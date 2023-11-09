@@ -16,7 +16,7 @@
 #ifndef MBMP_H
 #define MBMP_H
 
-const FTG kftgBmp = 'BMP';
+const FileType kftgBmp = 'BMP';
 
 enum
 {
@@ -26,7 +26,7 @@ enum
 };
 
 typedef class MBMP *PMBMP;
-#define MBMP_PAR BACO
+#define MBMP_PAR BaseCacheableObject
 #define kclsMBMP 'MBMP'
 class MBMP : public MBMP_PAR
 {
@@ -89,10 +89,10 @@ class MBMP : public MBMP_PAR
 
     static PMBMP PmbmpNew(byte *prgbPixels, long cbRow, long dyp, RC *prc, long xpRef, long ypRef, byte bTransparent,
                           ulong grfmbmp = fmbmpNil, byte bDefault = 0);
-    static PMBMP PmbmpReadNative(FNI *pfni, byte bTransparent = 0, long xp = 0, long yp = 0, ulong grfmbmp = fmbmpNil,
+    static PMBMP PmbmpReadNative(Filename *pfni, byte bTransparent = 0, long xp = 0, long yp = 0, ulong grfmbmp = fmbmpNil,
                                  byte bDefault = 0);
 
-    static PMBMP PmbmpRead(PBLCK pblck);
+    static PMBMP PmbmpRead(PDataBlock pblck);
 
     void GetRc(RC *prc);
     void Draw(byte *prgbPixels, long cbRow, long dyp, long xpRef, long ypRef, RC *prcClip = pvNil,
@@ -100,19 +100,19 @@ class MBMP : public MBMP_PAR
     void DrawMask(byte *prgbPixels, long cbRow, long dyp, long xpRef, long ypRef, RC *prcClip = pvNil);
     bool FPtIn(long xp, long yp);
 
-    virtual bool FWrite(PBLCK pblck);
+    virtual bool FWrite(PDataBlock pblck);
     virtual long CbOnFile(void);
 
     // a chunky resource reader for an MBMP
-    static bool FReadMbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
+    static bool FReadMbmp(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
 };
-const BOM kbomMbmph = 0xAFFC0000;
+const ByteOrderMask kbomMbmph = 0xAFFC0000;
 
 // reads a bitmap from the given file
-bool FReadBitmap(FNI *pfni, byte **pprgb, PGL *ppglclr, long *pdxp, long *pdyp, bool *pfUpsideDown,
+bool FReadBitmap(Filename *pfni, byte **pprgb, PDynamicArray *ppglclr, long *pdxp, long *pdyp, bool *pfUpsideDown,
                  byte bTransparent = 0);
 
 // writes a bitmap file
-bool FWriteBitmap(FNI *pfni, byte *prgb, PGL pglclr, long dxp, long dyp, bool fUpsideDown = fTrue);
+bool FWriteBitmap(Filename *pfni, byte *prgb, PDynamicArray pglclr, long dxp, long dyp, bool fUpsideDown = fTrue);
 
 #endif //! MBMP_H

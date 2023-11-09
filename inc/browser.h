@@ -9,7 +9,7 @@
     Review Status: Reviewed
 
     Studio Independent Browsers:
-    BASE --> CMH --> GOK	-->	BRWD  (Browser display class)
+    BASE --> CMH --> KidspaceGraphicObject	-->	BRWD  (Browser display class)
     BRWD --> BRWL  (Browser list class; chunky based)
     BRWD --> BRWT  (Browser text class)
     BRWD --> BRWL --> BRWN  (Browser named list class)
@@ -77,8 +77,8 @@ struct TFC
     union {
         struct
         {
-            CTG ctg;
-            CNO cno;
+            ChunkTag ctg;
+            ChunkNumber cno;
         };
         struct
         {
@@ -87,19 +87,19 @@ struct TFC
         };
         struct
         {
-            CTG ctg;
-            CHID chid;
+            ChunkTag ctg;
+            ChildChunkID chid;
         };
     };
 };
-const BOM kbomTfc = 0x5f000000;
+const ByteOrderMask kbomTfc = 0x5f000000;
 
 /************************************
 
    Browser Display Class
 
 *************************************/
-#define BRWD_PAR GOK
+#define BRWD_PAR KidspaceGraphicObject
 #define kclsBRWD 'BRWD'
 #define brwdidNil ivNil
 typedef class BRWD *PBRWD;
@@ -122,7 +122,7 @@ class BRWD : public BRWD_PAR
     long _kidThumOverride; // projects may override one thum gobid
     long _ithumOverride;   // projects may override one thum gobid
     PTGOB _ptgobPage;      // for page numbers
-    PSTDIO _pstdio;
+    PStudio _pstdio;
 
     // Display State variables
     long _cthumCD;          // Non-user content
@@ -137,7 +137,7 @@ class BRWD : public BRWD_PAR
   protected:
     void _SetScrollState(void);
     long _CfrmCalc(void);
-    static bool _FBuildGcb(GCB *pgcb, long kidPar, long kidBrws);
+    static bool _FBuildGcb(GraphicsObjectBlock *pgcb, long kidPar, long kidBrws);
     bool _FInitGok(PRCA prca, long kidGlass);
     void _SetVarForOverride(void);
 
@@ -146,7 +146,7 @@ class BRWD : public BRWD_PAR
         AssertThis(0);
         return 0;
     }
-    virtual bool _FSetThumFrame(long ithum, PGOB pgobPar)
+    virtual bool _FSetThumFrame(long ithum, PGraphicsObject pgobPar)
     {
         AssertThis(0);
         return fFalse;
@@ -181,11 +181,11 @@ class BRWD : public BRWD_PAR
     {
         return FPure(ithum == _ithumOverride);
     }
-    PGOB _PgobFromIfrm(long ifrm);
+    PGraphicsObject _PgobFromIfrm(long ifrm);
     long _KidThumFromIfrm(long ifrm);
     void _UnhiliteCurFrm(void);
     bool _FHiliteFrm(long ifrmSelect);
-    void _InitStateVars(PCMD pcmd, PSTDIO pstdio, bool fWrapScroll, long cthumScroll);
+    void _InitStateVars(PCMD pcmd, PStudio pstdio, bool fWrapScroll, long cthumScroll);
     void _InitFromData(PCMD pcmd, long ithumSelect, long ithumDisplay);
     virtual void _CacheContext(void);
 
@@ -201,7 +201,7 @@ class BRWD : public BRWD_PAR
     ~BRWD(void);
 
     static PBRWD PbrwdNew(PRCA prca, long kidPar, long kidBrwd);
-    void Init(PCMD pcmd, long ithumSelect, long ithumDisplay, PSTDIO pstdio, bool fWrapScroll = fTrue,
+    void Init(PCMD pcmd, long ithumSelect, long ithumDisplay, PStudio pstdio, bool fWrapScroll = fTrue,
               long cthumScroll = ivNil);
     bool FDraw(void);
     bool FCreateAllTgob(void); // For any text based browsers
@@ -253,10 +253,10 @@ class BRCNL : public BRCNL_PAR
 
   public:
     long cthumCD;
-    CKI ckiRoot;
-    PGL pglthd;
-    PGST pgst;
-    PCRM pcrm;
+    ChunkIdentification ckiRoot;
+    PDynamicArray pglthd;
+    PStringTable pgst;
+    PChunkyResourceManager pcrm;
 };
 
 //
@@ -279,13 +279,13 @@ struct THD
         {
             long lwFill1;
             long lwFill2;
-            CTG ctg;
-            CHID chid; // CHID of CD content
+            ChunkTag ctg;
+            ChildChunkID chid; // ChildChunkID of CD content
         };
     };
 
-    CNO cno;       // GOKD cno
-    CHID chidThum; // GOKD's parent's CHID (relative to GOKD parent's parent)
+    ChunkNumber cno;       // KidspaceGraphicObjectDescriptor cno
+    ChildChunkID chidThum; // KidspaceGraphicObjectDescriptor's parent's ChildChunkID (relative to KidspaceGraphicObjectDescriptor parent's parent)
     long ithd;     // Original index for this THD, before sorting (used to
                    // retrieve proper STN for the BRWN-derived browsers)
 };
@@ -302,11 +302,11 @@ class BCL : public BCL_PAR
     MARKMEM
 
   protected:
-    CTG _ctgRoot;
-    CNO _cnoRoot;
-    CTG _ctgContent;
+    ChunkTag _ctgRoot;
+    ChunkNumber _cnoRoot;
+    ChunkTag _ctgContent;
     bool _fDescend;
-    PGL _pglthd;
+    PDynamicArray _pglthd;
 
   protected:
     BCL(void)
@@ -318,17 +318,17 @@ class BCL : public BCL_PAR
         ReleasePpo(&_pglthd);
     }
 
-    bool _FInit(PCRM pcrm, CKI *pckiRoot, CTG ctgContent, PGL pglthd);
-    bool _FAddGokdToThd(PCFL pcfl, long sid, CKI *pcki);
-    bool _FAddFileToThd(PCFL pcfl, long sid);
-    bool _FBuildThd(PCRM pcrm);
+    bool _FInit(PChunkyResourceManager pcrm, ChunkIdentification *pckiRoot, ChunkTag ctgContent, PDynamicArray pglthd);
+    bool _FAddGokdToThd(PChunkyFile pcfl, long sid, ChunkIdentification *pcki);
+    bool _FAddFileToThd(PChunkyFile pcfl, long sid);
+    bool _FBuildThd(PChunkyResourceManager pcrm);
 
-    virtual bool _FAddGokdToThd(PCFL pcfl, long sid, KID *pkid);
+    virtual bool _FAddGokdToThd(PChunkyFile pcfl, long sid, ChildChunkIdentification *pkid);
 
   public:
-    static PBCL PbclNew(PCRM pcrm, CKI *pckiRoot, CTG ctgContent, PGL pglthd = pvNil, bool fOnlineOnly = fFalse);
+    static PBCL PbclNew(PChunkyResourceManager pcrm, ChunkIdentification *pckiRoot, ChunkTag ctgContent, PDynamicArray pglthd = pvNil, bool fOnlineOnly = fFalse);
 
-    PGL Pglthd(void)
+    PDynamicArray Pglthd(void)
     {
         return _pglthd;
     }
@@ -354,7 +354,7 @@ class BCLS : public BCLS_PAR
     MARKMEM
 
   protected:
-    PGST _pgst;
+    PStringTable _pgst;
 
   protected:
     BCLS(void)
@@ -366,16 +366,16 @@ class BCLS : public BCLS_PAR
         ReleasePpo(&_pgst);
     }
 
-    bool _FInit(PCRM pcrm, CKI *pckiRoot, CTG ctgContent, PGST pgst, PGL pglthd);
-    bool _FSetNameGst(PCFL pcfl, CTG ctg, CNO cno);
+    bool _FInit(PChunkyResourceManager pcrm, ChunkIdentification *pckiRoot, ChunkTag ctgContent, PStringTable pgst, PDynamicArray pglthd);
+    bool _FSetNameGst(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
 
-    virtual bool _FAddGokdToThd(PCFL pcfl, long sid, KID *pkid);
+    virtual bool _FAddGokdToThd(PChunkyFile pcfl, long sid, ChildChunkIdentification *pkid);
 
   public:
-    static PBCLS PbclsNew(PCRM pcrm, CKI *pckiRoot, CTG ctgContent, PGL pglthd = pvNil, PGST pgst = pvNil,
+    static PBCLS PbclsNew(PChunkyResourceManager pcrm, ChunkIdentification *pckiRoot, ChunkTag ctgContent, PDynamicArray pglthd = pvNil, PStringTable pgst = pvNil,
                           bool fOnlineOnly = fFalse);
 
-    PGST Pgst(void)
+    PStringTable Pgst(void)
     {
         return _pgst;
     }
@@ -411,27 +411,27 @@ class BRWL : public BRWL_PAR
     bool _fEnableAccel;
 
     // Thumnail descriptor lists
-    PCRM _pcrm;  // Chunky resource manager
-    PGL _pglthd; // Thumbnail descriptor	gl
-    PGST _pgst;  // Chunk name
+    PChunkyResourceManager _pcrm;  // Chunky resource manager
+    PDynamicArray _pglthd; // Thumbnail descriptor	gl
+    PStringTable _pgst;  // Chunk name
 
     // Browser Search (List) parameters
     BWS _bws;         // Selection type flag
     bool _fSinglePar; // Single parent search
-    CKI _ckiRoot;     // Grandparent cno=cnoNil => global search
-    CTG _ctgContent;  // Parent
+    ChunkIdentification _ckiRoot;     // Grandparent cno=cnoNil => global search
+    ChunkTag _ctgContent;  // Parent
 
   protected:
     // BRWL List
-    bool _FInitNew(PCMD pcmd, BWS bws, long ThumSelect, CKI ckiRoot, CTG ctgContent);
-    bool _FCreateBuildThd(CKI ckiRoot, CTG ctgContent, bool fBuildGl = fTrue);
-    virtual bool _FGetContent(PCRM pcrm, CKI *pcki, CTG ctg, bool fBuildGl);
+    bool _FInitNew(PCMD pcmd, BWS bws, long ThumSelect, ChunkIdentification ckiRoot, ChunkTag ctgContent);
+    bool _FCreateBuildThd(ChunkIdentification ckiRoot, ChunkTag ctgContent, bool fBuildGl = fTrue);
+    virtual bool _FGetContent(PChunkyResourceManager pcrm, ChunkIdentification *pcki, ChunkTag ctg, bool fBuildGl);
     virtual long _Cthum(void)
     {
         AssertThis(0);
         return _pglthd->IvMac();
     }
-    virtual bool _FSetThumFrame(long ithd, PGOB pgobPar);
+    virtual bool _FSetThumFrame(long ithd, PGraphicsObject pgobPar);
     virtual bool _FUpdateLists()
     {
         return fTrue;
@@ -455,7 +455,7 @@ class BRWL : public BRWL_PAR
     ~BRWL(void);
 
     static PBRWL PbrwlNew(PRCA prca, long kidPar, long kidBrwl);
-    virtual bool FInit(PCMD pcmd, BWS bws, long ThumSelect, long sidSelect, CKI ckiRoot, CTG ctgContent, PSTDIO pstdio,
+    virtual bool FInit(PCMD pcmd, BWS bws, long ThumSelect, long sidSelect, ChunkIdentification ckiRoot, ChunkTag ctgContent, PStudio pstdio,
                        PBRCNL pbrcnl = pvNil, bool fWrapScroll = fTrue, long cthumScroll = ivNil);
 };
 
@@ -475,7 +475,7 @@ class BRWT : public BRWT_PAR
     MARKMEM
 
   protected:
-    PGST _pgst;
+    PStringTable _pgst;
     bool _fEnableAccel;
 
     virtual long _Cthum(void)
@@ -483,7 +483,7 @@ class BRWT : public BRWT_PAR
         AssertThis(0);
         return _pgst->IvMac();
     }
-    virtual bool _FSetThumFrame(long istn, PGOB pgobPar);
+    virtual bool _FSetThumFrame(long istn, PGraphicsObject pgobPar);
     virtual void _ReleaseThumFrame(long ifrm)
     {
     } // No gob to release
@@ -499,8 +499,8 @@ class BRWT : public BRWT_PAR
     ~BRWT(void);
 
     static PBRWT PbrwtNew(PRCA prca, long kidPar, long kidBrwt);
-    void SetGst(PGST pgst);
-    bool FInit(PCMD pcmd, long thumSelect, long thumDisplay, PSTDIO pstdio, bool fWrapScroll = fTrue,
+    void SetGst(PStringTable pgst);
+    bool FInit(PCMD pcmd, long thumSelect, long thumDisplay, PStudio pstdio, bool fWrapScroll = fTrue,
                long cthumScroll = ivNil);
 };
 
@@ -518,12 +518,12 @@ class BRWN : public BRWN_PAR
     RTCLASS_DEC
 
   protected:
-    virtual bool _FGetContent(PCRM pcrm, CKI *pcki, CTG ctg, bool fBuildGl);
+    virtual bool _FGetContent(PChunkyResourceManager pcrm, ChunkIdentification *pcki, ChunkTag ctg, bool fBuildGl);
     virtual long _Cthum(void)
     {
         return _pglthd->IvMac();
     }
-    virtual bool _FSetThumFrame(long ithd, PGOB pgobPar);
+    virtual bool _FSetThumFrame(long ithd, PGraphicsObject pgobPar);
     virtual void _ReleaseThumFrame(long ifrm);
 
   public:
@@ -534,7 +534,7 @@ class BRWN : public BRWN_PAR
     {
     }
     ~BRWN(void){};
-    virtual bool FInit(PCMD pcmd, BWS bws, long ThumSelect, long sidSelect, CKI ckiRoot, CTG ctgContent, PSTDIO pstdio,
+    virtual bool FInit(PCMD pcmd, BWS bws, long ThumSelect, long sidSelect, ChunkIdentification ckiRoot, ChunkTag ctgContent, PStudio pstdio,
                        PBRCNL pbrcnl = pvNil, bool fWrapScroll = fTrue, long cthumScroll = ivNil);
 
     virtual bool FCmdOk(PCMD pcmd);
@@ -582,8 +582,8 @@ class BRWA : public BRWA_PAR
     }
 
     static PBRWA PbrwaNew(PRCA prca);
-    bool FBuildApe(PACTR pactr);
-    bool FBuildGst(PSCEN pscen);
+    bool FBuildApe(PActor pactr);
+    bool FBuildGst(PScene pscen);
     virtual bool FCmdChangeCel(PCMD pcmd);
 };
 
@@ -692,13 +692,13 @@ class BRWM : public BRWM_PAR
 
   protected:
     long _sty;  // Identifies type of sound
-    PCRF _pcrf; // NOT created here (autosave or BRWI file)
+    PChunkyResourceFile _pcrf; // NOT created here (autosave or BRWI file)
 
     virtual void _ApplySelection(long thumSelect, long sid);
     virtual bool _FUpdateLists(); // By all entries in pcrf of correct type
     void _ProcessSelection(void); // Sound Preview
-    bool _FAddThd(STN *pstn, CKI *pcki);
-    bool _FSndListed(CNO cno, long *pithd = pvNil);
+    bool _FAddThd(STN *pstn, ChunkIdentification *pcki);
+    bool _FSndListed(ChunkNumber cno, long *pithd = pvNil);
 
   public:
     //
@@ -710,7 +710,7 @@ class BRWM : public BRWM_PAR
     }
     ~BRWM(void){};
 
-    static PBRWM PbrwmNew(PRCA prca, long kidGlass, long sty, PSTDIO pstdio);
+    static PBRWM PbrwmNew(PRCA prca, long kidGlass, long sty, PStudio pstdio);
     virtual bool FCmdFile(PCMD pcmd); // Upon portfolio completion
     virtual bool FCmdDel(PCMD pcmd);  // Delete user sound
 };
@@ -747,7 +747,7 @@ class BRWI : public BRWI_PAR
     ~BRWI(void);
 
     static PBRWI PbrwiNew(PRCA prca, long kidGlass, long sty);
-    bool FInit(PCMD pcmd, CKI cki, PSTDIO pstdio);
+    bool FInit(PCMD pcmd, ChunkIdentification cki, PStudio pstdio);
 };
 
 /************************************
@@ -766,13 +766,13 @@ class BRWR : public BRWR_PAR
     MARKMEM
 
   protected:
-    CTG _ctg;
-    PCRM _pcrm; // Chunky resource manager
+    ChunkTag _ctg;
+    PChunkyResourceManager _pcrm; // Chunky resource manager
     bool _fApplyingSel;
 
   protected:
     virtual long _Cthum(void);
-    virtual bool _FSetThumFrame(long istn, PGOB pgobPar);
+    virtual bool _FSetThumFrame(long istn, PGraphicsObject pgobPar);
     virtual void _ReleaseThumFrame(long ifrm);
     virtual void _ApplySelection(long thumSelect, long sid);
     virtual void _ProcessSelection(void);
@@ -792,10 +792,10 @@ class BRWR : public BRWR_PAR
     ~BRWR(void);
 
     static PBRWR PbrwrNew(PRCA prca, long kid);
-    void Init(PCMD pcmd, long thumSelect, long thumDisplay, PSTDIO pstdio, bool fWrapScroll = fTrue,
+    void Init(PCMD pcmd, long thumSelect, long thumDisplay, PStudio pstdio, bool fWrapScroll = fTrue,
               long cthumScroll = ivNil);
-    bool FInit(PCMD pcmd, CTG ctg, long ithumDisplay, PSTDIO pstdio);
-    bool FUpdate(long arid, PSTDIO pstdio);
+    bool FInit(PCMD pcmd, ChunkTag ctg, long ithumDisplay, PStudio pstdio);
+    bool FUpdate(long arid, PStudio pstdio);
     bool FApplyingSel(void)
     {
         AssertBaseThis(0);
@@ -806,8 +806,8 @@ class BRWR : public BRWR_PAR
 const long kglcmgGrow = 8;
 struct CMG // Gokd Cno Map
 {
-    CNO cnoTmpl; // Content cno
-    CNO cnoGokd; // Thumbnail gokd cno
+    ChunkNumber cnoTmpl; // Content cno
+    ChunkNumber cnoGokd; // Thumbnail gokd cno
 };
 
 /************************************
@@ -827,13 +827,13 @@ class FNET : public FNET_PAR
     bool _fInitMSKDir;
     FNE _fne;
     FNE _fneDir;
-    FNI _fniDirMSK;
-    FNI _fniDir;
-    FNI _fniDirProduct;
+    Filename _fniDirMSK;
+    Filename _fniDir;
+    Filename _fniDirProduct;
     bool _fInited;
 
   protected:
-    bool _FNextFni(FNI *pfni, long *psid);
+    bool _FNextFni(Filename *pfni, long *psid);
 
   public:
     //
@@ -846,7 +846,7 @@ class FNET : public FNET_PAR
     ~FNET(void){};
 
     bool FInit(void);
-    bool FNext(FNI *pfni, long *psid = pvNil);
+    bool FNext(Filename *pfni, long *psid = pvNil);
 };
 
 #endif

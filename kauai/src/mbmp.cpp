@@ -237,7 +237,7 @@ bool MBMP::_FInit(byte *prgbPixels, long cbRow, long dyp, RC *prc, long xpRef, l
     transparent. The bitmap file must be uncompressed and have a bit depth
     of 8.  The palette information is be ignored.
 ****************************************************************************/
-PMBMP MBMP::PmbmpReadNative(FNI *pfni, byte bTransparent, long xp, long yp, ulong grfmbmp, byte bDefault)
+PMBMP MBMP::PmbmpReadNative(Filename *pfni, byte bTransparent, long xp, long yp, ulong grfmbmp, byte bDefault)
 {
     AssertPo(pfni, ffniFile);
     byte *prgb;
@@ -260,7 +260,7 @@ PMBMP MBMP::PmbmpReadNative(FNI *pfni, byte bTransparent, long xp, long yp, ulon
 /***************************************************************************
     Read a masked bitmap from a block.  May free the block or modify it.
 ***************************************************************************/
-PMBMP MBMP::PmbmpRead(PBLCK pblck)
+PMBMP MBMP::PmbmpRead(PDataBlock pblck)
 {
     AssertPo(pblck, 0);
     PMBMP pmbmp;
@@ -373,7 +373,7 @@ long MBMP::CbOnFile(void)
 /***************************************************************************
     Write the masked bitmap (and its header) to the given block.
 ***************************************************************************/
-bool MBMP::FWrite(PBLCK pblck)
+bool MBMP::FWrite(PDataBlock pblck)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -483,7 +483,7 @@ void MBMP::MarkMem(void)
 /***************************************************************************
     A PFNRPO to read an MBMP.
 ***************************************************************************/
-bool MBMP::FReadMbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool MBMP::FReadMbmp(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, fblckReadable);
@@ -511,7 +511,7 @@ bool MBMP::FReadMbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 }
 
 /***************************************************************************
-    Given an FNI refering to a bitmap file, returns the interesting parts of
+    Given an Filename refering to a bitmap file, returns the interesting parts of
     the header and the pixel data and palette.  Fails if the bitmap is not
     8 bits, uncompressed.  Any or all of the output pointers may be nil.
 
@@ -528,7 +528,7 @@ bool MBMP::FReadMbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
             pfUpsideDown	--	fTrue if the bitmap is upside down
         returns fTrue if it succeeds
 ***************************************************************************/
-bool FReadBitmap(FNI *pfni, byte **pprgb, PGL *ppglclr, long *pdxp, long *pdyp, bool *pfUpsideDown, byte bTransparent)
+bool FReadBitmap(Filename *pfni, byte **pprgb, PDynamicArray *ppglclr, long *pdxp, long *pdyp, bool *pfUpsideDown, byte bTransparent)
 {
     AssertPo(pfni, ffniFile);
     AssertNilOrVarMem(pprgb);
@@ -611,11 +611,11 @@ bool FReadBitmap(FNI *pfni, byte **pprgb, PGL *ppglclr, long *pdxp, long *pdyp, 
             goto LFail;
         }
 
-        if (pvNil == (*ppglclr = GL::PglNew(size(CLR), 256)))
+        if (pvNil == (*ppglclr = DynamicArray::PglNew(size(Color), 256)))
             goto LFail;
 
         AssertDo((*ppglclr)->FSetIvMac(256), 0);
-        fRet = pfil->FReadRgbSeq((*ppglclr)->PvLock(0), LwMul(size(CLR), 256), &fpCur);
+        fRet = pfil->FReadRgbSeq((*ppglclr)->PvLock(0), LwMul(size(Color), 256), &fpCur);
         (*ppglclr)->Unlock();
         if (!fRet)
             goto LFail;
@@ -767,16 +767,16 @@ LDone:
     Writes a given bitmap to a given file.
 
     Arguments:
-        FNI *pfni         -- the name of the file to write
+        Filename *pfni         -- the name of the file to write
         byte *prgb        -- the bits in the bitmap
-        PGL pglclr        -- the palette of the bitmap
+        PDynamicArray pglclr        -- the palette of the bitmap
         long dxp          -- the width of the bitmap
         long dyp          -- the height of the bitmap
         bool fUpsideDown  -- indicates if the rows should be inverted
 
     Returns: fTrue if it could write the file
 ***************************************************************************/
-bool FWriteBitmap(FNI *pfni, byte *prgb, PGL pglclr, long dxp, long dyp, bool fUpsideDown)
+bool FWriteBitmap(Filename *pfni, byte *prgb, PDynamicArray pglclr, long dxp, long dyp, bool fUpsideDown)
 {
     AssertPo(pfni, ffniFile);
     AssertVarMem(prgb);
@@ -829,7 +829,7 @@ bool FWriteBitmap(FNI *pfni, byte *prgb, PGL pglclr, long dxp, long dyp, bool fU
         goto LFail;
 
     /* Write the palette */
-    if (!pfil->FWriteRgbSeq(pglclr->PvLock(0), LwMul(size(CLR), 256), &fpCur))
+    if (!pfil->FWriteRgbSeq(pglclr->PvLock(0), LwMul(size(Color), 256), &fpCur))
     {
         pglclr->Unlock();
         goto LFail;

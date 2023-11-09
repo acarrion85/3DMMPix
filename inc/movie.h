@@ -7,17 +7,17 @@
 
     Movie Stuff
 
-        A single view on a movie (MVU)
+        A single view on a movie (MovieView)
 
-                DDG  	--->	MVU
+                DocumentDisplayGraphicsObject  	--->	MovieView
 
-        Callbacks to client (MCC)
+        Callbacks to client (MovieClientCallbacks)
 
-                BASE 	--->	MCC
+                BASE 	--->	MovieClientCallbacks
 
-        A single movie (MVIE)
+        A single movie (Movie)
 
-                DOCB	--->	MVIE
+                DocumentBase	--->	Movie
 
 ***************************************************************************/
 
@@ -116,20 +116,20 @@ enum
 //
 // The class definition
 //
-#define MVU_PAR DDG
+#define MovieView_PAR DocumentDisplayGraphicsObject
 
-typedef class MVU *PMVU;
-#define kclsMVU 'MVU'
-class MVU : public MVU_PAR
+typedef class MovieView *PMovieView;
+#define kclsMovieView 'MVU'
+class MovieView : public MovieView_PAR
 {
     RTCLASS_DEC
     ASSERT
     MARKMEM
-    CMD_MAP_DEC(MVU)
+    CMD_MAP_DEC(MovieView)
 
   protected:
     /* Make these static; we want to be able to set and restore without having
-        an actual MVU, and they shouldn't be getting set per-MVU anyway */
+        an actual MovieView, and they shouldn't be getting set per-MovieView anyway */
     static bool _fKbdDelayed;  // fTrue == we have delayed the keyboard
     static long _dtsKbdDelay;  // System keyboard delay before first repeat
     static long _dtsKbdRepeat; // System keyboard delay between repeats
@@ -143,8 +143,8 @@ class MVU : public MVU_PAR
     BRS _dzrPrev;         // Z motion of the "mouse" (arrow keys)
     long _grfcust;        // Options in effect when mouse was down.
     PCURS _pcursDefault;  // Default cursor for when a tool is not applicable.
-    PACTR _pactrListener; // Pactr of the actor being auditioned
-    PACTR _pactrRestore;  // Restore for actor recording
+    PActor _pactrListener; // Pactr of the actor being auditioned
+    PActor _pactrRestore;  // Restore for actor recording
 
     long _anidTool;     // Current selected action
     TAG _tagTool;       // Tag associated with current tool.
@@ -153,8 +153,8 @@ class MVU : public MVU_PAR
     bool _fCyclingCels; // Are we cycling cels in toolRecord?
     long _tool;         // Current tool loaded on cursor
 
-    // REVIEW Seanse(SeanSe): MVIE should not be creating/mucking with actor undo
-    //   objects.  V2.666 should revisit this issue and see if we can get ACTR to
+    // REVIEW Seanse(SeanSe): Movie should not be creating/mucking with actor undo
+    //   objects.  V2.666 should revisit this issue and see if we can get Actor to
     //   do all its own undo objects (e.g. Growing over a long drag could become
     //   a StartGrow/Grow/EndGrow sequence).  This also effects _pactrRestore.
     PAUND _paund;        // Actor undo object to save from mouse down to drag.
@@ -173,31 +173,31 @@ class MVU : public MVU_PAR
     bool _fEntireScene : 1; // Does positioning effect the entire scene?
 
     bool _fMouseDownSeen; // Was the mouse depressed during a place.
-    PACTR _pactrUndo;     // Actor to use for undo object when roll-calling.
+    PActor _pactrUndo;     // Actor to use for undo object when roll-calling.
 
-    ACR _acr;         // Color for painting text.
+    AbstractColor _acr;         // Color for painting text.
     long _onn;        // Font for text
     long _dypFont;    // Font size for text
     ulong _grfont;    // Font style for text
     long _lwLastTime; // State variable for the last time through.
 
-    MVU(PDOCB pdocb, PGCB pgcb) : DDG(pdocb, pgcb)
+    MovieView(PDocumentBase pdocb, PGCB pgcb) : DocumentDisplayGraphicsObject(pdocb, pgcb)
     {
     }
 
     //
     // Clipboard support
     //
-    bool _FCopySel(PDOCB *ppdocb, bool fRteOnly);
+    bool _FCopySel(PDocumentBase *ppdocb, bool fRteOnly);
     void _ClearSel(void);
-    bool _FPaste(PCLIP pclip);
+    bool _FPaste(PClipboardObject pclip);
 
     void _PositionActr(BRS dxrWld, BRS dyrWld, BRS dzrWld);
     void _MouseDown(CMD_MOUSE *pcmd);
     void _MouseDrag(CMD_MOUSE *pcmd);
     void _MouseUp(CMD_MOUSE *pcmd);
 
-    void _ActorClicked(PACTR pactr, bool fDown);
+    void _ActorClicked(PActor pactr, bool fDown);
 
   public:
     static void SlowKeyboardRepeat(void);
@@ -206,15 +206,15 @@ class MVU : public MVU_PAR
     //
     // Constructors and desctructors
     //
-    static MVU *PmvuNew(PMVIE pmvie, PGCB pgcb, long dxy, long dyp);
-    ~MVU(void);
+    static MovieView *PmvuNew(PMovie pmvie, PGCB pgcb, long dxy, long dyp);
+    ~MovieView(void);
 
     //
     // Accessor for getting the owning movie
     //
-    PMVIE Pmvie()
+    PMovie Pmvie()
     {
-        return (PMVIE)_pdocb;
+        return (PMovie)_pdocb;
     }
 
     //
@@ -262,7 +262,7 @@ class MVU : public MVU_PAR
     void StartPlaceActor(bool fEntireScene = fFalse);
     void EndPlaceActor(void);
     void WarpCursToCenter(void);
-    void WarpCursToActor(PACTR pactr);
+    void WarpCursToActor(PActor pactr);
     void AdjustCursor(long xp, long yp);
     void MouseToWorld(BRS dxrMouse, BRS dyrMouse, BRS dzrMouse, BRS *pdxrWld, BRS *pdyrWld, BRS *pdzrWld, bool fRecord);
     void SetAxis(BRS rgrAxis[3][3])
@@ -301,15 +301,15 @@ class MVU : public MVU_PAR
     {
         return _fRespectGround;
     }
-    void SetActrUndo(PACTR pactr)
+    void SetActrUndo(PActor pactr)
     {
         _pactrUndo = pactr;
     }
-    void SetPaintAcr(ACR acr)
+    void SetPaintAcr(AbstractColor acr)
     {
         _acr = acr;
     }
-    ACR AcrPaint(void)
+    AbstractColor AcrPaint(void)
     {
         return _acr;
     }
@@ -352,13 +352,13 @@ class MVU : public MVU_PAR
 //
 //
 
-#define MCC_PAR BASE
+#define MovieClientCallbacks_PAR BASE
 
-class MCC;
+class MovieClientCallbacks;
 
-typedef MCC *PMCC;
-#define kclsMCC 'MCC'
-class MCC : public MCC_PAR
+typedef MovieClientCallbacks *PMovieClientCallbacks;
+#define kclsMovieClientCallbacks 'MCC'
+class MovieClientCallbacks : public MovieClientCallbacks_PAR
 {
   protected:
     long _dxp;
@@ -366,7 +366,7 @@ class MCC : public MCC_PAR
     long _cbCache;
 
   public:
-    MCC(long dxp, long dyp, long cbCache)
+    MovieClientCallbacks(long dxp, long dyp, long cbCache)
     {
         _dxp = dxp;
         _dyp = dyp;
@@ -453,7 +453,7 @@ class MCC : public MCC_PAR
     virtual void StartListenerEasel(void)
     {
     } // Tells the client to start up the listener easel.
-    virtual bool GetFniSave(FNI *pfni, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
+    virtual bool GetFniSave(Filename *pfni, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
                             PSTN pstnDefFileName)
     {
         return fFalse;
@@ -503,8 +503,8 @@ typedef struct _scend
     /* The first fields are private...the client shouldn't change them, and
         in fact, generally shouldn't even look at them */
     long imvied;     // index of the MVIED for this scene
-    CNO cno;         // the CNO of this scene chunk
-    CHID chid;       // the original CHID
+    ChunkNumber cno;         // the ChunkNumber of this scene chunk
+    ChildChunkID chid;       // the original ChildChunkID
     PMBMP pmbmp;     // pointer to thumbnail MBMP
                      /* The client can read or write the following fields */
     TRANS trans;     // the transition that will occur after this scene
@@ -514,16 +514,16 @@ typedef struct _scend
 /* A MoVIE Descriptor */
 typedef struct _mvied
 {
-    PCRF pcrf;    // the file this scene's movie is in
-    CNO cno;      // CNO of the MVIE chunk
-    long aridLim; // _aridLim from the MVIE
+    PChunkyResourceFile pcrf;    // the file this scene's movie is in
+    ChunkNumber cno;      // ChunkNumber of the Movie chunk
+    long aridLim; // _aridLim from the Movie
 } MVIED, *PMVIED;
 
 /* A Composite MoVIe */
 typedef struct _cmvi
 {
-    PGL pglmvied; // GL of movie descriptors
-    PGL pglscend; // GL of scene descriptors
+    PDynamicArray pglmvied; // DynamicArray of movie descriptors
+    PDynamicArray pglscend; // DynamicArray of scene descriptors
 
     void Empty(void);
 #ifdef DEBUG
@@ -539,29 +539,29 @@ typedef struct _cmvi
 
 const long kccamMax = 9;
 
-typedef class MVIE *PMVIE;
+typedef class Movie *PMovie;
 
-#define MVIE_PAR DOCB
-#define kclsMVIE 'MVIE'
-class MVIE : public MVIE_PAR
+#define Movie_PAR DocumentBase
+#define kclsMovie 'MVIE'
+class Movie : public Movie_PAR
 {
     RTCLASS_DEC
     MARKMEM
     ASSERT
-    CMD_MAP_DEC(MVIE)
+    CMD_MAP_DEC(Movie)
 
   protected:
     long _aridLim; // Highest actor id in use.
 
-    PCRF _pcrfAutoSave; // CRF/CFL of auto save file.
+    PChunkyResourceFile _pcrfAutoSave; // ChunkyResourceFile/ChunkyFile of auto save file.
     PFIL _pfilSave;     // User's document
 
-    CNO _cno; // CNO of movie in current file.
+    ChunkNumber _cno; // ChunkNumber of movie in current file.
 
     STN _stnTitle; // Title of the movie
 
-    PGST _pgstmactr;             // GST of actors in the movie (for roll call)
-    PSCEN _pscenOpen;            // Index of current open scene.
+    PStringTable _pgstmactr;             // StringTable of actors in the movie (for roll call)
+    PScene _pscenOpen;            // Index of current open scene.
     long _cscen;                 // Number of scenes in the movie.
     long _iscen;                 // Number of scene open in the movie.
     bool _fAutosaveDirty : 1;    // Is the movie in memory different than disk
@@ -577,13 +577,13 @@ class MVIE : public MVIE_PAR
     bool _fGCSndsOnClose : 1;    // Garbage collection of sounds on close
     bool _fReadOnly : 1;         // Is the original file read-only?
 
-    PBWLD _pbwld;   // The brender world for this movie
+    PWorld _pbwld;   // The brender world for this movie
     PMSQ _pmsq;     // Message Sound Queue
     CLOK _clok;     // Clock for playing the film
     ulong _tsStart; // Time last play started.
     long _cnfrm;    // Number of frames since last play started.
 
-    PMCC _pmcc; // Parameters and callbacks.
+    PMovieClientCallbacks _pmcc; // Parameters and callbacks.
 
     WIT _wit;     // Pausing type
     long _dts;    // Number of clock ticks to pause.
@@ -596,23 +596,23 @@ class MVIE : public MVIE_PAR
     long _lwBmp;
 #endif // DEBUG
 
-    PGL _pglclrThumbPalette; // Palette to use for thumbnail rendering.
+    PDynamicArray _pglclrThumbPalette; // Palette to use for thumbnail rendering.
 
   private:
-    MVIE(void);
+    Movie(void);
     PTAGL _PtaglFetch(void);                      // Returns a list of all tags used in movie
     bool _FCloseCurrentScene(void);               // Closes and releases current scene, if any
     bool _FMakeCrfValid(void);                    // Makes sure there is a file to work with.
     bool _FUseTempFile(void);                     // Switches to using a temp file.
-    void _MoveChids(CHID chid, bool fDown);       // Move the chids of scenes in the movie.
-    bool _FDoGarbageCollection(PCFL pcfl);        // Remove unused chunks from movie.
+    void _MoveChids(ChildChunkID chid, bool fDown);       // Move the chids of scenes in the movie.
+    bool _FDoGarbageCollection(PChunkyFile pcfl);        // Remove unused chunks from movie.
     void _DoSndGarbageCollection(bool fPurgeAll); // Remove unused user sounds from movie
-    bool _FDoMtrlTmplGC(PCFL pcfl);               // Material and template garbage collection
-    CHID _ChidScenNewSnd(void);                   // Choose an unused chid for a new scene child user sound
-    CHID _ChidMvieNewSnd(void);                   // Choose an unused chid for a new movie child user sound
-    void _SetTitle(PFNI pfni = pvNil);            // Set the title of the movie based on given file name.
-    bool _FIsChild(PCFL pcfl, CTG ctg, CNO cno);
-    bool _FSetPfilSave(PFNI pfni);
+    bool _FDoMtrlTmplGC(PChunkyFile pcfl);               // Material and template garbage collection
+    ChildChunkID _ChidScenNewSnd(void);                   // Choose an unused chid for a new scene child user sound
+    ChildChunkID _ChidMvieNewSnd(void);                   // Choose an unused chid for a new movie child user sound
+    void _SetTitle(PFilename pfni = pvNil);            // Set the title of the movie based on given file name.
+    bool _FIsChild(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
+    bool _FSetPfilSave(PFilename pfni);
 
   public:
     //
@@ -635,16 +635,16 @@ class MVIE : public MVIE_PAR
     //
     // Getting views
     //
-    PMVU PmvuCur(void);
-    PMVU PmvuFirst(void);
+    PMovieView PmvuCur(void);
+    PMovieView PmvuFirst(void);
 
     //
     // Create and Destroy
     //
-    static PMVIE PmvieNew(bool fHalfMode, PMCC pmcc, FNI *pfni = pvNil, CNO cno = cnoNil);
+    static PMovie PmvieNew(bool fHalfMode, PMovieClientCallbacks pmcc, Filename *pfni = pvNil, ChunkNumber cno = cnoNil);
     // Create a movie and read it if
     //   pfni != pvNil
-    static bool FReadRollCall(PCRF pcrf, CNO cno, PGST *ppgst, long *paridLim = pvNil);
+    static bool FReadRollCall(PChunkyResourceFile pcrf, ChunkNumber cno, PStringTable *ppgst, long *paridLim = pvNil);
     // reads roll call for a given movie
     void ForceSaveAs(void)
     {
@@ -657,16 +657,16 @@ class MVIE : public MVIE_PAR
         return FPure(_fReadOnly);
     }
 
-    ~MVIE(void);
+    ~Movie(void);
 
     //
-    // MCC maintenance
+    // MovieClientCallbacks maintenance
     //
-    PMCC Pmcc(void)
+    PMovieClientCallbacks Pmcc(void)
     {
         return _pmcc;
     } // Accessor for getting to client callbacks.
-    void SetMcc(PMCC pmcc)
+    void SetMcc(PMovieClientCallbacks pmcc)
     {
         ReleasePpo(&_pmcc);
         _pmcc = pmcc;
@@ -702,7 +702,7 @@ class MVIE : public MVIE_PAR
     bool FHideTbox(void);                                        // Hide selected text box from the scene at this fram.
     bool FNukeTbox(void);                                        // Remove selected text box from the scene.
     void SelectTbox(long itbox);                                 // Select the itbox'th text box in the frame.
-    void SetPaintAcr(ACR acr);                                   // Sets color that painting will occur with.
+    void SetPaintAcr(AbstractColor acr);                                   // Sets color that painting will occur with.
     void SetOnnTextCur(long onn);                                // Sets font that text will be in
     void SetDypFontTextCur(long dypFont);                        // Sets font size that text will be in
     void SetStyleTextCur(ulong grfont);                          // Sets font style that text will be in
@@ -723,12 +723,12 @@ class MVIE : public MVIE_PAR
     bool FAddToCmvi(PCMVI pcmvi, long *piscendIns);
     // Add this movie to the CMVI
     bool FSetCmvi(PCMVI pcmvi); // Re-build the movie from the CMVI
-    bool _FAddMvieToRollCall(CNO cno, long aridMin);
+    bool _FAddMvieToRollCall(ChunkNumber cno, long aridMin);
     // Updates roll call for an imported movie
-    bool _FInsertScend(PGL pglscend, long iscend, PSCEND pscend);
+    bool _FInsertScend(PDynamicArray pglscend, long iscend, PSCEND pscend);
     // Insert an imported scene
-    void _DeleteScend(PGL pglscend, long iscend);   // Delete an imported scene
-    bool _FAdoptMsndInMvie(PCFL pcfl, CNO cnoScen); // Adopt msnd chunks as children of the movie
+    void _DeleteScend(PDynamicArray pglscend, long iscend);   // Delete an imported scene
+    bool _FAdoptMsndInMvie(PChunkyFile pcfl, ChunkNumber cnoScen); // Adopt msnd chunks as children of the movie
 
     bool FAddBkgdSnd(PTAG ptag, tribool fLoop, tribool fQueue, long vlm = vlmNil,
                      long sty = styNil);                                                              // Adds a sound
@@ -737,17 +737,17 @@ class MVIE : public MVIE_PAR
     //
     // Auto save stuff
     //
-    bool FAutoSave(PFNI pfni = pvNil, bool fCleanRollCall = fFalse); // Save movie in temp file
+    bool FAutoSave(PFilename pfni = pvNil, bool fCleanRollCall = fFalse); // Save movie in temp file
     bool FSaveTagSnd(TAG *ptag)
     {
         return TAGM::FSaveTag(ptag, _pcrfAutoSave, fTrue);
     }
-    bool FCopySndFileToMvie(PFIL pfil, long sty, CNO *pcno, PSTN pstn = pvNil);
-    bool FVerifyVersion(PCFL pcfl, CNO *pcno = pvNil);
-    bool FEnsureAutosave(PCRF *pcrf = pvNil);
-    bool FCopyMsndFromPcfl(PCFL pcfl, CNO cnoSrc, CNO *pcnoDest);
-    bool FResolveSndTag(PTAG ptag, CHID chid, CNO cnoScen = cnoNil, PCRF pcrf = pvNil);
-    bool FChidFromUserSndCno(CNO cno, CHID *pchid);
+    bool FCopySndFileToMvie(PFIL pfil, long sty, ChunkNumber *pcno, PSTN pstn = pvNil);
+    bool FVerifyVersion(PChunkyFile pcfl, ChunkNumber *pcno = pvNil);
+    bool FEnsureAutosave(PChunkyResourceFile *pcrf = pvNil);
+    bool FCopyMsndFromPcfl(PChunkyFile pcfl, ChunkNumber cnoSrc, ChunkNumber *pcnoDest);
+    bool FResolveSndTag(PTAG ptag, ChildChunkID chid, ChunkNumber cnoScen = cnoNil, PChunkyResourceFile pcrf = pvNil);
+    bool FChidFromUserSndCno(ChunkNumber cno, ChildChunkID *pchid);
     void SetDocClosing(bool fClose)
     {
         _fDocClosing = fClose;
@@ -781,13 +781,13 @@ class MVIE : public MVIE_PAR
     bool FIsIaridTdt(long iarid);      // 3d spletter
 
     //
-    // Overridden DOCB functions
+    // Overridden DocumentBase functions
     //
-    bool FGetFni(FNI *pfni);                  // For saving to a file
+    bool FGetFni(Filename *pfni);                  // For saving to a file
     bool FSave(long cid);                     // For saving to a file, (calls FGetFni and FSaveToFni)
-    bool FSaveToFni(FNI *pfni, bool fSetFni); // For doing a Save As or Save
-    PDMD PdmdNew(void);                       // Do not use!
-    bool FGetFniSave(FNI *pfni);              // For saving via the portfolio.
+    bool FSaveToFni(Filename *pfni, bool fSetFni); // For doing a Save As or Save
+    PDocumentMDIWindow PdmdNew(void);                       // Do not use!
+    bool FGetFniSave(Filename *pfni);              // For saving via the portfolio.
 
     //
     // Drawing stuff
@@ -841,15 +841,15 @@ class MVIE : public MVIE_PAR
     //
     // Scene stuff
     //
-    PSCEN Pscen(void)
+    PScene Pscen(void)
     {
         return _pscenOpen;
     }                                           // The currently open scene.
-    bool FInsScenCore(long iscen, SCEN *pscen); // Insert this scene as scene number.
+    bool FInsScenCore(long iscen, Scene *pscen); // Insert this scene as scene number.
     bool FNewScenInsCore(long iscen);           // Inserts a blank scene before iscen
     bool FRemScenCore(long iscen);              // Removes a scene from the movie
-    bool FPasteActr(PACTR pactr);               // Pastes an actor into current scene.
-    bool FPasteActrPath(PACTR pactr);           // Pastes the path onto selected actor.
+    bool FPasteActr(PActor pactr);               // Pastes an actor into current scene.
+    bool FPasteActrPath(PActor pactr);           // Pastes the path onto selected actor.
     PMSQ Pmsq(void)
     {
         return _pmsq;
@@ -873,10 +873,10 @@ class MVIE : public MVIE_PAR
     // 3-D Text stuff
     //
     bool FInsTdt(PSTN pstn, long tdts, PTAG ptagTdf); // Inserts a TDT into this movie.
-    bool FChangeActrTdt(PACTR pactr, PSTN pstn, long tdts, PTAG ptagTdf);
+    bool FChangeActrTdt(PActor pactr, PSTN pstn, long tdts, PTAG ptagTdf);
 
     //
-    // Marking (overridden DOCB methods)
+    // Marking (overridden DocumentBase methods)
     //
     virtual bool FDirty(void) // Has the movie changed since last saved?
     {
@@ -890,15 +890,15 @@ class MVIE : public MVIE_PAR
     //
     // Roll call
     //
-    bool FAddToRollCall(ACTR *pactr, PSTN pstn);                    // Add an actor to the roll call
-    void RemFromRollCall(ACTR *pactr, bool fDelIfOnlyRef = fFalse); // Remove an actor from the roll call.
+    bool FAddToRollCall(Actor *pactr, PSTN pstn);                    // Add an actor to the roll call
+    void RemFromRollCall(Actor *pactr, bool fDelIfOnlyRef = fFalse); // Remove an actor from the roll call.
     void BuildActionMenu(void);                                     // Called when the selected actor has changed.
 
     //
-    // Overridden DOCB functions
+    // Overridden DocumentBase functions
     //
-    PDDG PddgNew(PGCB pgcb);    // For creating a view on a movie.
-    bool FAddUndo(PMUNB pmunb); // Add an item to the undo list
+    PDocumentDisplayGraphicsObject PddgNew(PGCB pgcb);    // For creating a view on a movie.
+    bool FAddUndo(PMovieUndo pmunb); // Add an item to the undo list
     void ClearUndo(void);
 
     //
@@ -945,7 +945,7 @@ class MVIE : public MVIE_PAR
     //
     // Accessor for getting to the Brender world.
     //
-    PBWLD Pbwld(void)
+    PWorld Pbwld(void)
     {
         return _pbwld;
     }
@@ -965,12 +965,12 @@ class MVIE : public MVIE_PAR
     //
     // Thumbnail stuff
     //
-    PGL PglclrThumbPalette(void)
+    PDynamicArray PglclrThumbPalette(void)
     {
         AssertThis(0);
         return _pglclrThumbPalette;
     }
-    void SetThumbPalette(PGL pglclr)
+    void SetThumbPalette(PDynamicArray pglclr)
     {
         ReleasePpo(&_pglclrThumbPalette);
         _pglclrThumbPalette = pglclr;

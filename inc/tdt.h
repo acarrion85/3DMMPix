@@ -8,7 +8,7 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BACO ---> TMPL ---> TDT  (Three-D Text)
+    BASE ---> BaseCacheableObject ---> TMPL ---> TDT  (Three-D Text)
 
 ***************************************************************************/
 #ifndef TDT_H
@@ -67,7 +67,7 @@ class TDT : public TDT_PAR
     MARKMEM
 
   protected:
-    static PGST _pgstAction; // Action names
+    static PStringTable _pgstAction; // Action names
 
     long _tdts;          // TDT shape
     TAG _tagTdf;         // Tag to Three-D Font
@@ -76,35 +76,35 @@ class TDT : public TDT_PAR
     long _tdaCache;      // Action in pactnCache
 
   protected:
-    virtual bool _FInit(PCFL pcfl, CTG ctgTmpl, CNO cnoTmpl);
+    virtual bool _FInit(PChunkyFile pcfl, ChunkTag ctgTmpl, ChunkNumber cnoTmpl);
     bool _FInitLists(void);
-    PGL _PglibactParBuild(void);
-    PGL _PglibsetBuild(void);
-    PGG _PggcmidBuild(void);
-    PGL _Pglbmat34Build(long tda);
-    PGG _PggcelBuild(long tda);
+    PDynamicArray _PglibactParBuild(void);
+    PDynamicArray _PglibsetBuild(void);
+    PGeneralGroup _PggcmidBuild(void);
+    PDynamicArray _Pglbmat34Build(long tda);
+    PGeneralGroup _PggcelBuild(long tda);
     virtual PACTN _PactnFetch(long tda);
     PACTN _PactnBuild(long tda);
-    virtual PMODL _PmodlFetch(CHID chidModl);
+    virtual PMODL _PmodlFetch(ChildChunkID chidModl);
     long _CcelOfTda(long tda);
     void _ApplyAction(BMAT34 *pbmat34, long tda, long ich, long ccel, long icel, BRS xrChar, BRS pdxrText);
     void _ApplyShape(BMAT34 *pbmat34, long tdts, long cch, long ich, BRS xrChar, BRS dxrText, BRS yrChar, BRS dyrMax,
                      BRS dyrTotal);
 
   public:
-    static bool FSetActionNames(PGST pgstAction);
+    static bool FSetActionNames(PStringTable pgstAction);
 #ifdef DEBUG
     static void MarkActionNames(void);
 #endif
 
     static PTDT PtdtNew(PSTN pstn, long tdts, PTAG ptagTdf);
     ~TDT(void);
-    static PGL PgltagFetch(PCFL pcfl, CTG ctg, CNO cno, bool *pfError);
+    static PDynamicArray PgltagFetch(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, bool *pfError);
     PTDT PtdtDup(void);
 
     void GetInfo(PSTN pstn, long *ptdts, PTAG ptagTdf);
     bool FChange(PSTN pstn, long tdts = tdtsNil, PTAG ptagTdf = pvNil);
-    bool FWrite(PCFL pcfl, CTG ctg, CNO *pcno);
+    bool FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno);
     bool FAdjustBody(PBODY pbody);
     virtual bool FSetDefaultCost(PBODY pbody);
     virtual PCMTL PcmtlFetch(long cmid);

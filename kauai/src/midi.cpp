@@ -313,7 +313,7 @@ void MIDS::MarkMem(void)
 /***************************************************************************
     A baco reader for a midi stream.
 ***************************************************************************/
-bool MIDS::FReadMids(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool MIDS::FReadMids(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, fblckReadable);
@@ -343,7 +343,7 @@ bool MIDS::FReadMids(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 /***************************************************************************
     Read a midi stream from the given block.
 ***************************************************************************/
-PMIDS MIDS::PmidsRead(PBLCK pblck)
+PMIDS MIDS::PmidsRead(PDataBlock pblck)
 {
     AssertPo(pblck, 0);
 
@@ -362,7 +362,7 @@ PMIDS MIDS::PmidsRead(PBLCK pblck)
 /***************************************************************************
     Read a native standard midi file and create a midi stream from it.
 ***************************************************************************/
-PMIDS MIDS::PmidsReadNative(FNI *pfni)
+PMIDS MIDS::PmidsReadNative(Filename *pfni)
 {
     AssertPo(pfni, ffniFile);
 
@@ -407,7 +407,7 @@ PMIDS MIDS::PmidsReadNative(FNI *pfni)
     long imidtr, imidtrMin;
     ulong tsMin;
     PMIDS pmids = pvNil;
-    PGL pglmidtr = pvNil;
+    PDynamicArray pglmidtr = pvNil;
 
     // open the file and set up the source flo
     if (pvNil == (flo.pfil = FIL::PfilOpen(pfni)))
@@ -431,7 +431,7 @@ PMIDS MIDS::PmidsReadNative(FNI *pfni)
     }
 
     // allocate the list of tracks to parse
-    if (pvNil == (pglmidtr = GL::PglNew(size(MIDTR))))
+    if (pvNil == (pglmidtr = DynamicArray::PglNew(size(MIDTR))))
         goto LFail;
 
     // build the track list...
@@ -662,7 +662,7 @@ long MIDS::_CbEncodeLu(ulong lu, byte *prgb)
 /***************************************************************************
     Write a midi stream to the given block.
 ***************************************************************************/
-bool MIDS::FWrite(PBLCK pblck)
+bool MIDS::FWrite(PDataBlock pblck)
 {
     AssertThis(0);
     AssertPo(pblck, 0);

@@ -10,13 +10,13 @@
 
     Syntax of a sitobren script (.s2b file):
 
-    ACTOR CNO <TMPL-id> NAMED "<actor_name>" [XREST <xaRest>]
+    ACTOR ChunkNumber <TMPL-id> NAMED "<actor_name>" [XREST <xaRest>]
         [YREST <yaRest>] [ZREST <zaRest>] [FLAGS <cust_mat_only>]
         [BPSETS <bpsets>]
     ACTION NAMED "<action_name>" FILEBASE "<file_name_base>"
         FIRST <start-#> LAST <end-#> FLAGS <action_flags>
         [SCALE <dwrScale>] [SKIP <skip_count>] [SUBMODEL "<submodel>"]
-    BACKGROUND CNO <BKGD-id> NAMED "<bkgd_name>" [LIGHTS <#lights>]
+    BACKGROUND ChunkNumber <Background-id> NAMED "<bkgd_name>" [LIGHTS <#lights>]
         [CAMERAS <#cameras>] [FIRST <first_pal>] [LENGTH <#entries>]
     COSTUME FILE "<filename>" USE_SETS <set #> [<set #> [<set #> [...]]]
 
@@ -39,7 +39,7 @@
         <bkgd_name>      -- any string conforming to actor/action naming
             conventions
         <TMPL-id>
-        <BKGD-id>        -- Chunk number for TMPL or BKGD chunk
+        <Background-id>        -- Chunk number for TMPL or Background chunk
         <xaRest>
         <yaRest>
         <zaRest>         -- Any valid integer, units are degrees
@@ -130,7 +130,7 @@ int __cdecl main(int cpsz, achar *prgpsz[])
     bool fContinue = fFalse, fPreprocess = fFalse, fHaveInc = fFalse;
     bool fIncNext = fFalse, fHaveRoundXF = fFalse, fFixWrap = fTrue;
     uint mdVerbose, iRound = 3, iRet = 1, iRoundXF;
-    FNI fniSrc, fniDst, fniInc;
+    Filename fniSrc, fniDst, fniInc;
     PFIL pfilSrc = pvNil;
     FILE *pfileDst = pvNil;
     MSSIO *pmssioErr = pvNil, *pmssioDst = pvNil;
@@ -514,9 +514,9 @@ PS2B S2B::Ps2bNew(PFIL pfilSrc, bool fSwapHand, uint mdVerbose, int iRound, int 
 S2B::S2B(bool fSwapHand, uint mdVerbose, int iRound, int iRoundXF, PSZ pszApp)
 {
     short bo;
-    FNI fni;
-    CFL *pcfl;
-    BLCK blck;
+    Filename fni;
+    ChunkyFile *pcfl;
+    DataBlock blck;
     STN stnPal;
 
     _ibpCur = 0;
@@ -551,21 +551,21 @@ S2B::S2B(bool fSwapHand, uint mdVerbose, int iRound, int iRoundXF, PSZ pszApp)
     _pglclr = _pglcrng = pvNil;
     stnPal = pszApp;
     AssertDo(fni.FBuildFromPath(&stnPal), "Couldn't build .chk path?");
-    AssertDo(fni.FChangeFtg(kftgContent), "Couldn't change FTG?");
+    AssertDo(fni.FChangeFtg(kftgContent), "Couldn't change FileType?");
     fni.GetLeaf(&stnPal);
-    if (fni.FSearchInPath(&stnPal) && (pcfl = CFL::PcflOpen(&fni, fcflNil)) != pvNil)
+    if (fni.FSearchInPath(&stnPal) && (pcfl = ChunkyFile::PcflOpen(&fni, fcflNil)) != pvNil)
     {
         if (pcfl->FFind(kctgColorTable, 0, &blck))
         {
-            _pglclr = GL::PglRead(&blck, &bo);
+            _pglclr = DynamicArray::PglRead(&blck, &bo);
             if (_pglclr != pvNil && bo == kboCur)
             {
-                KID kidGlcg;
+                ChildChunkIdentification kidGlcg;
 
                 if (pcfl->FGetKidChidCtg(kctgColorTable, 0, 0, kctgGlcg, &kidGlcg) &&
                     pcfl->FFind(kidGlcg.cki.ctg, kidGlcg.cki.cno, &blck))
                 {
-                    _pglcrng = GL::PglRead(&blck, &bo);
+                    _pglcrng = DynamicArray::PglRead(&blck, &bo);
                     Assert(bo == kboCur, "GLCG byte-order not same as GLCR");
                 }
                 else
@@ -635,13 +635,13 @@ S2B::~S2B(void)
         that need names in the final product.
 
     Arguments:
-        CTG ctg       -- the CTG of the chunk; used in the #ifdef
-        CNO cno       -- the remainder of the arguments are just passed
-        PSTN pstnName    directly to the CHSE DumpHeader()
+        ChunkTag ctg       -- the ChunkTag of the chunk; used in the #ifdef
+        ChunkNumber cno       -- the remainder of the arguments are just passed
+        PSTN pstnName    directly to the SourceEmitter DumpHeader()
         bool fPack
 
 ************************************************************ PETED ***********/
-void S2B::_DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack)
+void S2B::_DumpHeader(ChunkTag ctg, ChunkNumber cno, PSTN pstnName, bool fPack)
 {
     if (_fPreprocess)
     {
@@ -677,7 +677,7 @@ void S2B::_DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack)
             return;
         }
 
-        printf("Warning: CTG w/out any alphanumerics; preprocessor directives"
+        printf("Warning: ChunkTag w/out any alphanumerics; preprocessor directives"
                " skipped for that chunk\n");
     }
 
@@ -697,7 +697,7 @@ void S2B::_DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack)
 |		fTrue if it succeeds, fFalse otherwise
 |
 -------------------------------------------------------------PETED-----------*/
-bool S2B::FConvertSI(PMSNK pmsnkErr, PMSNK pmsnkDst, PFNI pfniInc, ulong grfs2b)
+bool S2B::FConvertSI(PMSNK pmsnkErr, PMSNK pmsnkDst, PFilename pfniInc, ulong grfs2b)
 {
     bool fGotTok, fHaveActor = fFalse, fRet = fFalse;
 
@@ -725,9 +725,9 @@ bool S2B::FConvertSI(PMSNK pmsnkErr, PMSNK pmsnkDst, PFNI pfniInc, ulong grfs2b)
 #if HASH_FIXED
     if (!FAllocPv((void **)&_prgpbmdb, kcbrgpbmdb, fmemClear, mprNormal))
 #else  /* HASH_FIXED */
-    if ((_pglpbmatdb = GL::PglNew(size(PBMATDB))) == pvNil)
+    if ((_pglpbmatdb = DynamicArray::PglNew(size(PBMATDB))) == pvNil)
         goto LFail;
-    if ((_pglpbmdb = GL::PglNew(size(PBMDB))) == pvNil)
+    if ((_pglpbmdb = DynamicArray::PglNew(size(PBMDB))) == pvNil)
 #endif /* !HASH_FIXED */
         goto LFail;
 
@@ -901,7 +901,7 @@ LDone:
     return fRet;
 }
 
-const SCRP rgscrpActor[] = {{ptLong, ttCno, "missing CNO for actor"},
+const SCRP rgscrpActor[] = {{ptLong, ttCno, "missing ChunkNumber for actor"},
                             {ptString, ttCalled, "missing name for actor"},
                             {ptBRA, ttXRest, ""},
                             {ptBRA, ttYRest, ""},
@@ -926,7 +926,7 @@ bool S2B::_FDoTtActor(bool *pfHaveActor)
 {
     bool fRet = fTrue;
     uint mdBPS = _mdBPS, mdMaterials = 2;
-    CNO cno;
+    ChunkNumber cno;
     TMPLF tmplf;
 
     _FlushTmplKids();
@@ -983,7 +983,7 @@ LFail:
     if (!*pfHaveActor)
     {
         printf("Error occured during processing for command line:\n");
-        printf("    ACTOR CNO %d, NAMED \"%s\",\n"
+        printf("    ACTOR ChunkNumber %d, NAMED \"%s\",\n"
                "        XREST %f, YREST %f, ZREST %f FLAGS %08x, BPSETS %d\n",
                cno, _stnTmpl.Psz(), BrScalarToFloat(BrAngleToDegree(tmplf.xaRest)),
                BrScalarToFloat(BrAngleToDegree(tmplf.yaRest)), BrScalarToFloat(BrAngleToDegree(tmplf.zaRest)),
@@ -1022,7 +1022,7 @@ bool S2B::_FDoTtActionS2B(void)
     int cCel, iCel, iCelBase, dCel = 1, iCelMac;
     long grfactn;
     ACTNF actnf;
-    CNO cnoActn;
+    ChunkNumber cnoActn;
     BRS brsScale = BrFloatToScalar(1.0), brsStep = BR_SCALAR(-1);
     BRS rgbrsDwr[3] = {BR_SCALAR(0), BR_SCALAR(0), BR_SCALAR(0)};
 
@@ -1135,12 +1135,12 @@ bool S2B::_FDoTtActionS2B(void)
 
         if (FAllocPv((void **)&_prgcps, cbrgcps, fmemNil, mprNormal))
         {
-            if ((_pglxf != pvNil) || (_pglxf = GL::PglNew(size(BMAT34))) != pvNil)
+            if ((_pglxf != pvNil) || (_pglxf = DynamicArray::PglNew(size(BMAT34))) != pvNil)
             {
                 _ibpCur = 0;
                 if (_FProcessBmhr(&_pbmhr))
                 {
-                    if (_pggcl != pvNil || (_pggcl = GG::PggNew(size(CEL))) != pvNil)
+                    if (_pggcl != pvNil || (_pggcl = GeneralGroup::PggNew(size(CEL))) != pvNil)
                         fSuccess = _pggcl->FAdd(cbrgcps, pvNil, _prgcps, &cel);
                 }
             }
@@ -1260,12 +1260,12 @@ bool S2B::_FInitGlpiCost(bool fForceCost)
     if (_fMakeGlpi)
     {
         Assert(_pglbs == pvNil, "Non-nil body part set");
-        if ((_pglibactPar = GL::PglNew(size(short))) == pvNil)
+        if ((_pglibactPar = DynamicArray::PglNew(size(short))) == pvNil)
         {
             printf("Error: Couldn't create GLPI -- OOM\n");
             goto LFail;
         }
-        if ((_pglbs = GL::PglNew(size(short))) == pvNil)
+        if ((_pglbs = DynamicArray::PglNew(size(short))) == pvNil)
         {
             printf("Warning: no body part set info -- OOM\n");
             _fMakeCostume = fFalse;
@@ -1275,9 +1275,9 @@ bool S2B::_FInitGlpiCost(bool fForceCost)
     if (_fMakeCostume)
     {
         Assert(_pglcmtld == pvNil, "Non-nil GLCMTLD");
-        if ((_pglcmtld = GL::PglNew(size(CMTLD))) == pvNil)
+        if ((_pglcmtld = DynamicArray::PglNew(size(CMTLD))) == pvNil)
             goto LFailCost;
-        if (_pggcm == pvNil && (_pggcm = GG::PggNew(size(long))) == pvNil)
+        if (_pggcm == pvNil && (_pggcm = GeneralGroup::PggNew(size(long))) == pvNil)
         {
             ReleasePpo(&_pglcmtld);
         LFailCost:
@@ -1291,7 +1291,7 @@ LFail:
     return fFalse;
 }
 
-const SCRP rgscrpBackground[] = {{ptLong, ttCno, "missing CNO for background"},
+const SCRP rgscrpBackground[] = {{ptLong, ttCno, "missing ChunkNumber for background"},
                                  {ptString, ttCalled, "missing name for background"},
                                  {ptLong, ttLights, ""},
                                  {ptLong, ttCameras, ""},
@@ -1312,10 +1312,10 @@ bool S2B::_FDoTtBackgroundS2B(void)
 {
     bool fGotTok, fSuccess = fFalse;
     long cLite = 2, cCam = 9, iPalBase = 151, cPal = 95;
-    CTG ctgSav;
-    CNO cnoBkgd, cnoSav;
+    ChunkTag ctgSav;
+    ChunkNumber cnoBkgd, cnoSav;
     STN stnBkgd;
-    BKGDF bkgdf;
+    BackgroundFile bkgdf;
 
     ctgSav = _ctgPar;
     cnoSav = _cnoPar;
@@ -1325,7 +1325,7 @@ bool S2B::_FDoTtBackgroundS2B(void)
                        &cPal))
         goto LFail;
 
-    /* Generate the BKGD chunk */
+    /* Generate the Background chunk */
     bkgdf.bo = kboCur;
     bkgdf.osk = koskCur;
     Assert(iPalBase >= 0 && iPalBase <= kbMax, "Palette base out of range");
@@ -1354,7 +1354,7 @@ LFail:
     if (!fSuccess)
     {
         printf("Error occured during processing for command line:\n");
-        printf("    BACKGROUND CNO %d, NAMED \"%s\""
+        printf("    BACKGROUND ChunkNumber %d, NAMED \"%s\""
                "        LIGHTS %d, CAMERAS %d, FIRST %d, LENGTH %d\n",
                cnoBkgd, stnBkgd.Psz(), cLite, cCam, iPalBase, cPal);
     }
@@ -1388,7 +1388,7 @@ bool S2B::_FDoTtCostume(void)
         goto LFail;
 
     /* Get list of body part sets to pay attention to */
-    if ((_pglibps = GL::PglNew(size(long))) == pvNil)
+    if ((_pglibps = DynamicArray::PglNew(size(long))) == pvNil)
         goto LOOM1;
     if (!_pglibps->FAdd(&ibpsCur))
         goto LOOM1;
@@ -1488,17 +1488,17 @@ bool S2B::_FDumpLites(int cLite, PSTN pstnBkgd)
 {
     bool fRet = fFalse;
     int iLite;
-    LITE lite;
-    PGL pgllite;
+    LightPosition lite;
+    PDynamicArray pgllite;
 
-    /* Create a GL of LITEs */
-    if ((pgllite = GL::PglNew(size(LITE))) == pvNil)
+    /* Create a DynamicArray of LITEs */
+    if ((pgllite = DynamicArray::PglNew(size(LightPosition))) == pvNil)
     {
         printf("Couldn't allocate GLLT\n");
         goto LFail;
     }
 
-    /* Read in the SoftImage lights, adding each to the GL */
+    /* Read in the SoftImage lights, adding each to the DynamicArray */
     for (iLite = 0; iLite < cLite; iLite++)
     {
         if (!_stnT.FFormatSz(kszLight, pstnBkgd, iLite + 1))
@@ -1517,7 +1517,7 @@ bool S2B::_FDumpLites(int cLite, PSTN pstnBkgd)
         }
     }
 
-    /* Emit the LITE chunk */
+    /* Emit the LightPosition chunk */
     CnoNext();
     _stnT.FFormatSz(PszLit("%s Lights"), pstnBkgd);
     _DumpHeader(kctgGllt, _cnoCur, &_stnT, fTrue);
@@ -1552,16 +1552,16 @@ bool S2B::_FDumpCameras(int cCam, PSTN pstnBkgd, int iPalBase, int cPal)
 {
     int iCam;
     long dxp, dyp;
-    CAM cam;
+    CameraPosition cam;
     STN stnFile;
 
     /* Cameras are kept as individual chunks;
         read each file and create the chunk */
     for (iCam = 1; iCam <= cCam; iCam++)
     {
-        CNO cnoCam;
-        FNI fni;
-        PGL pglapos = pvNil;
+        ChunkNumber cnoCam;
+        Filename fni;
+        PDynamicArray pglapos = pvNil;
 
         /* Get the file */
         if (!stnFile.FFormatSz(kszCam, pstnBkgd, iCam))
@@ -1590,7 +1590,7 @@ bool S2B::_FDumpCameras(int cCam, PSTN pstnBkgd, int iPalBase, int cPal)
         /* Only extract the palette once */
         if (iCam == 1)
         {
-            PGL pglclr;
+            PDynamicArray pglclr;
 
             /* Read the palette */
             if (FReadBitmap(&fni, pvNil, &pglclr, &dxp, &dyp, pvNil))
@@ -1624,7 +1624,7 @@ bool S2B::_FDumpCameras(int cCam, PSTN pstnBkgd, int iPalBase, int cPal)
         cnoCam = CnoNext();
         _stnT.FFormatSz(PszLit("%s Camera %d"), pstnBkgd, iCam);
         _DumpHeader(kctgCam, cnoCam, &_stnT, fTrue);
-        Assert(_ctgPar == kctgBkgd, "Odd parent for CAM");
+        Assert(_ctgPar == kctgBkgd, "Odd parent for CameraPosition");
         _chse.DumpParentCmd(_ctgPar, _cnoPar, iCam - 1);
         _chse.DumpRgb(&cam, size(cam));
         if (pglapos != pvNil)
@@ -1670,17 +1670,17 @@ LFail:
 
     Arguments:
         PSTN pstnBkgd -- the name of the background
-        CNO cnoPar    -- the CNO of the parent camera chunk
+        ChunkNumber cnoPar    -- the ChunkNumber of the parent camera chunk
         int iCam      -- the number of the camera
         long dxp      -- the width of the background
         long dyp      -- the height of the background
-        CAM *pcam     -- pointer to the camera data
+        CameraPosition *pcam     -- pointer to the camera data
 
     Returns: fTrue if it could successfully read and process the z-buffer
         data, fFalse otherwise.
 
 ************************************************************ PETED ***********/
-bool S2B::_FZbmpFromZpic(PSTN pstnBkgd, CNO cnoPar, int iCam, long dxp, long dyp, CAM *pcam)
+bool S2B::_FZbmpFromZpic(PSTN pstnBkgd, ChunkNumber cnoPar, int iCam, long dxp, long dyp, CameraPosition *pcam)
 {
     Assert(dxp > 0, "Invalid z-buffer width");
     Assert(dyp > 0, "Invalid z-buffer height");
@@ -1688,7 +1688,7 @@ bool S2B::_FZbmpFromZpic(PSTN pstnBkgd, CNO cnoPar, int iCam, long dxp, long dyp
     bool fRet = fFalse;
     short *prgsw = pvNil;
     float *prgfl = pvNil;
-    FNI fni;
+    Filename fni;
     FIL *pfil = pvNil;
 
     /* Try to find and open the SoftImage data file */
@@ -1706,7 +1706,7 @@ bool S2B::_FZbmpFromZpic(PSTN pstnBkgd, CNO cnoPar, int iCam, long dxp, long dyp
             short *psw, *prgsw;
             long cPix = dxp * dyp, cbSw, cbBuf, cbLeft;
             float fl, *prgfl;
-            FNI fniZbmp;
+            Filename fniZbmp;
             FP fpZbmp;
             FIL *pfilZbmp = pvNil;
             FP fpRead = 0;
@@ -1912,17 +1912,17 @@ void S2B::_Bmat34FromVec3(BVEC3 *pbvec3, BMAT34 *pbmat34)
 
 /******************************************************************************
     _ReadLite
-        Reads a SoftImage ASCII light file and fills in the LITE structure
+        Reads a SoftImage ASCII light file and fills in the LightPosition structure
     as appropriate.
 
     Arguments:
         PSTN pstnLite -- the name of the light file
-        LITE *plite   -- pointer to LITE structure to fill in
+        LightPosition *plite   -- pointer to LightPosition structure to fill in
 
 ************************************************************ PETED ***********/
-void S2B::_ReadLite(PSTN pstnLite, LITE *plite)
+void S2B::_ReadLite(PSTN pstnLite, LightPosition *plite)
 {
-    FNI fni;
+    Filename fni;
     FIL *pfil;
 
     /* Attempt to open the file */
@@ -1989,18 +1989,18 @@ LFail:
 
 /******************************************************************************
     _ReadCam
-        Reads a SoftImage ASCII camera file and fills in the given CAM
+        Reads a SoftImage ASCII camera file and fills in the given CameraPosition
     structure as appropriate.
 
     Arguments:
         PSTN pstnCam -- the name of the camera file
-        CAM *pcam    -- pointer to the CAM to fill in
+        CameraPosition *pcam    -- pointer to the CameraPosition to fill in
 
 ************************************************************ PETED ***********/
-void S2B::_ReadCam(PSTN pstnCam, CAM *pcam, PGL *ppglapos)
+void S2B::_ReadCam(PSTN pstnCam, CameraPosition *pcam, PDynamicArray *ppglapos)
 {
     bool fGotActorPos = fFalse;
-    FNI fni;
+    Filename fni;
     FIL *pfil;
 
     /* Attempt to open the camera file */
@@ -2087,7 +2087,7 @@ void S2B::_ReadCam(PSTN pstnCam, CAM *pcam, PGL *ppglapos)
                     }
                     else
                     {
-                        if (*ppglapos != pvNil || (*ppglapos = GL::PglNew(size(APOS))) != pvNil)
+                        if (*ppglapos != pvNil || (*ppglapos = DynamicArray::PglNew(size(APOS))) != pvNil)
                         {
                             APOS apos;
 
@@ -2534,34 +2534,34 @@ LNotexture:
 
 /******************************************************************************
     _FTmapFromBmp
-        Given a texture name, adds the texture to the MTRL with the given CNO.
+        Given a texture name, adds the texture to the MTRL with the given ChunkNumber.
         If this texture has never been seen before, the .bmp file is converted
-        to an appropriate TMAP chunk file.  The reference to the parent MTRL's
-        CNO is added to our list of generated TMAPs for use later in actually
-        dumping out the TMAP chunk definition.
+        to an appropriate TextureMap chunk file.  The reference to the parent MTRL's
+        ChunkNumber is added to our list of generated TMAPs for use later in actually
+        dumping out the TextureMap chunk definition.
 
     Arguments:
         PSTN pstnBmpFile  -- the name of the texture
-        CNO cnoPar        -- the CNO of the parent MTRL
+        ChunkNumber cnoPar        -- the ChunkNumber of the parent MTRL
         pstnMtrl          -- the string used for the MTRL name
 
     Returns: fTrue if the texture was successfully added
 
 ************************************************************ PETED ***********/
-bool S2B::_FTmapFromBmp(PBMHR pbmhr, CNO cnoPar, PSTN pstnMtrl)
+bool S2B::_FTmapFromBmp(PBMHR pbmhr, ChunkNumber cnoPar, PSTN pstnMtrl)
 {
     Assert(pbmhr != pvNil, 0);
     AssertPo(pbmhr->pstnMtrlFile, 0);
 
     bool fRet = fFalse;
     long itmapd, itmapdMac;
-    FNI fni;
-    PTMAP ptmap = pvNil;
+    Filename fni;
+    PTextureMap ptmap = pvNil;
     TMAPD tmapd;
     PSTN pstnBmpFile = pbmhr->pstnMtrlFile;
 
     /* Look for the bitmap file in our list */
-    if (_pggtmapd == pvNil && (_pggtmapd = GG::PggNew(size(TMAPD))) == pvNil)
+    if (_pggtmapd == pvNil && (_pggtmapd = GeneralGroup::PggNew(size(TMAPD))) == pvNil)
         goto LFail;
     itmapdMac = _pggtmapd->IvMac();
     for (itmapd = 0; itmapd < itmapdMac; itmapd++)
@@ -2578,7 +2578,7 @@ bool S2B::_FTmapFromBmp(PBMHR pbmhr, CNO cnoPar, PSTN pstnMtrl)
         if (!fni.FSetLeaf(&_stnT, kftgBmp))
             goto LFail;
 
-        ptmap = TMAP::PtmapReadNative(&fni);
+        ptmap = TextureMap::PtmapReadNative(&fni);
         if (ptmap == pvNil)
             goto LFail;
 
@@ -2591,7 +2591,7 @@ bool S2B::_FTmapFromBmp(PBMHR pbmhr, CNO cnoPar, PSTN pstnMtrl)
         tmapd.ccnoPar = 1;
         tmapd.xp = ptmap->Pbpmp()->width;
         tmapd.yp = ptmap->Pbpmp()->height;
-        if (!_pggtmapd->FAdd(size(CNO), pvNil, &cnoPar, &tmapd))
+        if (!_pggtmapd->FAdd(size(ChunkNumber), pvNil, &cnoPar, &tmapd))
             goto LFailAdd;
 
         /* Write the file out last; it's easier to remove the reference to a
@@ -2606,7 +2606,7 @@ bool S2B::_FTmapFromBmp(PBMHR pbmhr, CNO cnoPar, PSTN pstnMtrl)
     }
     else
     {
-        if (!_pggtmapd->FInsertRgb(itmapd, tmapd.ccnoPar * size(CNO), size(CNO), &cnoPar))
+        if (!_pggtmapd->FInsertRgb(itmapd, tmapd.ccnoPar * size(ChunkNumber), size(ChunkNumber), &cnoPar))
             goto LFail;
         tmapd.ccnoPar++;
         _pggtmapd->PutFixed(itmapd, &tmapd);
@@ -2655,12 +2655,12 @@ LFail:
 
 /******************************************************************************
     _FFlushTmaps
-        Actually writes out the TMAP definitions to the chunk source file.
-        Each unique TMAP chunk is added once, with each MTRL that refers to
-        it being included as a parent of the TMAP chunk.
+        Actually writes out the TextureMap definitions to the chunk source file.
+        Each unique TextureMap chunk is added once, with each MTRL that refers to
+        it being included as a parent of the TextureMap chunk.
 
-    Returns: fTrue if all of the TMAP declarations could be generated; in
-        theory, since we would have failed to even add a given TMAP to the list
+    Returns: fTrue if all of the TextureMap declarations could be generated; in
+        theory, since we would have failed to even add a given TextureMap to the list
         of TMAPs if we couldn't successfully generate the complete filename
         *and* failing to generate the complete filename is the only way for
         this routine to fail, this routine should never fail.
@@ -2673,12 +2673,12 @@ bool S2B::_FFlushTmaps(void)
     bool fRet = fTrue;
     long itmapd, itmapdMac = _pggtmapd->IvMac();
     long icnoPar;
-    CNO cnoPar;
+    ChunkNumber cnoPar;
     TMAPD tmapd;
 
     for (itmapd = 0; itmapd < itmapdMac; itmapd++)
     {
-        FNI fni;
+        Filename fni;
 
         _pggtmapd->GetFixed(itmapd, &tmapd);
 
@@ -2699,7 +2699,7 @@ bool S2B::_FFlushTmaps(void)
         /* Dump out all the necessary PARENT declarations */
         for (icnoPar = 0; icnoPar < tmapd.ccnoPar; icnoPar++)
         {
-            _pggtmapd->GetRgb(itmapd, icnoPar * size(CNO), size(CNO), &cnoPar);
+            _pggtmapd->GetRgb(itmapd, icnoPar * size(ChunkNumber), size(ChunkNumber), &cnoPar);
             _chse.DumpParentCmd(kctgMtrl, cnoPar, 0);
         }
 
@@ -2858,7 +2858,7 @@ void S2B::_CopyFaces(DK_Polygon *polygons, void *pvDst, long cFaces, BRV rgbrv[]
 /******************************************************************************
     _FDoBodyPart
         Handles a single body part.  Sets the Brender body part set for the
-        given body part and stores that in the GL for the body part sets, and
+        given body part and stores that in the DynamicArray for the body part sets, and
         then handles actually generating whatever costume information for this
         body part is needed.
 
@@ -2867,7 +2867,7 @@ void S2B::_CopyFaces(DK_Polygon *polygons, void *pvDst, long cFaces, BRV rgbrv[]
         long ibp     -- the actual body part number for this body part
 
     Returns:  fTrue if the body part could be added, and its basic costume
-        information could be written out; failing to add the TMAP information
+        information could be written out; failing to add the TextureMap information
         simply generates a warning without causing this routine to return a
         failure.
 
@@ -3018,7 +3018,7 @@ bool S2B::_FDoBodyPart(PBMHR pbmhr, long ibp)
                 if (pbmhr->fAccessory)
                 {
                     PBMDB pbmdb;
-                    KID kidBmdl;
+                    ChildChunkIdentification kidBmdl;
 
                     _ApplyBmdlXF(pbmhr);
                     if (!_FChidFromModlf(pbmhr, pvNil, &pbmdb))
@@ -3703,7 +3703,7 @@ void S2B::_FlushTmplKids(void)
             /* Don't need this any more */
             ReleasePpo(&_pglibactPar);
 
-            /* Do material stuff if we have the CMTL GL and there's valid
+            /* Do material stuff if we have the CMTL DynamicArray and there's valid
                 color info */
             if (_pggcm != pvNil && _pglclr != pvNil)
             {
@@ -3794,7 +3794,7 @@ void S2B::_FlushTmplKids(void)
                 if (pbmdb->pglkidCmtl != pvNil)
                 {
                     long icno, icnoMac = pbmdb->pglkidCmtl->IvMac();
-                    KID kidBmdl;
+                    ChildChunkIdentification kidBmdl;
 
                     for (icno = 0; icno < icnoMac; icno++)
                     {
@@ -3958,7 +3958,7 @@ LFail:
 bool S2B::_FSetCps(PBMHR pbmhr, CPS *pcps)
 {
     long imat34;
-    CHID chid;
+    ChildChunkID chid;
 
     if (pbmhr->fAccessory)
     {
@@ -3994,14 +3994,14 @@ LFail:
 |
 |	Arguments:
 |		PBMHR pbmhr -- points to BMHR node that contains the pmodlf
-|		CHID *pchid -- points to CHID var that takes the result
+|		ChildChunkID *pchid -- points to ChildChunkID var that takes the result
 |
 |	Returns:
 |		fTrue if it could find or allocate the new MODLF node, fFalse otherwise
-|		*pchid takes the CHID for the MODL chunk
+|		*pchid takes the ChildChunkID for the MODL chunk
 |
 -------------------------------------------------------------PETED-----------*/
-bool S2B::_FChidFromModlf(PBMHR pbmhr, CHID *pchid, PBMDB *ppbmdb)
+bool S2B::_FChidFromModlf(PBMHR pbmhr, ChildChunkID *pchid, PBMDB *ppbmdb)
 {
     AssertNilOrVarMem(pchid);
     AssertNilOrVarMem(ppbmdb);
@@ -4070,11 +4070,11 @@ bool S2B::_FChidFromModlf(PBMHR pbmhr, CHID *pchid, PBMDB *ppbmdb)
     return fTrue;
 }
 
-bool S2B::_FAddBmdlParent(PBMDB pbmdb, KID *pkid)
+bool S2B::_FAddBmdlParent(PBMDB pbmdb, ChildChunkIdentification *pkid)
 {
     AssertVarMem(pkid);
 
-    if (pbmdb->pglkidCmtl == pvNil && (pbmdb->pglkidCmtl = GL::PglNew(size(KID))) == pvNil)
+    if (pbmdb->pglkidCmtl == pvNil && (pbmdb->pglkidCmtl = DynamicArray::PglNew(size(ChildChunkIdentification))) == pvNil)
     {
         goto LFail;
     }
@@ -4093,12 +4093,12 @@ LFail:
 
     Arguments:
         PHSHDB phshdb  -- pointer to the hash DB entry to insert
-        PGL pglphshdb  -- the GL used to maintain the sorted hash table
+        PDynamicArray pglphshdb  -- the DynamicArray used to maintain the sorted hash table
 
     Returns: fTrue if the entry could be inserted
 
 ************************************************************ PETED ***********/
-bool S2B::_FInsertPhshdb(PHSHDB phshdb, PGL pglphshdb)
+bool S2B::_FInsertPhshdb(PHSHDB phshdb, PDynamicArray pglphshdb)
 {
     long iphshdb;
 
@@ -4124,13 +4124,13 @@ bool S2B::_FInsertPhshdb(PHSHDB phshdb, PGL pglphshdb)
     Arguments:
         uint luHash     -- the hash value to look for
         long *piphshdb  -- takes the position in the hash table
-        PGL pglphshdb   -- the hash table
+        PDynamicArray pglphshdb   -- the hash table
 
     Returns: fTrue if the hash value is already in the hash table, fFalse if
         it needs to be added
 
 ************************************************************ PETED ***********/
-bool S2B::_FIphshdbFromLuHash(uint luHash, long *piphshdb, PGL pglphshdb)
+bool S2B::_FIphshdbFromLuHash(uint luHash, long *piphshdb, PDynamicArray pglphshdb)
 {
     bool fRet = fFalse;
     long iphshdbMin = 0, iphshdbMac = pglphshdb->IvMac();
@@ -4287,7 +4287,7 @@ uint S2B::_LuHashBytes(uint luHash, void *pv, long cb)
 |
 |	Returns:
 |		fTrue if it succeeds, fFalse otherwise
-|		*pimat34 takes the index for the BMAT34 in the GL
+|		*pimat34 takes the index for the BMAT34 in the DynamicArray
 |
 -------------------------------------------------------------PETED-----------*/
 bool S2B::_FImat34GetBmat34(BMAT34 *pbmat34, long *pimat34)
@@ -4329,7 +4329,7 @@ bool S2B::_FImat34GetBmat34(BMAT34 *pbmat34, long *pimat34)
     if (pbmatdb == pvNil)
     {
     LAddXF:
-        /* Add the XF to the GL and to the database */
+        /* Add the XF to the DynamicArray and to the database */
         if (_pglxf->FAdd(pbmat34, pimat34))
         {
             if (FAllocPv((void **)&pbmatdb, size(BMATDB), fmemNil, mprNormal))
@@ -4391,19 +4391,19 @@ void S2B::_DisposeBmhr(PBMHR *ppbmhr)
     obsolete.
 
     Arguments:
-        PGL pglclr -- the palette to use
+        PDynamicArray pglclr -- the palette to use
 
-    Returns: a GL of CRNGs, each entry is the description of one color range
+    Returns: a DynamicArray of CRNGs, each entry is the description of one color range
 
 ************************************************************ PETED ***********/
-PGL PglcrngFromPal(PGL pglclr)
+PDynamicArray PglcrngFromPal(PDynamicArray pglclr)
 {
     long lwCur, lwStart, lwMac = pglclr->IvMac();
     BRCLR brclr;
     BRS brsRLast, brsGLast, brsBLast;
     BRS brsNorm, brsR, brsG, brsB;
     CRNG crng;
-    PGL pglcrng = GL::PglNew(size(CRNG));
+    PDynamicArray pglcrng = DynamicArray::PglNew(size(CRNG));
 
     if (pglcrng == pvNil)
         goto LFail;
@@ -4476,14 +4476,14 @@ LFail:
 
     Arguments:
         BRCLR brclr -- the Brender color
-        PGL pglclr  -- the palette
-        PGL pglcrng -- description of the color ranges in the palette
+        PDynamicArray pglclr  -- the palette
+        PDynamicArray pglcrng -- description of the color ranges in the palette
 
-    Returns: returns the entry in the color range GL that corresponds to the
+    Returns: returns the entry in the color range DynamicArray that corresponds to the
         given color
 
 ************************************************************ PETED ***********/
-long LwcrngNearestBrclr(BRCLR brclr, PGL pglclr, PGL pglcrng)
+long LwcrngNearestBrclr(BRCLR brclr, PDynamicArray pglclr, PDynamicArray pglcrng)
 {
     long lwclr, lwclrMac = pglclr->IvMac(), lwclrNear, lwcrng, lwcrngMac = pglcrng->IvMac(), lwcrngNear,
                 dclrNear = klwMax, dclrT;
@@ -4548,7 +4548,7 @@ static KEYTT _rgkeyttS2B[] = {"ACTOR",
                               ttFovCam,
                               DK_A_POS_STATIC_TOKEN,
                               ttStatic,
-                              "CNO",
+                              "ChunkNumber",
                               ttCno,
                               "NAMED",
                               ttCalled,
@@ -4599,7 +4599,7 @@ static KEYTT _rgkeyttS2B[] = {"ACTOR",
     Read a number.  The first character is passed in ch.  lwBase is the base
     of the number (must be <= 10).
 ***************************************************************************/
-void S2BLX::_ReadNumTok(PTOK ptok, achar ch, long lwBase, long cchMax)
+void S2BLX::_ReadNumTok(PToken ptok, achar ch, long lwBase, long cchMax)
 {
     AssertThis(0);
     AssertVarMem(ptok);
@@ -4646,7 +4646,7 @@ bool S2BLX::FGetS2btk(PS2BTK ps2btk)
     AssertVarMem(ps2btk);
     bool fRet;
     long ikeytt;
-    PTOK ptok = &ps2btk->tok;
+    PToken ptok = &ps2btk->tok;
 
     while ((fRet = S2BLX_PAR::FGetTok(ptok)) && (ptok->tt == ttComma || ptok->tt == ttSemi))
         ;
@@ -4694,15 +4694,15 @@ LDone:
 
 /******************************************************************************
     FGetTok
-        Gets a base TOK.  Will filter out ttFloat.
+        Gets a base Token.  Will filter out ttFloat.
 
     Arguments:
-        PTOK ptok -- pointer to TOK to fill in
+        PToken ptok -- pointer to Token to fill in
 
     Returns: fTrue if it got a valid token
 
 ************************************************************ PETED ***********/
-bool S2BLX::FGetTok(PTOK ptok)
+bool S2BLX::FGetTok(PToken ptok)
 {
     bool fRet;
     S2BTK s2btk;
@@ -4779,7 +4779,7 @@ bool S2BLX::FTextFromS2btk(PS2BTK ps2btk, PSTN pstn)
     }
 
     //	return FTextFromTok(&ps2btk->tok, pstn);
-    PTOK ptok = &ps2btk->tok;
+    PToken ptok = &ps2btk->tok;
 
     switch (ptok->tt)
     {

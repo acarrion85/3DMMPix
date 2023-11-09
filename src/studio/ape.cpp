@@ -9,7 +9,7 @@
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
     The APE is used to preview a single actor.  The APE doesn't actually
-    contain an ACTR...more of an "ACTR Jr.": a _ptmpl, _pbody, _anid, and
+    contain an Actor...more of an "Actor Jr.": a _ptmpl, _pbody, _anid, and
     a _pbwld to display in.  If fCycleCels is set to fTrue in PapeNew(),
     the APE will cycle through the cels of the current action.
 
@@ -30,7 +30,7 @@ const BRA kaFov = BR_ANGLE_DEG(60.0); // camera field of view
 
 RTCLASS(APE)
 
-BEGIN_CMD_MAP(APE, GOB)
+BEGIN_CMD_MAP(APE, GraphicsObject)
 ON_CID_GEN(cidAlarm, &APE::FCmdNextCel, pvNil)
 END_CMD_MAP_NIL()
 
@@ -103,7 +103,7 @@ bool APE::_FInit(PTMPL ptmpl, PCOST pcost, long anid, bool fCycleCels, PRCA prca
         }
     }
 
-    _pglgms = GL::PglNew(size(GMS), cbset);
+    _pglgms = DynamicArray::PglNew(size(GMS), cbset);
     if (pvNil == _pglgms)
         return fFalse;
     AssertDo(_pglgms->FSetIvMac(cbset), "PglNew should have ensured space");
@@ -113,11 +113,11 @@ bool APE::_FInit(PTMPL ptmpl, PCOST pcost, long anid, bool fCycleCels, PRCA prca
         _pglgms->Put(ibset, &gms);
 
     GetRc(&rc, cooLocal);
-    _pbwld = BWLD::PbwldNew(rc.Dxp(), rc.Dyp());
+    _pbwld = World::PbwldNew(rc.Dxp(), rc.Dyp());
     if (pvNil == _pbwld)
         return fFalse;
 
-    // Add a light source to the BWLD
+    // Add a light source to the World
     _blit.type = BR_LIGHT_DIRECT;
     _blit.colour = BR_COLOUR_RGB(0xff, 0xff, 0xff);
     _blit.attenuation_c = rOne;
@@ -768,10 +768,10 @@ bool APE::FSetTdtMtrl(PTAG ptagMtrl)
 }
 
 /***************************************************************************
-    Get the CNO of the MTRL attached to this TDT.  Returns fFalse if there
+    Get the ChunkNumber of the MTRL attached to this TDT.  Returns fFalse if there
     is no MTRL attached or the MTRL didn't come from a chunk.
 ***************************************************************************/
-bool APE::FGetTdtMtrlCno(CNO *pcno)
+bool APE::FGetTdtMtrlCno(ChunkNumber *pcno)
 {
     AssertThis(0);
     Assert(_ptmpl->FIsTdt(), "FGetTdtMtrlCno is only for TDTs");

@@ -15,6 +15,8 @@
 #ifndef MIDI_H
 #define MIDI_H
 
+using namespace Chunky;
+
 typedef class MIDS *PMIDS;
 
 // midi event
@@ -67,7 +69,7 @@ class MSTP : public MSTP_PAR
     Midi Stream object - this is like a MTrk chunk in a standard MIDI file,
     with timing in milliseconds.
 ***************************************************************************/
-#define MIDS_PAR BACO
+#define MIDS_PAR BaseCacheableObject
 #define kclsMIDS 'MIDS'
 class MIDS : public MIDS_PAR
 {
@@ -85,12 +87,12 @@ class MIDS : public MIDS_PAR
     static long _CbEncodeLu(ulong lu, byte *prgb);
 
   public:
-    static bool FReadMids(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static PMIDS PmidsRead(PBLCK pblck);
-    static PMIDS PmidsReadNative(FNI *pfni);
+    static bool FReadMids(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static PMIDS PmidsRead(PDataBlock pblck);
+    static PMIDS PmidsReadNative(Filename *pfni);
     ~MIDS(void);
 
-    virtual bool FWrite(PBLCK pblck);
+    virtual bool FWrite(PDataBlock pblck);
     virtual long CbOnFile(void);
 };
 

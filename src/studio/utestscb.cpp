@@ -23,7 +23,7 @@ ASSERTNAME
 
 RTCLASS(MSCB)
 
-BEGIN_CMD_MAP(MSCB, GOB)
+BEGIN_CMD_MAP(MSCB, GraphicsObject)
 ON_CID_ME(cidDoScroll, MSCB::FCmdScroll, pvNil)
 ON_CID_ME(cidEndScroll, MSCB::FCmdScroll, pvNil)
 END_CMD_MAP_NIL()
@@ -34,7 +34,7 @@ END_CMD_MAP_NIL()
  * is private, use PmscbNew() for public construction.
  *
  ****************************************************/
-MSCB::MSCB(PMVIE pmvie, PGCB pgcb) : GOB(pgcb)
+MSCB::MSCB(PMovie pmvie, PGCB pgcb) : GraphicsObject(pgcb)
 {
     _pmvie = pmvie;
 }
@@ -51,11 +51,11 @@ MSCB::MSCB(PMVIE pmvie, PGCB pgcb) : GOB(pgcb)
  *	A pointer to the scroll bar objects, else pvNil.
  *
  ****************************************************/
-PMSCB MSCB::PmscbNew(PMVIE pmvie, PGCB pgcb)
+PMSCB MSCB::PmscbNew(PMovie pmvie, PGCB pgcb)
 {
     PMSCB pmscb;
     RC rc;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     AssertNilOrPo(pmvie, 0);
     AssertVarMem(pgcb);
@@ -290,7 +290,7 @@ void MSCB::Update()
  *  None.
  *
  ****************************************************/
-void MSCB::SetMvie(PMVIE pmvie)
+void MSCB::SetMvie(PMovie pmvie)
 {
     _pmvie = pmvie;
 }

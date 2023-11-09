@@ -8,7 +8,7 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BACO ---> CMH ---> TATR
+    BASE ---> BaseCacheableObject ---> CMH ---> TATR
 
 ***************************************************************************/
 #ifndef TATR_H
@@ -36,8 +36,8 @@ class TATR : public TATR_PAR
     CMD_MAP_DEC(TATR)
 
   protected:
-    long _kidParent; // ID of gob parent of MVU
-    PMVIE _pmvie;    // Currently loaded movie
+    long _kidParent; // ID of gob parent of MovieView
+    PMovie _pmvie;    // Currently loaded movie
 
   protected:
     TATR(long hid) : CMH(hid)
@@ -54,7 +54,7 @@ class TATR : public TATR_PAR
     bool FCmdStop(PCMD pcmd);
     bool FCmdRewind(PCMD pcmd);
 
-    PMVIE Pmvie(void)
+    PMovie Pmvie(void)
     {
         return _pmvie;
     }

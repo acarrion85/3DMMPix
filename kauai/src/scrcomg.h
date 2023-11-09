@@ -16,6 +16,8 @@
 #ifndef SCRCOMG_H
 #define SCRCOMG_H
 
+namespace ScriptCompiler {
+
 // if you change this enum, bump the version numbers below
 enum
 {
@@ -149,10 +151,10 @@ const short kswMinSccg = 0x1015;  // we can read back to this version
 /****************************************
     Gob based script compiler
 ****************************************/
-typedef class SCCG *PSCCG;
-#define SCCG_PAR SCCB
-#define kclsSCCG 'SCCG'
-class SCCG : public SCCG_PAR
+typedef class GraphicsObjectCompiler *PGraphicsObjectCompiler;
+#define GraphicsObjectCompiler_PAR CompilerBase
+#define kclsGraphicsObjectCompiler 'SCCG'
+class GraphicsObjectCompiler : public GraphicsObjectCompiler_PAR
 {
     RTCLASS_DEC
 
@@ -165,5 +167,7 @@ class SCCG : public SCCG_PAR
     virtual bool _FGetOpFromName(PSTN pstn, long *pop, long *pclwFixed, long *pclwVar, long *pcactMinVar, bool *pfVoid);
     virtual bool _FGetStnFromOp(long op, PSTN pstn);
 };
+
+} // end of namespace ScriptCompiler
 
 #endif //! SCRCOMG_H

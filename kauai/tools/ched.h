@@ -20,7 +20,7 @@
 
 #include "chdoc.h"
 
-#define APP_PAR APPB
+#define APP_PAR ApplicationBase
 #define kclsAPP 'APP'
 class APP : public APP_PAR
 {
@@ -29,7 +29,7 @@ class APP : public APP_PAR
 
   protected:
     virtual bool _FInit(ulong grfapp, ulong grfgob, long ginDef);
-    virtual void _FastUpdate(PGOB pgob, PREGN pregnClip, ulong grfapp = fappNil, PGPT pgpt = pvNil);
+    virtual void _FastUpdate(PGraphicsObject pgob, PREGN pregnClip, ulong grfapp = fappNil, PGPT pgpt = pvNil);
 
   public:
     virtual void GetStnAppName(PSTN pstn);

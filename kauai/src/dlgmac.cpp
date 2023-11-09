@@ -18,7 +18,7 @@ ASSERTNAME
 /***************************************************************************
     Read the dialog resource and construct the GGDIT.
 ***************************************************************************/
-bool DLG::_FInit(void)
+bool Dialog::_FInit(void)
 {
     HN hn;
     short ridDitl;
@@ -28,7 +28,7 @@ bool DLG::_FInit(void)
     byte *pbDitl;
     byte bType;
     long cbEntry;
-    DIT dit;
+    DialogItem dit;
     bool fAddDit;
     bool fRet = fFalse;
 
@@ -201,10 +201,10 @@ LFail:
     Actually put up the dialog and don't return until it comes down.
     Returns the idit that dismissed the dialog.  Returns ivNil on failure.
 ***************************************************************************/
-long DLG::IditDo(long iditFocus)
+long Dialog::IditDo(long iditFocus)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short swHit;
     long idit = ivNil;
 
@@ -214,7 +214,7 @@ long DLG::IditDo(long iditFocus)
         goto LDone;
     }
 
-    if (pvNil == (_pgob = NewObj GOB(khidDialog)))
+    if (pvNil == (_pgob = NewObj GraphicsObject(khidDialog)))
     {
         PushErc(ercDlgOom);
         goto LDone;
@@ -283,10 +283,10 @@ LDone:
 /***************************************************************************
     Get the value of a radio group.
 ***************************************************************************/
-long DLG::_LwGetRadioGroup(long idit)
+long Dialog::_LwGetRadioGroup(long idit)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HCTL hctl;
     RCS rcs;
@@ -311,10 +311,10 @@ long DLG::_LwGetRadioGroup(long idit)
 /***************************************************************************
     Change a radio group value.
 ***************************************************************************/
-void DLG::_SetRadioGroup(long idit, long lw)
+void Dialog::_SetRadioGroup(long idit, long lw)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HCTL hctl;
     RCS rcs;
@@ -353,10 +353,10 @@ void DLG::_SetRadioGroup(long idit, long lw)
 /***************************************************************************
     Returns the current value of a check box.
 ***************************************************************************/
-bool DLG::_FGetCheckBox(long idit)
+bool Dialog::_FGetCheckBox(long idit)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HCTL hctl;
     RCS rcs;
@@ -375,7 +375,7 @@ bool DLG::_FGetCheckBox(long idit)
 /***************************************************************************
     Invert the value of a check box.
 ***************************************************************************/
-void DLG::_InvertCheckBox(long idit)
+void Dialog::_InvertCheckBox(long idit)
 {
     _SetCheckBox(idit, !_FGetCheckBox(idit));
 }
@@ -383,10 +383,10 @@ void DLG::_InvertCheckBox(long idit)
 /***************************************************************************
     Set the value of a check box.
 ***************************************************************************/
-void DLG::_SetCheckBox(long idit, bool fOn)
+void Dialog::_SetCheckBox(long idit, bool fOn)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HCTL hctl;
     RCS rcs;
@@ -411,10 +411,10 @@ void DLG::_SetCheckBox(long idit, bool fOn)
 /***************************************************************************
     Get the text from an edit control.
 ***************************************************************************/
-void DLG::_GetEditText(long idit, PSTZ pstz)
+void Dialog::_GetEditText(long idit, PSTZ pstz)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HN hn;
     RCS rcs;
@@ -434,10 +434,10 @@ void DLG::_GetEditText(long idit, PSTZ pstz)
 /***************************************************************************
     Set the text in an edit control.
 ***************************************************************************/
-void DLG::_SetEditText(long idit, PSTZ pstz)
+void Dialog::_SetEditText(long idit, PSTZ pstz)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
     short sitk;
     HN hn;
     RCS rcs;
@@ -460,10 +460,10 @@ void DLG::_SetEditText(long idit, PSTZ pstz)
     Make the given item the "focused" item and select its contents.  The
     item should be a text item.
 ***************************************************************************/
-void DLG::SelectDit(long idit)
+void Dialog::SelectDit(long idit)
 {
     HDLG hdlg;
-    DIT dit;
+    DialogItem dit;
 
     if (hNil == (hdlg = (HDLG)_pgob->Hwnd()))
         goto LBug;
@@ -472,7 +472,7 @@ void DLG::SelectDit(long idit)
     if (dit.ditk != ditkEditText)
     {
     LBug:
-        Bug("bad call to DLG::SelectDit");
+        Bug("bad call to Dialog::SelectDit");
         return;
     }
     Assert(dit.sitLim == dit.sitMin + 1, "wrong lim on edit item");

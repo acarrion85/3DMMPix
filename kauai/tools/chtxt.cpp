@@ -12,14 +12,14 @@ ASSERTNAME
 /***************************************************************************
     Constructor for a chunky text doc.
 ***************************************************************************/
-CHTXD::CHTXD(PDOCB pdocb, ulong grfdoc) : CHTXD_PAR(pdocb, grfdoc)
+CHTXD::CHTXD(PDocumentBase pdocb, ulong grfdoc) : CHTXD_PAR(pdocb, grfdoc)
 {
 }
 
 /***************************************************************************
     Create a new chunky text doc.
 ***************************************************************************/
-PCHTXD CHTXD::PchtxdNew(PFNI pfni, PBSF pbsf, short osk, PDOCB pdocb, ulong grfdoc)
+PCHTXD CHTXD::PchtxdNew(PFilename pfni, PFileByteStream pbsf, short osk, PDocumentBase pdocb, ulong grfdoc)
 {
     AssertNilOrPo(pfni, ffniFile);
     AssertNilOrPo(pbsf, 0);
@@ -38,12 +38,12 @@ PCHTXD CHTXD::PchtxdNew(PFNI pfni, PBSF pbsf, short osk, PDOCB pdocb, ulong grfd
 /***************************************************************************
     Create a new document display gob for the chunky text doc.
 ***************************************************************************/
-PDDG CHTXD::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject CHTXD::PddgNew(PGCB pgcb)
 {
     return CHTDD::PchtddNew(this, pgcb, vpappb->OnnDefFixed(), fontNil, vpappb->DypTextDef(), 4);
 }
 
-BEGIN_CMD_MAP(CHTDD, DDG)
+BEGIN_CMD_MAP(CHTDD, DocumentDisplayGraphicsObject)
 ON_CID_GEN(cidCompileChunky, &CHTDD::FCmdCompileChunky, pvNil)
 ON_CID_GEN(cidCompileScript, &CHTDD::FCmdCompileScript, pvNil)
 ON_CID_GEN(cidAssembleScript, &CHTDD::FCmdCompileScript, pvNil)
@@ -52,7 +52,7 @@ END_CMD_MAP_NIL()
 /***************************************************************************
     Constructor.
 ***************************************************************************/
-CHTDD::CHTDD(PTXTB ptxtb, PGCB pgcb, long onn, ulong grfont, long dypFont, long cchTab)
+CHTDD::CHTDD(PTextDocumentBase ptxtb, PGCB pgcb, long onn, ulong grfont, long dypFont, long cchTab)
     : CHTDD_PAR(ptxtb, pgcb, onn, grfont, dypFont, cchTab)
 {
     _fMark = fFalse;
@@ -61,7 +61,7 @@ CHTDD::CHTDD(PTXTB ptxtb, PGCB pgcb, long onn, ulong grfont, long dypFont, long 
 /***************************************************************************
     Create a new one.
 ***************************************************************************/
-PCHTDD CHTDD::PchtddNew(PTXTB ptxtb, PGCB pgcb, long onn, ulong grfont, long dypFont, long cchTab)
+PCHTDD CHTDD::PchtddNew(PTextDocumentBase ptxtb, PGCB pgcb, long onn, ulong grfont, long dypFont, long cchTab)
 {
     PCHTDD pchtdd;
 
@@ -86,11 +86,11 @@ PCHTDD CHTDD::PchtddNew(PTXTB ptxtb, PGCB pgcb, long onn, ulong grfont, long dyp
 ***************************************************************************/
 bool CHTDD::FCmdCompileChunky(PCMD pcmd)
 {
-    FNI fni;
-    PCFL pcfl;
+    Filename fni;
+    PChunkyFile pcfl;
     STN stnFile;
     MSFIL msfil;
-    CHCM chcm;
+    Chunky::Compiler chcm;
     PDOC pdoc;
 
     if (!fni.FGetTemp())
@@ -129,14 +129,14 @@ bool CHTDD::FCmdCompileScript(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
-    SCCG sccg;
+    GraphicsObjectCompiler sccg;
     MSFIL msfil;
     STN stnFile;
-    PSCPT pscpt;
+    PScript pscpt;
     PDOC pdoc = pvNil;
 
     Ptxtb()->GetName(&stnFile);
-    LEXB lexb(Ptxtb()->Pbsf(), &stnFile);
+    LexerBase lexb(Ptxtb()->Pbsf(), &stnFile);
     pscpt = sccg.PscptCompileLex(&lexb, pcmd->cid == cidCompileScript, &msfil);
     if (pvNil == pscpt)
     {
@@ -173,9 +173,9 @@ bool CHTDD::FCmdCompileScript(PCMD pcmd)
 ***************************************************************************/
 void OpenSinkDoc(PMSFIL pmsfil)
 {
-    PDOCB pdocb;
+    PDocumentBase pdocb;
     PFIL pfil;
-    FNI fni;
+    Filename fni;
     bool fTemp;
 
     if (pvNil == (pfil = pmsfil->PfilRelease()))
@@ -187,7 +187,7 @@ void OpenSinkDoc(PMSFIL pmsfil)
     }
     pfil->GetFni(&fni);
     fTemp = pfil->FTemp();
-    pdocb = (PDOCB)CHTXD::PchtxdNew(&fni);
+    pdocb = (PDocumentBase)CHTXD::PchtxdNew(&fni);
     pfil->SetTemp(fTemp);
     ReleasePpo(&pfil);
     if (pvNil != pdocb)

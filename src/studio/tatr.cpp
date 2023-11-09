@@ -8,7 +8,7 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    A TATR (theater) is similar to a STDIO, but has no UI and is used for
+    A TATR (theater) is similar to a Studio, but has no UI and is used for
     playback only.
 
 ***************************************************************************/
@@ -82,20 +82,20 @@ bool TATR::FCmdLoad(PCMD pcmd)
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMCC pmcc;
-    FNI fni;
-    PMVIE pmvie = pvNil;
-    PGOB pgob;
-    GCB gcb;
+    PMovieClientCallbacks pmcc;
+    Filename fni;
+    PMovie pmvie = pvNil;
+    PGraphicsObject pgob;
+    GraphicsObjectBlock gcb;
 
-    pmcc = NewObj MCC(kdxpWorkspace, kdypWorkspace, kcbStudioCache);
+    pmcc = NewObj MovieClientCallbacks(kdxpWorkspace, kdypWorkspace, kcbStudioCache);
     if (pvNil == pmcc)
         goto LFail;
 
     vpapp->GetPortfolioDoc(&fni);
     if (fni.Ftg() != kftg3mm)
     {
-        Bug("Portfolio's FNI has bad FTG in theater");
+        Bug("Portfolio's Filename has bad FileType in theater");
         goto LFail;
     }
 
@@ -112,12 +112,12 @@ bool TATR::FCmdLoad(PCMD pcmd)
                                            // Note: could clear out the RAM cache too, but I'm keeping this change
                                            // as small as possible.
 #endif                                     // BUG1907
-    pmvie = MVIE::PmvieNew(vpapp->FSlowCPU(), pmcc, &fni, cnoNil);
+    pmvie = Movie::PmvieNew(vpapp->FSlowCPU(), pmcc, &fni, cnoNil);
     if (pmvie == pvNil)
         goto LFail;
     ReleasePpo(&pmcc);
 
-    // Create a new MVU (with PddgNew()) as a child GOB of _kidParent.
+    // Create a new MovieView (with PddgNew()) as a child GraphicsObject of _kidParent.
     // Make it invisible until we get a play command
     pgob = vpapp->Pkwa()->PgobFromHid(_kidParent);
     if (pvNil == pgob)
@@ -156,14 +156,14 @@ LFail:
 }
 
 /***************************************************************************
-    Play the current movie.  Also makes the MVU visible, if it was hidden.
+    Play the current movie.  Also makes the MovieView visible, if it was hidden.
 ***************************************************************************/
 bool TATR::FCmdPlay(PCMD pcmd)
 {
     AssertThis(ftatrMvie); // make sure we have a movie
     AssertVarMem(pcmd);
 
-    PMVU pmvu;
+    PMovieView pmvu;
     RC rcAbs;
     RC rcRel;
 

@@ -8,17 +8,19 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BACO ---> TDF  (Three-D Font)
+    BASE ---> BaseCacheableObject ---> TDF  (Three-D Font)
 
 ***************************************************************************/
 #ifndef TDF_H
 #define TDF_H
 
+using namespace BRender;
+
 /****************************************
     3-D Font class
 ****************************************/
 typedef class TDF *PTDF;
-#define TDF_PAR BACO
+#define TDF_PAR BaseCacheableObject
 #define kclsTDF 'TDF'
 class TDF : public TDF_PAR
 {
@@ -36,16 +38,16 @@ class TDF : public TDF_PAR
     TDF(void)
     {
     }
-    bool _FInit(PBLCK pblck);
+    bool _FInit(PDataBlock pblck);
 
   public:
-    static bool FReadTdf(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
+    static bool FReadTdf(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
     ~TDF(void);
 
     // This authoring-only API creates a new TDF based on a set of models
-    static bool FCreate(PCRF pcrf, PGL pglkid, STN *pstn, CKI *pckiTdf = pvNil);
+    static bool FCreate(PChunkyResourceFile pcrf, PDynamicArray pglkid, STN *pstn, ChunkIdentification *pckiTdf = pvNil);
 
-    PMODL PmodlFetch(CHID chid);
+    PMODL PmodlFetch(ChildChunkID chid);
     BRS DxrChar(long ich);
     BRS DyrChar(long ich);
     BRS DyrMax(void)

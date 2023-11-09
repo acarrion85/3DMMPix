@@ -16,6 +16,8 @@
 #ifndef KIDSPACE_H
 #define KIDSPACE_H
 
+namespace GraphicalObjectRepresentation {
+
 #define ChidFromSnoDchid(sno, dchid) LwHighLow((short)(sno), (short)(dchid))
 
 /***************************************************************************
@@ -62,15 +64,15 @@ class GORF : public GORF_PAR
     RTCLASS_DEC
 
   protected:
-    ACR _acrFore;
-    ACR _acrBack;
-    APT _apt;
+    AbstractColor _acrFore;
+    AbstractColor _acrBack;
+    AbstractPattern _apt;
     RC _rc;
     long _dxp;
     long _dyp;
 
   public:
-    static PGORF PgorfNew(PGOK pgok, PCRF pcrf, CTG ctg, CNO cno);
+    static PGORF PgorfNew(PKidspaceGraphicObject pgok, PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
     virtual void Draw(PGNV pgnv, RC *prcClip);
     virtual bool FPtIn(long xp, long yp);
@@ -90,15 +92,15 @@ class GORB : public GORB_PAR
     RTCLASS_DEC
 
   protected:
-    PCRF _pcrf;
-    CTG _ctg;
-    CNO _cno;
+    PChunkyResourceFile _pcrf;
+    ChunkTag _ctg;
+    ChunkNumber _cno;
     bool _fStream;
 
     ~GORB(void);
 
   public:
-    static PGORB PgorbNew(PGOK pgok, PCRF pcrf, CTG ctg, CNO cno);
+    static PGORB PgorbNew(PKidspaceGraphicObject pgok, PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
     virtual void Draw(PGNV pgnv, RC *prcClip);
     virtual bool FPtIn(long xp, long yp);
@@ -142,9 +144,9 @@ class GORT : public GORT_PAR
         short rgdyp[idzpLimGort];
     };
 
-    PCRF _pcrf;
-    CTG _ctg;
-    CNO _cno;
+    PChunkyResourceFile _pcrf;
+    ChunkTag _ctg;
+    ChunkNumber _cno;
     short _rgdxp[idzpLimGort];
     short _rgdyp[idzpLimGort];
 
@@ -164,7 +166,7 @@ class GORT : public GORT_PAR
     void _MapZpFlex(long *pzp, short *prgdzp, long dzpLeftFlex, long dzpRightFlex);
 
   public:
-    static PGORT PgortNew(PGOK pgok, PCRF pcrf, CTG ctg, CNO cno);
+    static PGORT PgortNew(PKidspaceGraphicObject pgok, PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
     virtual void Draw(PGNV pgnv, RC *prcClip);
     virtual bool FPtIn(long xp, long yp);
@@ -196,10 +198,10 @@ class GORV : public GORV_PAR
 
     ~GORV(void);
 
-    virtual bool _FInit(PGOK pgok, PCRF pcrf, CTG ctg, CNO cno);
+    virtual bool _FInit(PKidspaceGraphicObject pgok, PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
   public:
-    static PGORV PgorvNew(PGOK pgok, PCRF pcrf, CTG ctg, CNO cno);
+    static PGORV PgorvNew(PKidspaceGraphicObject pgok, PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
     virtual void Draw(PGNV pgnv, RC *prcClip);
     virtual bool FPtIn(long xp, long yp);
@@ -275,9 +277,9 @@ enum
 };
 
 /***************************************************************************
-    Graphic Object in Kidspace.  Because of script invocation, the GOK
-    may be destroyed in just about every method of the GOK.  So most methods
-    return a boolean indicating whether the GOK still exists.
+    Graphic Object in Kidspace.  Because of script invocation, the KidspaceGraphicObject
+    may be destroyed in just about every method of the KidspaceGraphicObject.  So most methods
+    return a boolean indicating whether the KidspaceGraphicObject still exists.
 ***************************************************************************/
 enum
 {
@@ -288,27 +290,27 @@ enum
     fgokMouseSound = 8, // set the mouse sound as well
 };
 
-typedef class GOK *PGOK;
-#define GOK_PAR GOB
-#define kclsGOK 'GOK'
-class GOK : public GOK_PAR
+typedef class KidspaceGraphicObject *PKidspaceGraphicObject;
+#define KidspaceGraphicObject_PAR GraphicsObject
+#define kclsKidspaceGraphicObject 'GOK'
+class KidspaceGraphicObject : public KidspaceGraphicObject_PAR
 {
     RTCLASS_DEC
     ASSERT
     MARKMEM
-    CMD_MAP_DEC(GOK)
+    CMD_MAP_DEC(KidspaceGraphicObject)
 
   protected:
     long _dxp; // offset from top-left to the registration point
     long _dyp;
-    long _zp; // z-coord (for placing GOK's relative to this one)
+    long _zp; // z-coord (for placing KidspaceGraphicObject's relative to this one)
 
     long _dxpPref; // preferred size (if non-zero)
     long _dypPref;
 
-    PWOKS _pwoks; // the kidspace world that this GOK belongs to
+    PWorldOfKidspace _pwoks; // the kidspace world that this KidspaceGraphicObject belongs to
     PRCA _prca;   // Chunky resource chain
-    PCRF _pcrf;   // Chunky resource file
+    PChunkyResourceFile _pcrf;   // Chunky resource file
 
     short _sno;       // state number
     short _cactMouse; // mouse click count of last mouse down
@@ -317,7 +319,7 @@ class GOK : public GOK_PAR
 
     bool _fRect : 1;          // whether to use rectangular hit testing exclusively
     bool _fNoHit : 1;         // invisible to the mouse
-    bool _fNoHitKids : 1;     // children of this GOK are invisible to the mouse
+    bool _fNoHitKids : 1;     // children of this KidspaceGraphicObject are invisible to the mouse
     bool _fNoSlip : 1;        // animations shouldn't slip
     bool _fGorpDirty : 1;     // whether the GORP changed while deferred
     bool _fMouseSndDirty : 1; // whether playing the mouse sound was deferred
@@ -325,17 +327,17 @@ class GOK : public GOK_PAR
 
     long _cactDeferGorp; // defer marking and positioning the gorp
     PGORP _pgorp;        // the graphical representation
-    CKI _ckiGorp;        // cki of the current gorp
+    ChunkIdentification _ckiGorp;        // cki of the current gorp
 
     long _dtim;       // current time increment for animation
-    PSCEG _pscegAnim; // animation script
-    CHID _chidAnim;   // chid of current animation
+    PGraphicsObjectInterpreter _pscegAnim; // animation script
+    ChildChunkID _chidAnim;   // chid of current animation
 
-    PGOKD _pgokd;
+    PKidspaceGraphicObjectDescriptor _pgokd;
 
     long _siiSound;     // sound to kill when we go away
     long _siiMouse;     // mouse tracking sound - kill it when we go away
-    CKI _ckiMouseSnd;   // for deferred playing of the mouse sound
+    ChunkIdentification _ckiMouseSnd;   // for deferred playing of the mouse sound
     long _cactDeferSnd; // defer starting the mouse sound if this is > 0
 
     // cid/hid filtering
@@ -343,44 +345,44 @@ class GOK : public GOK_PAR
     {
         long cid;
         long hid;
-        CHID chidScript;
+        ChildChunkID chidScript;
     };
-    PGL _pglcmflt; // list of cmd filtering structs, sorted by cid
+    PDynamicArray _pglcmflt; // list of cmd filtering structs, sorted by cid
 
-    long _hidToolTipSrc; // get the tool tip info from this GOK
+    long _hidToolTipSrc; // get the tool tip info from this KidspaceGraphicObject
 
-    GOK(GCB *pgcb);
-    ~GOK(void);
+    KidspaceGraphicObject(GraphicsObjectBlock *pgcb);
+    ~KidspaceGraphicObject(void);
 
-    static PGOB _PgobBefore(PGOB pgobPar, long zp);
+    static PGraphicsObject _PgobBefore(PGraphicsObject pgobPar, long zp);
 
-    virtual bool _FInit(PWOKS pwoks, PGOKD pgokd, PRCA prca);
-    virtual bool _FInit(PWOKS pwoks, CNO cno, PRCA prca);
+    virtual bool _FInit(PWorldOfKidspace pwoks, PKidspaceGraphicObjectDescriptor pgokd, PRCA prca);
+    virtual bool _FInit(PWorldOfKidspace pwoks, ChunkNumber cno, PRCA prca);
 
     virtual bool _FAdjustGms(struct GMSE *pmpgmsgmse);
     virtual bool _FSetGmsCore(long gms, ulong grfact, bool *pfStable);
     virtual bool _FSetGms(long gms, ulong grfact);
 
     virtual bool _FEnterState(long sno);
-    virtual bool _FSetRep(CHID chid, ulong grfgok = fgokKillAnim, CTG ctg = ctgNil, long dxp = 0, long dyp = 0,
+    virtual bool _FSetRep(ChildChunkID chid, ulong grfgok = fgokKillAnim, ChunkTag ctg = ctgNil, long dxp = 0, long dyp = 0,
                           bool *pfSet = pvNil);
     virtual bool _FAdvanceFrame(void);
 
     virtual void _SetGorp(PGORP pgorp, long dxp, long dyp);
-    virtual PGORP _PgorpNew(PCRF pcrf, CTG ctg, CNO cno);
+    virtual PGORP _PgorpNew(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
     bool _FFindCmflt(long cid, long hid, CMFLT *pcmflt = pvNil, long *picmflt = pvNil);
-    bool _FFilterCmd(PCMD pcmd, CHID chidScript, bool *pfFilter);
-    void _PlayMouseSound(CHID chid);
-    CNO _CnoToolTip(void);
-    CHID _ChidMouse(void);
+    bool _FFilterCmd(PCMD pcmd, ChildChunkID chidScript, bool *pfFilter);
+    void _PlayMouseSound(ChildChunkID chid);
+    ChunkNumber _CnoToolTip(void);
+    ChildChunkID _ChidMouse(void);
     void _DeferGorp(bool fDefer);
     void _DeferSnd(bool fDefer);
 
   public:
-    static PGOK PgokNew(PWOKS pwoks, PGOB pgobPar, long hid, PGOKD pgokd, PRCA prca);
+    static PKidspaceGraphicObject PgokNew(PWorldOfKidspace pwoks, PGraphicsObject pgobPar, long hid, PKidspaceGraphicObjectDescriptor pgokd, PRCA prca);
 
-    PWOKS Pwoks(void)
+    PWorldOfKidspace Pwoks(void)
     {
         return _pwoks;
     }
@@ -411,17 +413,17 @@ class GOK : public GOK_PAR
         return FCmdClicked((PCMD_MOUSE)pcmd);
     }
     virtual bool FCmdAll(PCMD pcmd);
-    virtual bool FFilterCidHid(long cid, long hid, CHID chidScript);
+    virtual bool FFilterCidHid(long cid, long hid, ChildChunkID chidScript);
 
-    virtual bool FEnsureToolTip(PGOB *ppgobCurTip, long xpMouse, long ypMouse);
+    virtual bool FEnsureToolTip(PGraphicsObject *ppgobCurTip, long xpMouse, long ypMouse);
     virtual long LwState(void);
 
-    virtual bool FRunScript(CHID chid, long *prglw = pvNil, long clw = 0, long *plwReturn = pvNil,
+    virtual bool FRunScript(ChildChunkID chid, long *prglw = pvNil, long clw = 0, long *plwReturn = pvNil,
                             tribool *ptSuccess = pvNil);
-    virtual bool FRunScriptCno(CNO cno, long *prglw = pvNil, long clw = 0, long *plwReturn = pvNil,
+    virtual bool FRunScriptCno(ChunkNumber cno, long *prglw = pvNil, long clw = 0, long *plwReturn = pvNil,
                                tribool *ptSuccess = pvNil);
     virtual bool FChangeState(long sno);
-    virtual bool FSetRep(CHID chid, ulong grfgok = fgokKillAnim, CTG ctg = ctgNil, long dxp = 0, long dyp = 0,
+    virtual bool FSetRep(ChildChunkID chid, ulong grfgok = fgokKillAnim, ChunkTag ctg = ctgNil, long dxp = 0, long dyp = 0,
                          ulong dtim = 0);
 
     virtual bool FPlay(void);
@@ -431,12 +433,13 @@ class GOK : public GOK_PAR
     virtual long NfrMac(void);
     virtual long NfrCur(void);
 
-    virtual long SiiPlaySound(CTG ctg, CNO cno, long sqn, long vlm, long cactPlay, ulong dtsStart, long spr, long scl);
-    virtual long SiiPlayMouseSound(CTG ctg, CNO cno);
+    virtual long SiiPlaySound(ChunkTag ctg, ChunkNumber cno, long sqn, long vlm, long cactPlay, ulong dtsStart, long spr, long scl);
+    virtual long SiiPlayMouseSound(ChunkTag ctg, ChunkNumber cno);
 
     virtual void Suspend(void);
     virtual void Resume(void);
     virtual void Stream(bool fStream);
 };
 
+} // end of namespace GraphicalObjectRepresentation
 #endif //! KIDSPACE_H

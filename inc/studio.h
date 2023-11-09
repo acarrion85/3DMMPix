@@ -7,7 +7,7 @@
 
         The Studio
 
-                STDIO 	--->   	GOB
+                Studio 	--->   	GraphicsObject
 
 ***************************************************************************/
 
@@ -35,7 +35,7 @@
 #include "helpbook.h"
 #include "helptops.h"
 
-typedef class SMCC *PSMCC;
+typedef class StudioClientCallbacks *PSMCC;
 
 const long kcmhlStudio = 0x10000; // nice medium level for the Studio
 
@@ -44,26 +44,26 @@ extern APP vapp;
 //
 // Studio class
 //
-#define STDIO_PAR GOB
-#define kclsSTDIO 'stio'
-class STDIO : public STDIO_PAR
+#define Studio_PAR GraphicsObject
+#define kclsStudio 'stio'
+class Studio : public Studio_PAR
 {
     RTCLASS_DEC
     ASSERT
     MARKMEM
-    CMD_MAP_DEC(STDIO)
+    CMD_MAP_DEC(Studio)
 
   protected:
-    PCRM _pcrm;
-    PGST _pgstMisc;
-    PMVIE _pmvie;
+    PChunkyResourceManager _pcrm;
+    PStringTable _pgstMisc;
+    PMovie _pmvie;
     PSMCC _psmcc;
-    PGL _pglpbrcn;
+    PDynamicArray _pglpbrcn;
     long _aridSelected;
     PBRWR _pbrwrActr;
     PBRWR _pbrwrProp;
-    PGL _pglcmg;        // Cno map tmpl->gokd for rollcall
-    PGL _pglclr;        // Color table for common palette
+    PDynamicArray _pglcmg;        // Cno map tmpl->gokd for rollcall
+    PDynamicArray _pglclr;        // Color table for common palette
     bool _fDisplayCast; // Display movie's cast
 
     CMD _cmd;
@@ -72,22 +72,22 @@ class STDIO : public STDIO_PAR
     PTGOB _ptgobTitle;
     bool _fStartedSoonerLater;
 
-    STDIO(PGCB pgcb) : GOB(pgcb){};
+    Studio(PGCB pgcb) : GraphicsObject(pgcb){};
     bool _FOpenStudio(bool fPaletteFade);
     void _SetToolStates(void);
-    bool _FBuildMenuCidCtg(long cid, CTG ctg, PGL pgl, ulong grfHotKey, ulong grfNum, bool fNew);
+    bool _FBuildMenuCidCtg(long cid, ChunkTag ctg, PDynamicArray pgl, ulong grfHotKey, ulong grfNum, bool fNew);
     PBRCN _PbrcnFromBrwdid(long brwdid);
 #ifdef BUG1959
-    bool _FLoadMovie(PFNI pfni, CNO cno, bool *pfClosedOld);
+    bool _FLoadMovie(PFilename pfni, ChunkNumber cno, bool *pfClosedOld);
 #endif // BUG1959
 
   public:
     //
     // Create and destroy functions
     //
-    static PSTDIO PstdioNew(long hid, PCRM pcrmStudio, PFNI pfniUserDoc = pvNil, bool fFailIfDocOpenFailed = fTrue);
+    static PStudio PstdioNew(long hid, PChunkyResourceManager pcrmStudio, PFilename pfniUserDoc = pvNil, bool fFailIfDocOpenFailed = fTrue);
     void ReleaseBrcn(void);
-    ~STDIO(void);
+    ~Studio(void);
 
     //
     // Command functions for getting from scripts to here.
@@ -171,8 +171,8 @@ class STDIO : public STDIO_PAR
     {
         return _pbrwrProp;
     }
-    bool FAddCmg(CNO cnoTmpl, CNO cnoGokd);
-    CNO CnoGokdFromCnoTmpl(CNO cnoTmpl);
+    bool FAddCmg(ChunkNumber cnoTmpl, ChunkNumber cnoGokd);
+    ChunkNumber CnoGokdFromCnoTmpl(ChunkNumber cnoTmpl);
     void SetDisplayCast(bool fDisplayCast)
     {
         _fDisplayCast = fDisplayCast;
@@ -190,13 +190,13 @@ class STDIO : public STDIO_PAR
     //
     // Movie changing
     //
-    bool FLoadMovie(PFNI pfni = pvNil, CNO cno = cnoNil);
-    bool FSetMovie(PMVIE pmvie);
-    PMVIE Pmvie()
+    bool FLoadMovie(PFilename pfni = pvNil, ChunkNumber cno = cnoNil);
+    bool FSetMovie(PMovie pmvie);
+    PMovie Pmvie()
     {
         return _pmvie;
     };
-    bool FGetFniMovieOpen(PFNI pfni)
+    bool FGetFniMovieOpen(PFilename pfni)
     {
         return FPortDisplayWithIds(pfni, fTrue, idsPortfMovieFilterLabel, idsPortfMovieFilterExt,
                                    idsPortfOpenMovieTitle, pvNil, pvNil, pvNil, fpfPortPrevMovie, kwavPortOpenMovie);
@@ -207,25 +207,25 @@ class STDIO : public STDIO_PAR
     }
 };
 
-#define SMCC_PAR MCC
-#define kclsSMCC 'SMCC'
-class SMCC : public SMCC_PAR
+#define StudioClientCallbacks_PAR MovieClientCallbacks
+#define kclsStudioClientCallbacks 'SMCC'
+class StudioClientCallbacks : public StudioClientCallbacks_PAR
 {
     RTCLASS_DEC
     ASSERT
     MARKMEM
 
   private:
-    PSSCB _psscb;
-    PSTDIO _pstdio;
+    PStudioScrollbars _psscb;
+    PStudio _pstdio;
     long _dypTextTbox;
 
   public:
-    ~SMCC(void)
+    ~StudioClientCallbacks(void)
     {
         ReleasePpo(&_psscb);
     }
-    SMCC(long dxp, long dyp, long cbCache, PSSCB psscb, PSTDIO pstdio);
+    StudioClientCallbacks(long dxp, long dyp, long cbCache, PStudioScrollbars psscb, PStudio pstdio);
 
     virtual long Dxp(void)
     {
@@ -239,7 +239,7 @@ class SMCC : public SMCC_PAR
     {
         return _cbCache;
     }
-    virtual PSSCB Psscb(void)
+    virtual PStudioScrollbars Psscb(void)
     {
         return _psscb;
     }
@@ -261,7 +261,7 @@ class SMCC : public SMCC_PAR
         if (pvNil != _psscb)
             _psscb->Update();
     }
-    virtual void SetSscb(PSSCB psscb)
+    virtual void SetSscb(PStudioScrollbars psscb)
     {
         AssertNilOrPo(psscb, 0);
         ReleasePpo(&_psscb);
@@ -342,7 +342,7 @@ class SMCC : public SMCC_PAR
     {
         _pstdio->StartListenerEasel();
     }
-    virtual bool GetFniSave(FNI *pfni, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
+    virtual bool GetFniSave(Filename *pfni, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
                             PSTN pstnDefFileName)
     {
         return (FPortDisplayWithIds(pfni, fFalse, lFilterLabel, lFilterExt, lTitle, lpstrDefExt, pstnDefFileName, pvNil,

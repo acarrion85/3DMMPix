@@ -19,7 +19,7 @@ const SCR kscrWhite = PALETTERGB(0xFF, 0xFF, 0xFF);
 HPAL GPT::_hpal = hNil;
 HPAL GPT::_hpalIdentity = hNil;
 long GPT::_cclrPal = 0;
-CLR *GPT::_prgclr = pvNil;
+Color *GPT::_prgclr = pvNil;
 long GPT::_cactPalCur = 0;
 long GPT::_cactFlush = 1;
 bool GPT::_fPalettized = fFalse;
@@ -52,7 +52,7 @@ HRGN _HrgnNew(RCS *prcs, long dxpInset, long dypInset, bool fOval)
 /***************************************************************************
     Get a system color from the abstract color.
 ***************************************************************************/
-SCR ACR::_Scr(void)
+SCR AbstractColor::_Scr(void)
 {
     AssertThis(facrRgb | facrIndex);
     return B3Lw(_lu) == kbIndexAcr ? PALETTEINDEX(B0Lw(_lu)) : PALETTERGB(B2Lw(_lu), B1Lw(_lu), B0Lw(_lu));
@@ -114,16 +114,16 @@ static PALETTEENTRY _rgpe[20] = {
     fpalAnimate means animate the palette with the new colors, don't do
         a normal palette set.
 ***************************************************************************/
-void GPT::SetActiveColors(PGL pglclr, ulong grfpal)
+void GPT::SetActiveColors(PDynamicArray pglclr, ulong grfpal)
 {
     AssertNilOrPo(pglclr, 0);
-    Assert(pvNil == pglclr || pglclr->CbEntry() == size(CLR), "wrong CbEntry");
+    Assert(pvNil == pglclr || pglclr->CbEntry() == size(Color), "wrong CbEntry");
     byte rgb[size(LOGPALETTE) + 256 * size(PALETTEENTRY)];
     LOGPALETTE *ppal = (LOGPALETTE *)rgb;
     PALETTEENTRY pe;
     long ipe, ipeLim;
     long cclr;
-    CLR clr;
+    Color clr;
     byte rgbT[256 / 8];
 
     if (pvNil == _prgclr)
@@ -133,7 +133,7 @@ void GPT::SetActiveColors(PGL pglclr, ulong grfpal)
             Bug("Setting palette before vwig.hdcApp is set");
             return;
         }
-        if (!FAllocPv((void **)&_prgclr, LwMul(256, size(CLR)), fmemNil, mprNormal))
+        if (!FAllocPv((void **)&_prgclr, LwMul(256, size(Color)), fmemNil, mprNormal))
         {
             PushErc(ercGfxCantSetPalette);
             return;
@@ -281,15 +281,15 @@ LDone:
 /***************************************************************************
     Static method to create a new pglclr containing the current palette.
 ***************************************************************************/
-PGL GPT::PglclrGetPalette(void)
+PDynamicArray GPT::PglclrGetPalette(void)
 {
-    PGL pglclr;
+    PDynamicArray pglclr;
 
-    if (pvNil == (pglclr = GL::PglNew(size(CLR), _cclrPal)))
+    if (pvNil == (pglclr = DynamicArray::PglNew(size(Color), _cclrPal)))
         return pvNil;
 
     AssertDo(pglclr->FSetIvMac(_cclrPal), 0);
-    CopyPb(_prgclr, pglclr->QvGet(0), LwMul(size(CLR), _cclrPal));
+    CopyPb(_prgclr, pglclr->QvGet(0), LwMul(size(Color), _cclrPal));
     return pglclr;
 }
 
@@ -456,11 +456,11 @@ GPT::~GPT(void)
 /***************************************************************************
     Get the system color for this abstract color.
 ***************************************************************************/
-SCR GPT::_Scr(ACR acr)
+SCR GPT::_Scr(AbstractColor acr)
 {
     SCR scr;
     long iclr;
-    CLR clr;
+    Color clr;
 
     if (!_fMapIndices && _fPalettized)
         return acr._Scr();
@@ -632,7 +632,7 @@ PGPT GPT::PgptNewOffscreen(RC *prc, long cbitPixel)
 /***************************************************************************
     Set the color table of an offscreen GPT.
 ***************************************************************************/
-void GPT::SetOffscreenColors(PGL pglclr)
+void GPT::SetOffscreenColors(PDynamicArray pglclr)
 {
     AssertThis(0);
     AssertNilOrPo(pglclr, 0);
@@ -1111,7 +1111,7 @@ void GPT::_EnsurePalette(void)
 ***************************************************************************/
 void GPT::_Fill(void *pv, GDD *pgdd, PFNDRW pfn)
 {
-    ACR acrFore;
+    AbstractColor acrFore;
 
     acrFore = pgdd->acrFore;
     _SetClip(pgdd->prcsClip);
@@ -1119,8 +1119,8 @@ void GPT::_Fill(void *pv, GDD *pgdd, PFNDRW pfn)
     if (pgdd->grfgdd & fgddPattern)
     {
         // patterned fill
-        ACR acrBack = pgdd->acrBack;
-        APT apt = pgdd->apt;
+        AbstractColor acrBack = pgdd->acrBack;
+        AbstractPattern apt = pgdd->apt;
 
         // check for a solid pattern
         if (apt.FSolidFore() || acrFore == acrBack)
@@ -1224,7 +1224,7 @@ void GPT::ScrollRcs(RCS *prcs, long dxp, long dyp, GDD *pgdd)
 /***************************************************************************
     Draw some text.
 ***************************************************************************/
-void GPT::DrawRgch(achar *prgch, long cch, PTS pts, GDD *pgdd, DSF *pdsf)
+void GPT::DrawRgch(achar *prgch, long cch, PTS pts, GDD *pgdd, FontDescription *pdsf)
 {
     AssertThis(0);
     AssertIn(cch, 0, kcbMax);
@@ -1232,7 +1232,7 @@ void GPT::DrawRgch(achar *prgch, long cch, PTS pts, GDD *pgdd, DSF *pdsf)
     AssertVarMem(pgdd);
     AssertPo(pdsf, 0);
 
-    ACR acrFore, acrBack;
+    AbstractColor acrFore, acrBack;
     RCS rcs;
 
     _SetClip(pgdd->prcsClip);
@@ -1295,7 +1295,7 @@ void GPT::DrawRgch(achar *prgch, long cch, PTS pts, GDD *pgdd, DSF *pdsf)
 /***************************************************************************
     Get the bounding text rectangle.
 ***************************************************************************/
-void GPT::GetRcsFromRgch(RCS *prcs, achar *prgch, long cch, PTS pts, DSF *pdsf)
+void GPT::GetRcsFromRgch(RCS *prcs, achar *prgch, long cch, PTS pts, FontDescription *pdsf)
 {
     AssertThis(0);
     AssertVarMem(prcs);
@@ -1360,9 +1360,9 @@ void GPT::GetRcsFromRgch(RCS *prcs, achar *prgch, long cch, PTS pts, DSF *pdsf)
 }
 
 /***************************************************************************
-    Select a monochrome patterned brush corresponding to the APT.
+    Select a monochrome patterned brush corresponding to the AbstractPattern.
 ***************************************************************************/
-void GPT::_SetAptBrush(APT *papt)
+void GPT::_SetAptBrush(AbstractPattern *papt)
 {
     AssertVarMem(papt);
     short rgw[8];
@@ -1399,7 +1399,7 @@ void GPT::_SetAptBrush(APT *papt)
 /***************************************************************************
     Select a solid brush corresponding to the acr.
 ***************************************************************************/
-void GPT::_SetAcrBrush(ACR acr)
+void GPT::_SetAcrBrush(AbstractColor acr)
 {
     HBRUSH hbr;
 
@@ -1449,10 +1449,10 @@ void GPT::_SetStockBrush(int wType)
 }
 
 /***************************************************************************
-    Select a font corresponding to the DSF.  Also, set the alignment as
-    specified in the DSF.
+    Select a font corresponding to the FontDescription.  Also, set the alignment as
+    specified in the FontDescription.
 ***************************************************************************/
-void GPT::_SetTextProps(DSF *pdsf)
+void GPT::_SetTextProps(FontDescription *pdsf)
 {
     AssertPo(pdsf, 0);
     static int _mptahw[] = {
@@ -1796,7 +1796,7 @@ bool NTL::FInit(void)
     LOGFONT lgf;
     HFONT hfnt;
 
-    if (pvNil == (_pgst = GST::PgstNew(offset(LOGFONT, lfFaceName))))
+    if (pvNil == (_pgst = StringTable::PgstNew(offset(LOGFONT, lfFaceName))))
         goto LFail;
 
     // Make sure to explicitly add the system font since EnumFonts() won't.
@@ -1819,26 +1819,27 @@ bool NTL::FInit(void)
 
 /***************************************************************************
     -- Font enumuration callback.
-    -- If font is TrueType, it is added to the GST.
+    -- If font is TrueType, it is added to the StringTable.
 ***************************************************************************/
 int CALLBACK _FEnumFont(LOGFONT *plgf, TEXTMETRIC *ptxm, ulong luType, LPARAM luParam)
 {
     long istz;
-    PGST pgst = (PGST)luParam;
+    PStringTable pgst = (PStringTable)luParam;
     AssertPo(pgst, 0);
 
     if (luType != TRUETYPE_FONTTYPE)
         return fTrue;
 
-    AssertDo(!pgst->FFindRgch(plgf->lfFaceName, CchSz(plgf->lfFaceName), &istz, fgstUserSorted),
-             "font already in list!");
+    // AssertDo(!pgst->FFindRgch(plgf->lfFaceName, CchSz(plgf->lfFaceName), &istz, fgstUserSorted),
+    //          "font already in list!");
+    pgst->FFindRgch(plgf->lfFaceName, CchSz(plgf->lfFaceName), &istz, fgstUserSorted);
     return pgst->FInsertRgch(istz, plgf->lfFaceName, CchSz(plgf->lfFaceName), plgf);
 }
 
 /***************************************************************************
     -- Create a logical GDI font from the given font attributes.
 ***************************************************************************/
-HFONT NTL::HfntCreate(DSF *pdsf)
+HFONT NTL::HfntCreate(FontDescription *pdsf)
 {
     AssertThis(0);
     AssertPo(pdsf, 0);

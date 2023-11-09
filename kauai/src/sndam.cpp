@@ -163,8 +163,8 @@ PSTBL STBL::PstblNew(FLO *pflo, bool fPacked)
 {
     AssertPo(pflo, ffloReadable);
     PSTBL pstbl;
-    BLCK blck;
-    PBLCK pblck;
+    DataBlock blck;
+    PDataBlock pblck;
 
     if (pvNil == (pstbl = new STBL))
         return pvNil;
@@ -198,13 +198,13 @@ PSTBL STBL::PstblNew(FLO *pflo, bool fPacked)
     else
     {
         // see if it's on a removeable disk
-        FNI fni;
+        Filename fni;
 
         pflo->pfil->GetFni(&fni);
         if (fni.Grfvk() & (fvkFloppy | fvkCD | fvkRemovable))
         {
             // cache to the hard drive or memory, depending on the size
-            BLCK blck(pflo);
+            DataBlock blck(pflo);
 
             if (!pblck->FSetTemp(pflo->cb, blck.Cb() + size(STBL) > SDAM::vcbMaxMemWave) || !blck.FWriteToBlck(pblck))
             {
@@ -260,9 +260,9 @@ CAMS::~CAMS(void)
 }
 
 /***************************************************************************
-    Static BACO reader method to put together a Cached AudioMan sound.
+    Static BaseCacheableObject reader method to put together a Cached AudioMan sound.
 ***************************************************************************/
-bool CAMS::FReadCams(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool CAMS::FReadCams(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -303,7 +303,7 @@ bool CAMS::FReadCams(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 }
 
 /***************************************************************************
-    Static BACO reader method to put together a Cached AudioMan sound.
+    Static BaseCacheableObject reader method to put together a Cached AudioMan sound.
 ***************************************************************************/
 PCAMS CAMS::PcamsNewLoop(PCAMS pcamsSrc, long cactPlay)
 {
@@ -523,7 +523,7 @@ void AMQUE::_Leave(void)
 /***************************************************************************
     Fetch the given sound chunk as a CAMS.
 ***************************************************************************/
-PBACO AMQUE::_PbacoFetch(PRCA prca, CTG ctg, CNO cno)
+PBaseCacheableObject AMQUE::_PbacoFetch(PRCA prca, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(prca, 0);

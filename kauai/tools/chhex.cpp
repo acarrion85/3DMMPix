@@ -16,7 +16,7 @@ ASSERTNAME
     hex editor (DCH).  Used for the clipboard.
 ***************************************************************************/
 typedef class DHEX *PDHEX;
-#define DHEX_PAR DOCB
+#define DHEX_PAR DocumentBase
 #define kclsDHEX 'DHEX'
 class DHEX : public DHEX_PAR
 {
@@ -25,21 +25,21 @@ class DHEX : public DHEX_PAR
     MARKMEM
 
   protected:
-    BSF _bsf;
+    FileByteStream _bsf;
 
-    DHEX(PDOCB pdocb = pvNil, ulong grfdoc = fdocNil) : DHEX_PAR(pdocb, grfdoc)
+    DHEX(PDocumentBase pdocb = pvNil, ulong grfdoc = fdocNil) : DHEX_PAR(pdocb, grfdoc)
     {
     }
 
   public:
     static PDHEX PdhexNew(void);
 
-    PBSF Pbsf(void)
+    PFileByteStream Pbsf(void)
     {
         return &_bsf;
     }
 
-    virtual PDDG PddgNew(PGCB pgcb);
+    virtual PDocumentDisplayGraphicsObject PddgNew(PGCB pgcb);
 };
 
 RTCLASS(DCH)
@@ -63,7 +63,7 @@ PDHEX DHEX::PdhexNew(void)
 /***************************************************************************
     Create a new DCH displaying this stream.
 ***************************************************************************/
-PDDG DHEX::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject DHEX::PddgNew(PGCB pgcb)
 {
     return DCH::PdchNew(this, &_bsf, fFalse, pgcb);
 }
@@ -92,7 +92,7 @@ void DHEX::MarkMem(void)
 /***************************************************************************
     Constructor for the DCH.
 ***************************************************************************/
-DCH::DCH(PDOCB pdocb, PBSF pbsf, bool fFixed, PGCB pgcb) : DCLB(pdocb, pgcb)
+DCH::DCH(PDocumentBase pdocb, PFileByteStream pbsf, bool fFixed, PGCB pgcb) : DCLB(pdocb, pgcb)
 {
     _pbsf = pbsf;
     _cbLine = kcbMaxLineDch;
@@ -103,7 +103,7 @@ DCH::DCH(PDOCB pdocb, PBSF pbsf, bool fFixed, PGCB pgcb) : DCLB(pdocb, pgcb)
 /***************************************************************************
     Static method to create a new DCH.
 ***************************************************************************/
-PDCH DCH::PdchNew(PDOCB pdocb, PBSF pbsf, bool fFixed, PGCB pgcb)
+PDCH DCH::PdchNew(PDocumentBase pdocb, PFileByteStream pbsf, bool fFixed, PGCB pgcb)
 {
     PDCH pdch;
 
@@ -129,7 +129,7 @@ void DCH::_Activate(bool fActive)
     AssertThis(0);
     RC rc;
 
-    DDG::_Activate(fActive);
+    DocumentDisplayGraphicsObject::_Activate(fActive);
     GetRc(&rc, cooLocal);
     rc.ypBottom = _dypHeader;
     InvalRc(&rc);
@@ -471,7 +471,7 @@ void DCH::_InvalAllDch(long ib, long cbIns, long cbDel)
 {
     AssertThis(0);
     long ipddg;
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
 
     // mark the document dirty
     _pdocb->SetDirty();
@@ -992,7 +992,7 @@ long DCH::_ScvMax(bool fVert)
 /***************************************************************************
     Copy the selection.
 ***************************************************************************/
-bool DCH::_FCopySel(PDOCB *ppdocb)
+bool DCH::_FCopySel(PDocumentBase *ppdocb)
 {
     PDHEX pdhex;
     long ib1, ib2;
@@ -1027,18 +1027,18 @@ void DCH::_ClearSel(void)
 /***************************************************************************
     Paste over the selection.
 ***************************************************************************/
-bool DCH::_FPaste(PCLIP pclip, bool fDoIt, long cid)
+bool DCH::_FPaste(PClipboardObject pclip, bool fDoIt, long cid)
 {
     AssertThis(0);
     AssertPo(pclip, 0);
     long ib1, ib2, cb;
-    PDOCB pdocb;
-    PBSF pbsf;
+    PDocumentBase pdocb;
+    PFileByteStream pbsf;
 
     if (cidPaste != cid)
         return fFalse;
 
-    if (!pclip->FGetFormat(kclsDHEX) && !pclip->FGetFormat(kclsTXTB))
+    if (!pclip->FGetFormat(kclsDHEX) && !pclip->FGetFormat(kclsTextDocumentBase))
         return fFalse;
 
     if (!fDoIt)
@@ -1052,9 +1052,9 @@ bool DCH::_FPaste(PCLIP pclip, bool fDoIt, long cid)
             return fFalse;
         }
     }
-    else if (pclip->FGetFormat(kclsTXTB, &pdocb))
+    else if (pclip->FGetFormat(kclsTextDocumentBase, &pdocb))
     {
-        if (pvNil == (pbsf = ((PTXTB)pdocb)->Pbsf()) || 0 >= (cb = pbsf->IbMac() - size(achar)))
+        if (pvNil == (pbsf = ((PTextDocumentBase)pdocb)->Pbsf()) || 0 >= (cb = pbsf->IbMac() - size(achar)))
         {
             ReleasePpo(&pdocb);
             return fFalse;
@@ -1114,7 +1114,7 @@ void DCH::MarkMem(void)
 /***************************************************************************
     Constructor for a chunk hex editing doc.
 ***************************************************************************/
-DOCH::DOCH(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno) : DOCE(pdocb, pcfl, ctg, cno)
+DOCH::DOCH(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno) : DOCE(pdocb, pcfl, ctg, cno)
 {
 }
 
@@ -1122,7 +1122,7 @@ DOCH::DOCH(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno) : DOCE(pdocb, pcfl, ctg, cn
     Creates a new hex editing doc based on the given chunk.  Asserts that
     there are no open editing docs based on the chunk.
 ***************************************************************************/
-PDOCH DOCH::PdochNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
+PDOCH DOCH::PdochNew(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertPo(pdocb, 0);
     AssertPo(pcfl, 0);
@@ -1144,7 +1144,7 @@ PDOCH DOCH::PdochNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
 /***************************************************************************
     Initialize the stream from the given flo.
 ***************************************************************************/
-bool DOCH::_FRead(PBLCK pblck)
+bool DOCH::_FRead(PDataBlock pblck)
 {
     FLO flo;
     bool fRet;
@@ -1169,9 +1169,9 @@ bool DOCH::_FRead(PBLCK pblck)
 }
 
 /***************************************************************************
-    Create a new DDG for the doc.
+    Create a new DocumentDisplayGraphicsObject for the doc.
 ***************************************************************************/
-PDDG DOCH::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject DOCH::PddgNew(PGCB pgcb)
 {
     AssertThis(0);
     return DCH::PdchNew(this, &_bsf, fFalse, pgcb);
@@ -1189,7 +1189,7 @@ long DOCH::_CbOnFile(void)
 /***************************************************************************
     Writes the data and returns success/failure.
 ***************************************************************************/
-bool DOCH::_FWrite(PBLCK pblck, bool fRedirect)
+bool DOCH::_FWrite(PDataBlock pblck, bool fRedirect)
 {
     AssertThis(0);
     if (!_bsf.FWriteRgb(pblck))

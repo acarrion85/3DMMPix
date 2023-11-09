@@ -16,8 +16,8 @@ ASSERTNAME
 ***************************************************************************/
 int __cdecl main(int cpszs, char *prgpszs[])
 {
-    FNI fniSrc, fniDst;
-    PCFL pcfl;
+    Filename fniSrc, fniDst;
+    PChunkyFile pcfl;
     STN stn;
     char *pszs;
     MSSIO mssioError(stderr);
@@ -87,7 +87,7 @@ int __cdecl main(int cpszs, char *prgpszs[])
 
     if (fCompile)
     {
-        CHCM chcm;
+        Compiler chcm;
 
         if (fniDst.Ftg() == ftgNil)
         {
@@ -103,9 +103,9 @@ int __cdecl main(int cpszs, char *prgpszs[])
         bool fRet;
         MSSIO mssioDump(stdout);
         MSFIL msfilDump;
-        CHDC chdc;
+        Decompiler chdc;
 
-        if (pvNil == (pcfl = CFL::PcflOpen(&fniSrc, fcflNil)))
+        if (pvNil == (pcfl = ChunkyFile::PcflOpen(&fniSrc, fcflNil)))
         {
             fprintf(stderr, "Couldn't open source file as a chunky file\n\n");
             goto LUsage;
@@ -170,7 +170,7 @@ bool FAssertProc(PSZS pszsFile, long lwLine, PSZS pszsMessage, void *pv, long cb
         fprintf(stderr, "   Message: %s\n", pszsMessage);
     if (pv != pvNil)
     {
-        fprintf(stderr, "   Address %x\n", pv);
+        fprintf(stderr, "   Address %p\n", pv);
         if (cb != 0)
         {
             fprintf(stderr, "   Value: ");

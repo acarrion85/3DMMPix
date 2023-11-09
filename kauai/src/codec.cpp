@@ -122,7 +122,7 @@ bool CODM::FRegisterCodec(PCODC pcodc)
     AssertThis(0);
     AssertPo(pcodc, 0);
 
-    if (pvNil == _pglpcodc && pvNil == (_pglpcodc = GL::PglNew(size(PCODC))))
+    if (pvNil == _pglpcodc && pvNil == (_pglpcodc = DynamicArray::PglNew(size(PCODC))))
         return fFalse;
 
     if (!_pglpcodc->FAdd(&pcodc))
@@ -150,7 +150,7 @@ bool CODM::FCanDo(long cfmt, bool fEncode)
     Gets the type of compression used on the block (assuming it is
     compressed).
 ***************************************************************************/
-bool CODM::FGetCfmtFromBlck(PBLCK pblck, long *pcfmt)
+bool CODM::FGetCfmtFromBlck(PDataBlock pblck, long *pcfmt)
 {
     AssertThis(0);
     AssertPo(pblck, 0);

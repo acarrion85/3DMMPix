@@ -15,7 +15,7 @@ RTCLASS(DCMBMP)
 /****************************************************************************
     Constructor for a MBMP document.
 ****************************************************************************/
-DOCMBMP::DOCMBMP(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno) : DOCE(pdocb, pcfl, ctg, cno)
+DOCMBMP::DOCMBMP(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno) : DOCE(pdocb, pcfl, ctg, cno)
 {
     _pmbmp = pvNil;
 }
@@ -31,7 +31,7 @@ DOCMBMP::~DOCMBMP(void)
 /****************************************************************************
     Static method to create a new MBMP document.
 ****************************************************************************/
-PDOCMBMP DOCMBMP::PdocmbmpNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
+PDOCMBMP DOCMBMP::PdocmbmpNew(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     PDOCMBMP pdocmbmp;
 
@@ -49,7 +49,7 @@ PDOCMBMP DOCMBMP::PdocmbmpNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
 /****************************************************************************
     Create a new display gob for the MBMP document.
 ****************************************************************************/
-PDDG DOCMBMP::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject DOCMBMP::PddgNew(PGCB pgcb)
 {
     return DCMBMP::PdcmbmpNew(this, _pmbmp, pgcb);
 }
@@ -65,7 +65,7 @@ long DOCMBMP::_CbOnFile(void)
 /****************************************************************************
     Write the data out.
 ****************************************************************************/
-bool DOCMBMP::_FWrite(PBLCK pblck, bool fRedirect)
+bool DOCMBMP::_FWrite(PDataBlock pblck, bool fRedirect)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -76,7 +76,7 @@ bool DOCMBMP::_FWrite(PBLCK pblck, bool fRedirect)
 /*****************************************************************************
     Read the MBMP.
 *****************************************************************************/
-bool DOCMBMP::_FRead(PBLCK pblck)
+bool DOCMBMP::_FRead(PDataBlock pblck)
 {
     Assert(pvNil == _pmbmp, "losing existing MBMP");
     AssertPo(pblck, 0);
@@ -109,7 +109,7 @@ void DOCMBMP::MarkMem(void)
 /*****************************************************************************
     Constructor for a pic display gob.
 *****************************************************************************/
-DCMBMP::DCMBMP(PDOCB pdocb, PMBMP pmbmp, PGCB pgcb) : DDG(pdocb, pgcb)
+DCMBMP::DCMBMP(PDocumentBase pdocb, PMBMP pmbmp, PGCB pgcb) : DocumentDisplayGraphicsObject(pdocb, pgcb)
 {
     _pmbmp = pmbmp;
 }
@@ -125,7 +125,7 @@ void DCMBMP::GetMinMax(RC *prcMinMax)
 /*****************************************************************************
     Static method to create a new DCMBMP.
 *****************************************************************************/
-PDCMBMP DCMBMP::PdcmbmpNew(PDOCB pdocb, PMBMP pmbmp, PGCB pgcb)
+PDCMBMP DCMBMP::PdcmbmpNew(PDocumentBase pdocb, PMBMP pmbmp, PGCB pgcb)
 {
     PDCMBMP pdcmbmp;
 

@@ -9,7 +9,7 @@
 #include "ched.h"
 ASSERTNAME
 
-BEGIN_CMD_MAP(APP, APPB)
+BEGIN_CMD_MAP(APP, ApplicationBase)
 ON_CID_GEN(cidNew, &APP::FCmdOpen, pvNil)
 ON_CID_GEN(cidOpen, &APP::FCmdOpen, pvNil)
 ON_CID_GEN(cidNewText, &APP::FCmdOpen, pvNil)
@@ -38,12 +38,12 @@ bool APP::_FInit(ulong grfapp, ulong grfgob, long ginDef)
 
 #ifdef WIN
     // parse the command line and load any resource files and help files
-    FNI fni;
+    Filename fni;
     STN stn;
     bool fQuote, fScript, fSkip;
-    PDMD pdmd;
-    PDDG pddg;
-    PDOCB pdocb;
+    PDocumentMDIWindow pdmd;
+    PDocumentDisplayGraphicsObject pddg;
+    PDocumentBase pdocb;
     long lw;
     PSZ psz = vwig.pszCmdLine;
 
@@ -96,7 +96,7 @@ bool APP::_FInit(ulong grfapp, ulong grfgob, long ginDef)
             if (!stn.FGetLw(&lw))
                 continue;
 
-            if (pvNil == (pdmd = DMD::PdmdTop()))
+            if (pvNil == (pdmd = DocumentMDIWindow::PdmdTop()))
                 continue;
             if (pvNil == (pddg = pdmd->Pdocb()->PddgActive()) || !pddg->FIs(kclsDCD))
             {
@@ -109,12 +109,12 @@ bool APP::_FInit(ulong grfapp, ulong grfgob, long ginDef)
         if (!fni.FBuildFromPath(&stn) || fni.Ftg() == kftgDir)
             continue;
 
-        if (pvNil != (pdocb = DOCB::PdocbFromFni(&fni)))
+        if (pvNil != (pdocb = DocumentBase::PdocbFromFni(&fni)))
         {
             pdocb->ActivateDmd();
             continue;
         }
-        if (pvNil == (pdocb = (PDOCB)DOC::PdocNew(&fni)))
+        if (pvNil == (pdocb = (PDocumentBase)DOC::PdocNew(&fni)))
             continue;
         pdocb->PdmdNew();
         ReleasePpo(&pdocb);
@@ -150,9 +150,9 @@ void APP::GetStnAppName(PSTN pstn)
 void APP::UpdateHwnd(HWND hwnd, RC *prc, ulong grfapp)
 {
     AssertThis(0);
-    PGOB pgob;
+    PGraphicsObject pgob;
 
-    if (pvNil == (pgob = GOB::PgobFromHwnd(hwnd)))
+    if (pvNil == (pgob = GraphicsObject::PgobFromHwnd(hwnd)))
         return;
 
     // for script windows, do offscreen updating
@@ -165,7 +165,7 @@ void APP::UpdateHwnd(HWND hwnd, RC *prc, ulong grfapp)
 /***************************************************************************
     Do a fast update of the gob and its descendents into the given gpt.
 ***************************************************************************/
-void APP::_FastUpdate(PGOB pgob, PREGN pregnClip, ulong grfapp, PGPT pgpt)
+void APP::_FastUpdate(PGraphicsObject pgob, PREGN pregnClip, ulong grfapp, PGPT pgpt)
 {
     AssertThis(0);
     AssertPo(pgob, 0);
@@ -184,9 +184,9 @@ void APP::_FastUpdate(PGOB pgob, PREGN pregnClip, ulong grfapp, PGPT pgpt)
 ***************************************************************************/
 bool APP::FCmdOpen(PCMD pcmd)
 {
-    FNI fni;
-    FNI *pfni;
-    PDOCB pdocb;
+    Filename fni;
+    Filename *pfni;
+    PDocumentBase pdocb;
 
     pfni = pvNil;
     switch (pcmd->cid)
@@ -202,14 +202,14 @@ bool APP::FCmdOpen(PCMD pcmd)
             return fTrue;
         }
         pfni = &fni;
-        if (pvNil != (pdocb = DOCB::PdocbFromFni(&fni)))
+        if (pvNil != (pdocb = DocumentBase::PdocbFromFni(&fni)))
         {
             pdocb->ActivateDmd();
             return fTrue;
         }
         // fall through
     case cidNew:
-        pdocb = (PDOCB)DOC::PdocNew(pfni);
+        pdocb = (PDocumentBase)DOC::PdocNew(pfni);
         break;
 
     case cidOpenText:
@@ -219,14 +219,14 @@ bool APP::FCmdOpen(PCMD pcmd)
             return fTrue;
         }
         pfni = &fni;
-        if (pvNil != (pdocb = DOCB::PdocbFromFni(&fni)))
+        if (pvNil != (pdocb = DocumentBase::PdocbFromFni(&fni)))
         {
             pdocb->ActivateDmd();
             return fTrue;
         }
         // fall through
     case cidNewText:
-        pdocb = (PDOCB)CHTXD::PchtxdNew(pfni, pvNil, oskNil);
+        pdocb = (PDocumentBase)CHTXD::PchtxdNew(pfni, pvNil, oskNil);
         break;
     }
 

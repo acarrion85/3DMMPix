@@ -9,7 +9,7 @@
 
     For editing a text file or text stream as a document.  Unlike the edit
     controls in text.h/text.cpp, all the text need not be in memory (this
-    uses a BSF) and there can be multiple views on the same text.
+    uses a FileByteStream) and there can be multiple views on the same text.
 
 ***************************************************************************/
 #include "frame.h"
@@ -21,7 +21,7 @@ RTCLASS(TXDD)
 /***************************************************************************
     Constructor for a text document.
 ***************************************************************************/
-TXDC::TXDC(PDOCB pdocb, ulong grfdoc) : DOCB(pdocb, grfdoc)
+TXDC::TXDC(PDocumentBase pdocb, ulong grfdoc) : DocumentBase(pdocb, grfdoc)
 {
     _pbsf = pvNil;
     _pfil = pvNil;
@@ -39,7 +39,7 @@ TXDC::~TXDC(void)
 /***************************************************************************
     Create a new document based on the given text file and or text stream.
 ***************************************************************************/
-PTXDC TXDC::PtxdcNew(PFNI pfni, PBSF pbsf, PDOCB pdocb, ulong grfdoc)
+PTXDC TXDC::PtxdcNew(PFilename pfni, PFileByteStream pbsf, PDocumentBase pdocb, ulong grfdoc)
 {
     AssertNilOrPo(pfni, ffniFile);
     AssertNilOrPo(pbsf, 0);
@@ -58,7 +58,7 @@ PTXDC TXDC::PtxdcNew(PFNI pfni, PBSF pbsf, PDOCB pdocb, ulong grfdoc)
 /***************************************************************************
     Initialize the TXDC.
 ***************************************************************************/
-bool TXDC::_FInit(PFNI pfni, PBSF pbsf)
+bool TXDC::_FInit(PFilename pfni, PFileByteStream pbsf)
 {
     AssertNilOrPo(pfni, ffniFile);
     AssertNilOrPo(pbsf, 0);
@@ -74,11 +74,11 @@ bool TXDC::_FInit(PFNI pfni, PBSF pbsf)
         pbsf->AddRef();
         _pbsf = pbsf;
     }
-    else if (pvNil == (_pbsf = NewObj BSF))
+    else if (pvNil == (_pbsf = NewObj FileByteStream))
         return fFalse;
     else if (pvNil != _pfil && _pfil->FpMac() > 0)
     {
-        // initialize the BSF to just point to the file
+        // initialize the FileByteStream to just point to the file
         FLO flo;
 
         flo.pfil = _pfil;
@@ -94,17 +94,17 @@ bool TXDC::_FInit(PFNI pfni, PBSF pbsf)
 /***************************************************************************
     Create a new TXDD to display the TXDC.
 ***************************************************************************/
-PDDG TXDC::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject TXDC::PddgNew(PGCB pgcb)
 {
     AssertThis(0);
     return TXDD::PtxddNew(this, pgcb, _pbsf, vpappb->OnnDefFixed(), fontNil, vpappb->DypTextDef());
 }
 
 /***************************************************************************
-    Get the current FNI for the doc.  Return false if the doc is not
-    currently based on an FNI (it's a new doc or an internal one).
+    Get the current Filename for the doc.  Return false if the doc is not
+    currently based on an Filename (it's a new doc or an internal one).
 ***************************************************************************/
-bool TXDC::FGetFni(FNI *pfni)
+bool TXDC::FGetFni(Filename *pfni)
 {
     AssertThis(0);
     AssertBasePo(pfni, 0);
@@ -117,17 +117,17 @@ bool TXDC::FGetFni(FNI *pfni)
 
 /***************************************************************************
     Save the document and optionally set this fni as the current one.
-    If the doc is currently based on an FNI, pfni may be nil, indicating
+    If the doc is currently based on an Filename, pfni may be nil, indicating
     that this is a normal save (not save as).  If pfni is not nil and
     fSetFni is false, this just writes a copy of the doc but doesn't change
     the doc one bit.
 ***************************************************************************/
-bool TXDC::FSaveToFni(FNI *pfni, bool fSetFni)
+bool TXDC::FSaveToFni(Filename *pfni, bool fSetFni)
 {
     AssertThis(0);
     AssertNilOrPo(pfni, ffniFile);
     FLO flo;
-    FNI fniT;
+    Filename fniT;
 
     if (pvNil == pfni)
     {
@@ -149,7 +149,7 @@ bool TXDC::FSaveToFni(FNI *pfni, bool fSetFni)
     if (!_pbsf->FWriteRgb(&flo))
         goto LFail;
 
-    // redirect the BSF to the new file
+    // redirect the FileByteStream to the new file
     if (fSetFni)
         _pbsf->FReplaceFlo(&flo, fFalse, 0, flo.cb);
 
@@ -198,7 +198,7 @@ void TXDC::MarkMem(void)
 /***************************************************************************
     Constructor for a text document display gob.
 ***************************************************************************/
-TXDD::TXDD(PDOCB pdocb, PGCB pgcb, PBSF pbsf, long onn, ulong grfont, long dypFont) : DDG(pdocb, pgcb)
+TXDD::TXDD(PDocumentBase pdocb, PGCB pgcb, PFileByteStream pbsf, long onn, ulong grfont, long dypFont) : DocumentDisplayGraphicsObject(pdocb, pgcb)
 {
     AssertPo(pbsf, 0);
     Assert(vntl.FValidOnn(onn), "bad onn");
@@ -231,7 +231,7 @@ TXDD::~TXDD(void)
 /***************************************************************************
     Create a new TXDD.
 ***************************************************************************/
-PTXDD TXDD::PtxddNew(PDOCB pdocb, PGCB pgcb, PBSF pbsf, long onn, ulong grfont, long dypFont)
+PTXDD TXDD::PtxddNew(PDocumentBase pdocb, PGCB pgcb, PFileByteStream pbsf, long onn, ulong grfont, long dypFont)
 {
     PTXDD ptxdd;
 
@@ -258,7 +258,7 @@ bool TXDD::_FInit(void)
 
     if (!TXDD_PAR::_FInit())
         return fFalse;
-    if (pvNil == (_pglichStarts = GL::PglNew(size(long))))
+    if (pvNil == (_pglichStarts = DynamicArray::PglNew(size(long))))
         return fFalse;
 
     _pglichStarts->SetMinGrow(20);
@@ -1622,7 +1622,7 @@ void TXDD::_InvalAllTxdd(long ich, long cchIns, long cchDel)
 {
     AssertThis(0);
     long ipddg;
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
 
     // mark the document dirty
     _pdocb->SetDirty();
@@ -1713,7 +1713,7 @@ void TXDD::_InvalIch(long ich, long cchIns, long cchDel)
     true.  If ppdocb == pvNil just return whether the selection is
     non-empty.
 ***************************************************************************/
-bool TXDD::_FCopySel(PDOCB *ppdocb)
+bool TXDD::_FCopySel(PDocumentBase *ppdocb)
 {
     AssertThis(0);
     PTXDC ptxdc;
@@ -1748,13 +1748,13 @@ void TXDD::_ClearSel(void)
 /***************************************************************************
     Paste the given doc into this one.
 ***************************************************************************/
-bool TXDD::_FPaste(PCLIP pclip, bool fDoIt, long cid)
+bool TXDD::_FPaste(PClipboardObject pclip, bool fDoIt, long cid)
 {
     AssertThis(0);
     AssertPo(pclip, 0);
     long ich1, ich2, cch;
     PTXDC ptxdc;
-    PBSF pbsf;
+    PFileByteStream pbsf;
 
     if (cidPaste != cid || !pclip->FGetFormat(kclsTXDC))
         return fFalse;
@@ -1762,7 +1762,7 @@ bool TXDD::_FPaste(PCLIP pclip, bool fDoIt, long cid)
     if (!fDoIt)
         return fTrue;
 
-    if (!pclip->FGetFormat(kclsTXDC, (PDOCB *)&ptxdc))
+    if (!pclip->FGetFormat(kclsTXDC, (PDocumentBase *)&ptxdc))
         return fFalse;
 
     AssertPo(ptxdc, 0);

@@ -8,7 +8,7 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> CMH ---> GOB ---> APE
+    BASE ---> CMH ---> GraphicsObject ---> APE
 
 ***************************************************************************/
 #ifndef APE_H
@@ -44,7 +44,7 @@ struct APET
     Actor preview entity class
 ****************************************/
 typedef class APE *PAPE;
-#define APE_PAR GOB
+#define APE_PAR GraphicsObject
 #define kclsAPE 'APE'
 class APE : public APE_PAR
 {
@@ -54,11 +54,11 @@ class APE : public APE_PAR
     CMD_MAP_DEC(APE)
 
   protected:
-    PBWLD _pbwld;       // BRender world to draw actor in
+    PWorld _pbwld;       // BRender world to draw actor in
     PTMPL _ptmpl;       // Template (or TDT) of the actor being previewed
     PBODY _pbody;       // Body of the actor being previewed
     APET _apet;         // Currently selected tool
-    PGL _pglgms;        // What materials are attached to what body part sets
+    PDynamicArray _pglgms;        // What materials are attached to what body part sets
     long _celn;         // Current cel of action
     CLOK _clok;         // To time cel cycling
     BLIT _blit;         // BRender light data
@@ -70,7 +70,7 @@ class APE : public APE_PAR
     long _ibsetOnlyAcc; // ibset of accessory, if only one (else ivNil)
 
   protected:
-    APE(PGCB pgcb) : GOB(pgcb), _clok(CMH::HidUnique())
+    APE(PGCB pgcb) : GraphicsObject(pgcb), _clok(CMH::HidUnique())
     {
     }
     bool _FInit(PTMPL ptmpl, PCOST pcost, long anid, bool fCycleCels, PRCA prca);
@@ -101,7 +101,7 @@ class APE : public APE_PAR
 
     bool FChangeTdt(PSTN pstn, long tdts, PTAG ptagTdf);
     bool FSetTdtMtrl(PTAG ptagMtrl);
-    bool FGetTdtMtrlCno(CNO *pcno);
+    bool FGetTdtMtrlCno(ChunkNumber *pcno);
 
     void GetTdtInfo(PSTN pstn, long *ptdts, PTAG ptagTdf);
     long Anid(void)

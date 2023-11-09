@@ -14,7 +14,7 @@ ASSERTNAME
 
 RTCLASS(SPLOT)
 
-BEGIN_CMD_MAP(SPLOT, GOK)
+BEGIN_CMD_MAP(SPLOT, KidspaceGraphicObject)
 ON_CID_GEN(cidSplotInit, &SPLOT::FCmdInit, pvNil)
 ON_CID_GEN(cidSplotDo, &SPLOT::FCmdSplot, pvNil)
 ON_CID_GEN(cidSplotUpdate, &SPLOT::FCmdUpdate, pvNil)
@@ -32,15 +32,15 @@ END_CMD_MAP_NIL()
 PSPLOT SPLOT::PsplotNew(long hidPar, long hid, PRCA prca)
 {
     PSPLOT psplot = pvNil;
-    PGL pglclr = pvNil;
-    PGOB pgobPar;
+    PDynamicArray pglclr = pvNil;
+    PGraphicsObject pgobPar;
     RC rcRel;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     CLOK clok(CMH::HidUnique());
 
     if ((pgobPar = vapp.Pkwa()->PgobFromHid(hidPar)) == pvNil)
     {
-        Bug("Couldn't find background GOB");
+        Bug("Couldn't find background GraphicsObject");
         goto LFail;
     }
 
@@ -61,7 +61,7 @@ PSPLOT SPLOT::PsplotNew(long hidPar, long hid, PRCA prca)
     }
     if (!psplot->_FEnterState(ksnoInit))
     {
-        Warn("GOK immediately destroyed!");
+        Warn("KidspaceGraphicObject immediately destroyed!");
         goto LFail;
     }
 
@@ -77,7 +77,7 @@ LFail:
 /******************************************************************************
     FCmdInit
         Initializes the splot machine; right now, just sets up the movie
-        and MVU for the splot machine, inside the given GOK parent.  In the
+        and MovieView for the splot machine, inside the given KidspaceGraphicObject parent.  In the
         future, perhaps the content data structures can be inited here, and
         only updated if we fail loading something (which would indicate that
         the user removed a CD or something during the splot machine).
@@ -94,22 +94,22 @@ bool SPLOT::FCmdInit(PCMD pcmd)
     AssertThis(0);
     Assert(_pmvie == pvNil, "Already Inited the Splot Machine");
 
-    PMCC pmcc = pvNil;
-    PGOB pgobParent;
+    PMovieClientCallbacks pmcc = pvNil;
+    PGraphicsObject pgobParent;
     RC rcRel;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if ((pgobParent = vpapp->Pkwa()->PgobFromHid(pcmd->rglw[0])) == pvNil)
     {
-        Bug("Parent GOB for view doesn't exist");
+        Bug("Parent GraphicsObject for view doesn't exist");
         goto LFail;
     }
 
-    pmcc = NewObj MCC(kdxpWorkspace, kdypWorkspace, kcbStudioCache);
+    pmcc = NewObj MovieClientCallbacks(kdxpWorkspace, kdypWorkspace, kcbStudioCache);
     if (pmcc == pvNil)
         goto LFail;
 
-    if ((_pmvie = MVIE::PmvieNew(vpapp->FSlowCPU(), pmcc)) == pvNil)
+    if ((_pmvie = Movie::PmvieNew(vpapp->FSlowCPU(), pmcc)) == pvNil)
         goto LFail;
 
     _pmvie->SetFSoundsEnabled(fTrue);
@@ -148,7 +148,7 @@ bool SPLOT::FCmdSplot(PCMD pcmd)
     AssertThis(0);
 
     bool fDirty = fFalse;
-    CKI cki;
+    ChunkIdentification cki;
     THD thd;
 
     vapp.BeginLongOp();
@@ -309,7 +309,7 @@ bool SPLOT::FCmdUpdate(PCMD pcmd)
         /* Still need to ensure on HD though */
         _pbclBkgd->GetThd(_ithdBkgd, &thd);
         Assert(thd.tag.sid != ksidUseCrf, "Need to open tag before using it");
-        if (!BKGD::FCacheToHD(&thd.tag))
+        if (!Background::FCacheToHD(&thd.tag))
             goto LFail;
         if (!_pmvie->FAddScen(&thd.tag))
             goto LFail;
@@ -402,7 +402,7 @@ SPLOT::~SPLOT(void)
     {
         /* This should be freed when its parent, the Splot Machine View gob, is
             freed */
-        Assert(_pmvie->PddgGet(0) == pvNil, "MVU wasn't freed");
+        Assert(_pmvie->PddgGet(0) == pvNil, "MovieView wasn't freed");
 
         _pmvie->Pmsq()->StopAll();
         _pmvie->Pmsq()->SndOnShort();

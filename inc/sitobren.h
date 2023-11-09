@@ -31,10 +31,10 @@ typedef struct _bmdb
     HSHDB hshdb;   // hash DB header
     MODLF *pmodlf; // the file data
     long cbModlf;
-    CHID chidBmdl;  // BMDL child ID
-    CNO cnoBmdl;    // BMDL CNO
+    ChildChunkID chidBmdl;  // BMDL child ID
+    ChunkNumber cnoBmdl;    // BMDL ChunkNumber
     char *pszName;  // name of the BMDL
-    PGL pglkidCmtl; // GL of CMTL parents' CNOs
+    PDynamicArray pglkidCmtl; // DynamicArray of CMTL parents' CNOs
     unsigned fFixWrap : 1, fSpherical : 1;
 } BMDB, *PBMDB;
 
@@ -75,16 +75,16 @@ typedef struct _crng
 /* A CMTL descriptor */
 typedef struct _cmtld
 {
-    CNO cno;      // the CMTL's CNO
-    CHID chidCur; // the next CHID for the CMTL's children
+    ChunkNumber cno;      // the CMTL's ChunkNumber
+    ChildChunkID chidCur; // the next ChildChunkID for the CMTL's children
     short ibps;   // the body part set as specified in the .hrc file
-    CHID chid;    // the CHID of this CMTL
+    ChildChunkID chid;    // the ChildChunkID of this CMTL
 } CMTLD, *PCMTLD;
 
-/* A TMAP descriptor */
+/* A TextureMap descriptor */
 typedef struct _tmapd
 {
-    PSTN pstn;    // the name of the TMAP
+    PSTN pstn;    // the name of the TextureMap
     long ccnoPar; // the number of MTRL parents
     long xp;      // the size of the bitmap
     long yp;
@@ -133,13 +133,13 @@ enum
 
 typedef struct _s2btk
 {
-    TOK tok;
+    Token tok;
     double fl;
 } S2BTK, *PS2BTK;
 
 typedef class S2BLX *PS2BLX;
 #define kclsS2BLX 's2bl'
-#define S2BLX_PAR LEXB
+#define S2BLX_PAR LexerBase
 class S2BLX : public S2BLX_PAR
 {
     RTCLASS_DEC
@@ -151,7 +151,7 @@ class S2BLX : public S2BLX_PAR
     double _fl;
 
   protected:
-    virtual void _ReadNumTok(PTOK ptok, achar ch, long lwBase, long cchMax);
+    virtual void _ReadNumTok(PToken ptok, achar ch, long lwBase, long cchMax);
 
   public:
     S2BLX(PFIL pfil, bool fUnionStrings = fTrue) : S2BLX_PAR(pfil, fUnionStrings)
@@ -161,9 +161,9 @@ class S2BLX : public S2BLX_PAR
     {
     }
 
-    virtual bool FGetTok(PTOK ptok);
+    virtual bool FGetTok(PToken ptok);
     bool FGetS2btk(PS2BTK ps2btk);
-    void GetFni(PFNI pfni)
+    void GetFni(PFilename pfni)
     {
         _pfil->GetFni(pfni);
     }
@@ -179,8 +179,8 @@ class S2BLX : public S2BLX_PAR
 #define CnoNext() CnoAdd(1)
 
 /* Some useful helper functions */
-PGL PglcrngFromPal(PGL pglclr);
-long LwcrngNearestBrclr(BRCLR brclr, PGL pglclr, PGL pglcrng);
+PDynamicArray PglcrngFromPal(PDynamicArray pglclr);
+long LwcrngNearestBrclr(BRCLR brclr, PDynamicArray pglclr, PDynamicArray pglcrng);
 
 #if HASH_FIXED
 
@@ -277,10 +277,10 @@ class S2B : public S2B_PAR
   protected:
     /* Used by script interpreter and chunk output code */
     PS2BLX _ps2blx; // used to process script file
-    CHSE _chse;     // used to dump chunk text to output file
-    CTG _ctgPar;    // CTG and CNO of current parent
-    CNO _cnoPar;
-    CNO _cnoCur;  // Current chunk number
+    SourceEmitter _chse;     // used to dump chunk text to output file
+    ChunkTag _ctgPar;    // ChunkTag and ChunkNumber of current parent
+    ChunkNumber _cnoPar;
+    ChunkNumber _cnoCur;  // Current chunk number
     STN _stnT;    // tmp buf for S2B to use
     S2BTK _s2btk; // current script token
     int _iZsign;  // Z multiplier
@@ -288,24 +288,24 @@ class S2B : public S2B_PAR
     /* Used by TMPL-specific stuff */
     STN _stnTmpl;
     STN _stnActn;
-    CHID _chidActn; // Next available ACTN CHID
-    CHID _chidBmdl;
-    CHID _chidCmtl;
+    ChildChunkID _chidActn; // Next available ACTN ChildChunkID
+    ChildChunkID _chidBmdl;
+    ChildChunkID _chidCmtl;
     short _ibpCur; // current body part #
-    PGL _pglibactPar;
-    PGL _pglbs;
-    PGL _pglcmtld;
-    PGG _pggcl;
-    PGL _pglxf;
-    PGL _pglibps; // list of body part sets to generate costumes for
-    PGG _pggcm;
-    PGG _pggtmapd; // list of TMAP chunks used by the current actor
+    PDynamicArray _pglibactPar;
+    PDynamicArray _pglbs;
+    PDynamicArray _pglcmtld;
+    PGeneralGroup _pggcl;
+    PDynamicArray _pglxf;
+    PDynamicArray _pglibps; // list of body part sets to generate costumes for
+    PGeneralGroup _pggcm;
+    PGeneralGroup _pggtmapd; // list of TextureMap chunks used by the current actor
 #if HASH_FIXED
     PBMDB *_prgpbmdb; // BMDL database
 //	PBMATDB *_prgpbmatdb;	// BMAT34 database
 #else             /* HASH_FIXED */
-    PGL _pglpbmdb;   // BMDL database
-    PGL _pglpbmatdb; // XF database
+    PDynamicArray _pglpbmdb;   // BMDL database
+    PDynamicArray _pglpbmatdb; // XF database
 #endif            /* !HASH_FIXED */
     PBMHR _pbmhr; // BMDL hierarchy for current cel
     int _cMesh;   // count of mesh nodes for current cel
@@ -321,8 +321,8 @@ class S2B : public S2B_PAR
     uint _mdBPS : 2;
 
     /* Useful data that doesn't wind up in chunks */
-    PGL _pglcrng;
-    PGL _pglclr;
+    PDynamicArray _pglcrng;
+    PDynamicArray _pglclr;
 
   protected:
     /* General script interpreter and chunk output stuff */
@@ -331,7 +331,7 @@ class S2B : public S2B_PAR
     bool _FDoTtBackgroundS2B(void);
     bool _FDoTtCostume(void);
     bool _FReadCmdline(char *szResult, bool *pfGotTok, const SCRP rgscrp[], ...);
-    void _DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack);
+    void _DumpHeader(ChunkTag ctg, ChunkNumber cno, PSTN pstnName, bool fPack);
 
     /* TMPL-specific stuff */
     bool _FInitGlpiCost(bool fForceCost);
@@ -348,10 +348,10 @@ class S2B : public S2B_PAR
     bool _FModlfToBmdl(PMODLF pmodlf, PBMDL *ppbmdl);
     bool _FBmdlToModlf(PBMDL pbmdl, PMODLF *ppmodlf, long *pcb);
     bool _FSetCps(PBMHR pbmhr, CPS *pcps);
-    bool _FChidFromModlf(PBMHR pbmhr, CHID *pchid, PBMDB *ppbmdb = pvNil);
-    bool _FAddBmdlParent(PBMDB pbmdb, KID *pkid);
-    bool _FInsertPhshdb(PHSHDB phshdb, PGL pglphshdb);
-    bool _FIphshdbFromLuHash(uint luHash, long *piphshdb, PGL pglphshdb);
+    bool _FChidFromModlf(PBMHR pbmhr, ChildChunkID *pchid, PBMDB *ppbmdb = pvNil);
+    bool _FAddBmdlParent(PBMDB pbmdb, ChildChunkIdentification *pkid);
+    bool _FInsertPhshdb(PHSHDB phshdb, PDynamicArray pglphshdb);
+    bool _FIphshdbFromLuHash(uint luHash, long *piphshdb, PDynamicArray pglphshdb);
     PBMDB _PbmdbFindModlf(MODLF *pmodlf, long cbModlf, uint *pluHashList);
     void _InitCrcTable(void);
     uint _LuHashBytesNoTable(uint luHash, void *pv, long cb);
@@ -361,17 +361,17 @@ class S2B : public S2B_PAR
     bool _FDoBodyPart(PBMHR pbmhr, long ibp);
     void _ApplyBmdlXF(PBMHR pbmhr);
     void _TextureFileFromModel(Model *pmodel, PBMHR pbmhr, bool fWrapOnly = fFalse);
-    bool _FTmapFromBmp(PBMHR pbmhr, CNO cnoPar, PSTN pstnMtrl);
+    bool _FTmapFromBmp(PBMHR pbmhr, ChunkNumber cnoPar, PSTN pstnMtrl);
     bool _FFlushTmaps(void);
 
-    /* BKGD-specific stuff */
+    /* Background-specific stuff */
     bool _FDumpLites(int cLite, PSTN stnBkgd);
     bool _FDumpCameras(int cCam, PSTN pstnBkgd, int iPalBase, int cPal);
     bool _FBvec3Read(PS2BLX ps2blx, BVEC3 *pbvec3, PS2BTK ps2btk);
     void _Bmat34FromVec3(BVEC3 *pbvec3, BMAT34 *pbmat34);
-    void _ReadLite(PSTN pstnLite, LITE *plite);
-    void _ReadCam(PSTN pstnCam, CAM *pcam, PGL *ppglapos);
-    bool _FZbmpFromZpic(PSTN pstnBkgd, CNO cnoPar, int iCam, long dxp, long dyp, CAM *pcam);
+    void _ReadLite(PSTN pstnLite, LightPosition *plite);
+    void _ReadCam(PSTN pstnCam, CameraPosition *pcam, PDynamicArray *ppglapos);
+    bool _FZbmpFromZpic(PSTN pstnBkgd, ChunkNumber cnoPar, int iCam, long dxp, long dyp, CameraPosition *pcam);
 
     /* Brender-knowledgable utilities */
     bool _FBrsFromS2btk(PS2BTK ps2btk, BRS *pbrs)
@@ -390,7 +390,7 @@ class S2B : public S2B_PAR
 
   public:
     static PS2B Ps2bNew(PFIL pfilSrc, bool fSwapHand, uint mdVerbose, int iRound, int iRoundXF, char *pszApp);
-    bool FConvertSI(PMSNK pmsnkErr, PMSNK pmsnkDst, PFNI pfniInc = pvNil, ulong grfs2b = fs2bNil);
+    bool FConvertSI(PMSNK pmsnkErr, PMSNK pmsnkDst, PFilename pfniInc = pvNil, ulong grfs2b = fs2bNil);
 };
 
 #endif // !SITOBREN_H

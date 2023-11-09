@@ -15,7 +15,7 @@
     characters.  It also holds an array of widths and heights of every
     character, to allow proportional spacing.  Fetching a letter's model
     from a TDF involves	looking for a child chunk of the TDF chunk with a
-    CHID equal to the ASCII value of the desired character:
+    ChildChunkID equal to the ASCII value of the desired character:
 
     TDF  // Contains font info (width and height of characters)
      |
@@ -49,12 +49,12 @@ struct TDFF
     //  BRS rgdxr[cch];
     //  BRS rgdyr[cch];
 };
-const BOM kbomTdff = 0x5F000000; // don't forget to swap rgdxr & rgdyr!
+const ByteOrderMask kbomTdff = 0x5F000000; // don't forget to swap rgdxr & rgdyr!
 
 /***************************************************************************
     A PFNRPO to read a TDF from a file.
 ***************************************************************************/
-bool TDF::FReadTdf(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool TDF::FReadTdf(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -88,7 +88,7 @@ bool TDF::FReadTdf(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long
     Initialize the font.  Does not clean up on failure because the
     destructor will.
 ***************************************************************************/
-bool TDF::_FInit(PBLCK pblck)
+bool TDF::_FInit(PDataBlock pblck)
 {
     AssertBaseThis(0);
     AssertPo(pblck, 0);
@@ -155,25 +155,25 @@ TDF::~TDF(void)
     TDF instance in memory...to do that, call FReadTdf with the values
     returned in pckiTdf.
 ***************************************************************************/
-bool TDF::FCreate(PCRF pcrf, PGL pglkid, STN *pstn, CKI *pckiTdf)
+bool TDF::FCreate(PChunkyResourceFile pcrf, PDynamicArray pglkid, STN *pstn, ChunkIdentification *pckiTdf)
 {
     AssertPo(pcrf, 0);
     AssertPo(pglkid, 0);
     AssertPo(pstn, 0);
     AssertNilOrVarMem(pckiTdf);
 
-    CKI ckiTdf;
-    KID kid;
-    KID kid2;
+    ChunkIdentification ckiTdf;
+    ChildChunkIdentification kid;
+    ChildChunkIdentification kid2;
     TDFF tdff;
     BRS *prgdxr = pvNil;
     BRS *prgdyr = pvNil;
     PMODL pmodl;
-    BLCK blck;
+    DataBlock blck;
     long cbrgdwr; // space taken by rgdxr or rgdyr
     long ikid;
     long ckid;
-    CHID chidMax = 0;
+    ChildChunkID chidMax = 0;
     long ikidLetteri = -1;
 
     // Find chidMax
@@ -183,7 +183,7 @@ bool TDF::FCreate(PCRF pcrf, PGL pglkid, STN *pstn, CKI *pckiTdf)
         pglkid->Get(ikid, &kid);
         if (kid.chid > chidMax)
             chidMax = kid.chid;
-        if (kid.chid == (CHID)ChLit('i'))
+        if (kid.chid == (ChildChunkID)ChLit('i'))
             ikidLetteri = ikid;
     }
 
@@ -215,7 +215,7 @@ bool TDF::FCreate(PCRF pcrf, PGL pglkid, STN *pstn, CKI *pckiTdf)
         {
             goto LFail;
         }
-        if (pmodl->Dxr() == 0 && kid.chid == (CHID)ChLit(' ') && ikidLetteri != -1)
+        if (pmodl->Dxr() == 0 && kid.chid == (ChildChunkID)ChLit(' ') && ikidLetteri != -1)
         {
             // Hack to turn null models into space characters:
             // space is the width and height of an "i"
@@ -253,11 +253,11 @@ LFail:
     Get a model for a character from the font.  The chid is equal to the
     ASCII (or Unicode) value of the desired character.
 ***************************************************************************/
-PMODL TDF::PmodlFetch(CHID chid)
+PMODL TDF::PmodlFetch(ChildChunkID chid)
 {
     AssertThis(0);
 
-    KID kid;
+    ChildChunkIdentification kid;
 
     if (!Pcrf()->Pcfl()->FGetKidChid(Ctg(), Cno(), chid, &kid))
     {

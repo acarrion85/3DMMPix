@@ -25,18 +25,18 @@ const br_ufraction kbrufKsDefault = BR_UFRACTION(0.60);
 const BRS krPowerDefault = BR_SCALAR(50);
 const byte kbOpaque = 0xff;
 
-PTMAP MTRL::_ptmapShadeTable = pvNil; // shade table for all MTRLs
+PTextureMap MTRL::_ptmapShadeTable = pvNil; // shade table for all MTRLs
 
 /***************************************************************************
     Call this function to assign the global shade table.  It is read from
     the given chunk.
 ***************************************************************************/
-bool MTRL::FSetShadeTable(PCFL pcfl, CTG ctg, CNO cno)
+bool MTRL::FSetShadeTable(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertPo(pcfl, 0);
 
     ReleasePpo(&_ptmapShadeTable);
-    _ptmapShadeTable = TMAP::PtmapRead(pcfl, ctg, cno);
+    _ptmapShadeTable = TextureMap::PtmapRead(pcfl, ctg, cno);
     return (pvNil != _ptmapShadeTable);
 }
 
@@ -89,7 +89,7 @@ PMTRL MTRL::PmtrlNew(long iclrBase, long cclr)
 /***************************************************************************
     A PFNRPO to read MTRL objects.
 ***************************************************************************/
-bool MTRL::FReadMtrl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool MTRL::FReadMtrl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -117,17 +117,17 @@ bool MTRL::FReadMtrl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 /***************************************************************************
     Read the given MTRL chunk from file
 ***************************************************************************/
-bool MTRL::_FInit(PCRF pcrf, CTG ctg, CNO cno)
+bool MTRL::_FInit(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno)
 {
     AssertBaseThis(0);
     AssertPo(pcrf, 0);
 
-    PCFL pcfl = pcrf->Pcfl();
-    BLCK blck;
+    PChunkyFile pcfl = pcrf->Pcfl();
+    DataBlock blck;
     MTRLF mtrlf;
-    KID kid;
+    ChildChunkIdentification kid;
     MTRL *pmtrlThis = this; // to get MTRL from BMTL
-    PTMAP ptmap = pvNil;
+    PTextureMap ptmap = pvNil;
 
     if (!pcfl->FFind(ctg, cno, &blck) || !blck.FUnpackData())
         return fFalse;
@@ -164,11 +164,11 @@ bool MTRL::_FInit(PCRF pcrf, CTG ctg, CNO cno)
     // now read texture map, if any
     if (pcfl->FGetKidChidCtg(ctg, cno, 0, kctgTmap, &kid))
     {
-        ptmap = (PTMAP)pcrf->PbacoFetch(kid.cki.ctg, kid.cki.cno, TMAP::FReadTmap);
+        ptmap = (PTextureMap)pcrf->PbacoFetch(kid.cki.ctg, kid.cki.cno, TextureMap::FReadTmap);
         if (pvNil == ptmap)
             return fFalse;
         _pbmtl->colour_map = ptmap->Pbpmp();
-        Assert((PTMAP)_pbmtl->colour_map->identifier == ptmap, "lost tmap!");
+        Assert((PTextureMap)_pbmtl->colour_map->identifier == ptmap, "lost tmap!");
         AssertPo(_ptmapShadeTable, 0);
         _pbmtl->index_shade = _ptmapShadeTable->Pbpmp();
         _pbmtl->flags |= BR_MATF_MAP_COLOUR;
@@ -199,7 +199,7 @@ LFail:
     /* REVIEW ***** (peted): Only the code that I added uses this LFail
         case.  It's my opinion that any API which can fail should clean up
         after itself.  It happens that in the case of this MTRL class, when
-        the caller releases this instance, the TMAP and BMTL are freed anyway,
+        the caller releases this instance, the TextureMap and BMTL are freed anyway,
         but I don't think that it's good to count on that */
     ReleasePpo(&ptmap);
     _pbmtl->colour_map = pvNil;
@@ -211,14 +211,14 @@ LFail:
 /***************************************************************************
     Read a PIX and build a PMTRL from it
 ***************************************************************************/
-PMTRL MTRL::PmtrlNewFromPix(PFNI pfni)
+PMTRL MTRL::PmtrlNewFromPix(PFilename pfni)
 {
     AssertPo(pfni, ffniFile);
 
     STN stn;
     PMTRL pmtrl;
     PBMTL pbmtl;
-    PTMAP ptmap;
+    PTextureMap ptmap;
 
     pmtrl = NewObj MTRL;
     if (pvNil == pmtrl)
@@ -244,16 +244,16 @@ PMTRL MTRL::PmtrlNewFromPix(PFNI pfni)
     if (pvNil == pbmtl->colour_map)
         goto LFail;
 
-    // Create a TMAP for this BPMP.  We don't directly save
+    // Create a TextureMap for this BPMP.  We don't directly save
     // the ptmap...it's automagically attached to the
     // BPMP's identifier.
-    ptmap = TMAP::PtmapNewFromBpmp(pbmtl->colour_map);
+    ptmap = TextureMap::PtmapNewFromBpmp(pbmtl->colour_map);
     if (pvNil == ptmap)
     {
         BrPixelmapFree(pbmtl->colour_map);
         goto LFail;
     }
-    Assert((PTMAP)pbmtl->colour_map->identifier == ptmap, "lost our TMAP!");
+    Assert((PTextureMap)pbmtl->colour_map->identifier == ptmap, "lost our TextureMap!");
     AssertPo(_ptmapShadeTable, 0);
     pbmtl->index_shade = _ptmapShadeTable->Pbpmp();
     pbmtl->flags |= BR_MATF_MAP_COLOUR;
@@ -269,19 +269,19 @@ LFail:
 /***************************************************************************
     Read a BMP and build a PMTRL from it
 ***************************************************************************/
-PMTRL MTRL::PmtrlNewFromBmp(PFNI pfni, PGL pglclr)
+PMTRL MTRL::PmtrlNewFromBmp(PFilename pfni, PDynamicArray pglclr)
 {
     AssertPo(pfni, ffniFile);
     AssertPo(_ptmapShadeTable, 0);
 
     PMTRL pmtrl;
-    PTMAP ptmap;
+    PTextureMap ptmap;
 
     pmtrl = PmtrlNew();
     if (pvNil == pmtrl)
         return pvNil;
 
-    ptmap = TMAP::PtmapReadNative(pfni, pglclr);
+    ptmap = TextureMap::PtmapReadNative(pfni, pglclr);
     if (pvNil == ptmap)
     {
         ReleasePpo(&pmtrl);
@@ -311,12 +311,12 @@ PMTRL MTRL::PmtrlFromBmtl(PBMTL pbmtl)
 }
 
 /***************************************************************************
-    Return this MTRL's TMAP, or pvNil if it's a solid-color MTRL.
+    Return this MTRL's TextureMap, or pvNil if it's a solid-color MTRL.
     Note: This function doesn't AssertThis because it gets called on
     objects which are not necessarily valid (e.g., from the destructor and
     from AssertThis())
 ***************************************************************************/
-PTMAP MTRL::Ptmap(void)
+PTextureMap MTRL::Ptmap(void)
 {
     AssertBaseThis(0);
 
@@ -325,21 +325,21 @@ PTMAP MTRL::Ptmap(void)
     else if (pvNil == _pbmtl->colour_map)
         return pvNil;
     else
-        return (PTMAP)_pbmtl->colour_map->identifier;
+        return (PTextureMap)_pbmtl->colour_map->identifier;
 }
 
 /***************************************************************************
     Write a MTRL to a chunky file
 ***************************************************************************/
-bool MTRL::FWrite(PCFL pcfl, CTG ctg, CNO *pcno)
+bool MTRL::FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     AssertVarMem(pcno);
 
     MTRLF mtrlf;
-    CNO cnoChild;
-    PTMAP ptmap;
+    ChunkNumber cnoChild;
+    PTextureMap ptmap;
 
     mtrlf.bo = kboCur;
     mtrlf.osk = koskCur;
@@ -378,7 +378,7 @@ MTRL::~MTRL(void)
 {
     AssertBaseThis(0);
 
-    PTMAP ptmap;
+    PTextureMap ptmap;
 
     ptmap = Ptmap();
 
@@ -410,7 +410,7 @@ void MTRL::MarkMem(void)
 {
     AssertThis(0);
 
-    PTMAP ptmap;
+    PTextureMap ptmap;
 
     MTRL_PAR::MarkMem();
     ptmap = Ptmap();
@@ -439,11 +439,11 @@ void MTRL::MarkShadeTable(void)
 /***************************************************************************
     Static function to see if the given chunk has MODL children
 ***************************************************************************/
-bool CMTL::FHasModels(PCFL pcfl, CTG ctg, CNO cno)
+bool CMTL::FHasModels(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertPo(pcfl, 0);
 
-    KID kid;
+    ChildChunkIdentification kid;
 
     return pcfl->FGetKidChidCtg(ctg, cno, 0, kctgBmdl, &kid);
 }
@@ -452,13 +452,13 @@ bool CMTL::FHasModels(PCFL pcfl, CTG ctg, CNO cno)
     Static function to see if the two given CMTLs have the same child
     MODLs
 ***************************************************************************/
-bool CMTL::FEqualModels(PCFL pcfl, CNO cno1, CNO cno2)
+bool CMTL::FEqualModels(PChunkyFile pcfl, ChunkNumber cno1, ChunkNumber cno2)
 {
     AssertPo(pcfl, 0);
 
-    CHID chid = 0;
-    KID kid1;
-    KID kid2;
+    ChildChunkID chid = 0;
+    ChildChunkIdentification kid1;
+    ChildChunkIdentification kid2;
 
     while (pcfl->FGetKidChidCtg(kctgCmtl, cno1, chid, kctgBmdl, &kid1))
     {
@@ -512,7 +512,7 @@ PCMTL CMTL::PcmtlNew(long ibset, long cbprt, PMTRL *prgpmtrl)
 /***************************************************************************
     A PFNRPO to read CMTL objects.
 ***************************************************************************/
-bool CMTL::FReadCmtl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool CMTL::FReadCmtl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -541,16 +541,16 @@ bool CMTL::FReadCmtl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 /***************************************************************************
     Read a CMTL from file
 ***************************************************************************/
-bool CMTL::_FInit(PCRF pcrf, CTG ctg, CNO cno)
+bool CMTL::_FInit(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno)
 {
     AssertBaseThis(0);
     AssertPo(pcrf, 0);
 
     long ikid;
     long imtrl;
-    KID kid;
-    BLCK blck;
-    PCFL pcfl = pcrf->Pcfl();
+    ChildChunkIdentification kid;
+    DataBlock blck;
+    PChunkyFile pcfl = pcrf->Pcfl();
     CMTLF cmtlf;
 
     if (!pcfl->FFind(ctg, cno, &blck) || !blck.FUnpackData())

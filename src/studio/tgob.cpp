@@ -23,7 +23,7 @@ RTCLASS(TGOB)
  * Constructor for text gobs.
  *
  ****************************************************/
-TGOB::TGOB(GCB *pgcb) : GOB(pgcb)
+TGOB::TGOB(GraphicsObjectBlock *pgcb) : GraphicsObject(pgcb)
 {
     _acrFore = kacrBlack;
     _acrBack = kacrClear;
@@ -38,7 +38,7 @@ TGOB::TGOB(GCB *pgcb) : GOB(pgcb)
  * Constructor for text gobs.
  *
  ****************************************************/
-TGOB::TGOB(long hid) : GOB(hid)
+TGOB::TGOB(long hid) : GraphicsObject(hid)
 {
     _acrFore = kacrBlack;
     _acrBack = kacrClear;
@@ -137,9 +137,9 @@ PTGOB TGOB::PtgobCreate(long kidFrm, long idsFont, long tav, long hid)
 {
     RC rcRel;
     RC rcAbs;
-    PGOB pgob;
+    PGraphicsObject pgob;
     STN stn;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     long onn;
     PTGOB ptgob;
 
@@ -153,7 +153,7 @@ PTGOB TGOB::PtgobCreate(long kidFrm, long idsFont, long tav, long hid)
         return pvNil;
 
     if (hidNil == hid)
-        hid = GOB::HidUnique();
+        hid = GraphicsObject::HidUnique();
     gcb.Set(hid, pgob, fgobNil, kginDefault, &rcAbs, &rcRel);
 
     if (pvNil == (ptgob = NewObj TGOB(&gcb)))
@@ -161,10 +161,10 @@ PTGOB TGOB::PtgobCreate(long kidFrm, long idsFont, long tav, long hid)
 
     if (idsFont != idsNil)
     {
-        PSTDIO pstdio;
+        PStudio pstdio;
 
-        pstdio = (PSTDIO)vapp.Pkwa()->PgobFromCls(kclsSTDIO);
-        Assert(pstdio != pvNil, "Creating a TGOB with no STDIO present");
+        pstdio = (PStudio)vapp.Pkwa()->PgobFromCls(kclsStudio);
+        Assert(pstdio != pvNil, "Creating a TGOB with no Studio present");
         pstdio->GetStnMisc(idsFont, &stn);
         vapp.FGetOnn(&stn, &onn); //  Ignore failure
         if (onn != onnNil)

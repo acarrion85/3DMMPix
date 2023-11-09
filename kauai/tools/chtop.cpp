@@ -22,7 +22,7 @@ RTCLASS(HTRU)
 #undef SPELL
 #endif // UNICODE
 
-BEGIN_CMD_MAP(HEDG, DDG)
+BEGIN_CMD_MAP(HEDG, DocumentDisplayGraphicsObject)
 ON_CID_GEN(cidDeleteTopic, &HEDG::FCmdDeleteTopic, &HEDG::FEnableHedgCmd)
 ON_CID_GEN(cidEditTopic, &HEDG::FCmdEditTopic, &HEDG::FEnableHedgCmd)
 ON_CID_GEN(cidNewTopic, &HEDG::FCmdNewTopic, pvNil)
@@ -34,7 +34,7 @@ ON_CID_GEN(cidSpellCheck, &HEDG::FCmdCheckSpelling, &HEDG::FEnableHedgCmd)
 ON_CID_GEN(cidDumpText, &HEDG::FCmdDump, &HEDG::FEnableHedgCmd)
 END_CMD_MAP_NIL()
 
-BEGIN_CMD_MAP(HETG, TXRG)
+BEGIN_CMD_MAP(HETG, RichTextDocumentGraphicsObject)
 ON_CID_GEN(cidGroupText, &HETG::FCmdGroupText, &HETG::FEnableHetgCmd)
 ON_CID_GEN(cidLineSpacing, &HETG::FCmdLineSpacing, pvNil)
 ON_CID_GEN(cidFormatPicture, &HETG::FCmdFormatPicture, &HETG::FEnableHetgCmd)
@@ -81,23 +81,23 @@ HEDO::~HEDO(void)
     Use pfni == pvNil to create a new file, non-nil to open an
     existing file.
 ***************************************************************************/
-PHEDO HEDO::PhedoNew(FNI *pfni, PRCA prca)
+PHEDO HEDO::PhedoNew(Filename *pfni, PRCA prca)
 {
     AssertNilOrPo(pfni, ffniFile);
     AssertPo(prca, 0);
-    PCFL pcfl;
+    PChunkyFile pcfl;
     PHEDO phedo;
 
     if (pvNil == pfni)
-        pcfl = CFL::PcflCreateTemp();
+        pcfl = ChunkyFile::PcflCreateTemp();
     else
     {
         AssertPo(pfni, ffniFile);
 
         // make sure no other docs are based on this pcfl.
-        if (pvNil != DOCB::PdocbFromFni(pfni))
+        if (pvNil != DocumentBase::PdocbFromFni(pfni))
             return pvNil;
-        pcfl = CFL::PcflOpen(pfni, fcflNil);
+        pcfl = ChunkyFile::PcflOpen(pfni, fcflNil);
     }
 
     if (pvNil == pcfl)
@@ -116,19 +116,19 @@ PHEDO HEDO::PhedoNew(FNI *pfni, PRCA prca)
 }
 
 /***************************************************************************
-    Create a new DDG for the HEDO.
+    Create a new DocumentDisplayGraphicsObject for the HEDO.
 ***************************************************************************/
-PDDG HEDO::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject HEDO::PddgNew(PGCB pgcb)
 {
     AssertThis(0);
     return HEDG::PhedgNew(this, _pcfl, pgcb);
 }
 
 /***************************************************************************
-    Get the current FNI for the doc.  Return false if the doc is not
-    currently based on an FNI (it's a new doc or an internal one).
+    Get the current Filename for the doc.  Return false if the doc is not
+    currently based on an Filename (it's a new doc or an internal one).
 ***************************************************************************/
-bool HEDO::FGetFni(FNI *pfni)
+bool HEDO::FGetFni(Filename *pfni)
 {
     AssertThis(0);
     AssertBasePo(pfni, 0);
@@ -141,12 +141,12 @@ bool HEDO::FGetFni(FNI *pfni)
 
 /***************************************************************************
     Save the document and optionally set this fni as the current one.
-    If the doc is currently based on an FNI, pfni may be nil, indicating
+    If the doc is currently based on an Filename, pfni may be nil, indicating
     that this is a normal save (not save as).  If pfni is not nil and
     fSetFni is false, this just writes a copy of the doc but doesn't change
     the doc one bit.
 ***************************************************************************/
-bool HEDO::FSaveToFni(FNI *pfni, bool fSetFni)
+bool HEDO::FSaveToFni(Filename *pfni, bool fSetFni)
 {
     AssertThis(0);
     if (!fSetFni && pvNil != pfni)
@@ -164,7 +164,7 @@ bool HEDO::FSaveToFni(FNI *pfni, bool fSetFni)
 /***************************************************************************
     Ask the user what file they want to save to.
 ***************************************************************************/
-bool HEDO::FGetFniSave(FNI *pfni)
+bool HEDO::FGetFniSave(Filename *pfni)
 {
     AssertThis(0);
     AssertPo(pfni, 0);
@@ -179,11 +179,11 @@ bool HEDO::FGetFniSave(FNI *pfni)
     Invalidate all DDGs on this HEDO.  Also dirties the document.  Should be
     called by any code that edits the document.
 ***************************************************************************/
-void HEDO::InvalAllDdg(CNO cno)
+void HEDO::InvalAllDdg(ChunkNumber cno)
 {
     AssertThis(0);
     long ipddg;
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
 
     // mark the document dirty
     SetDirty();
@@ -206,7 +206,7 @@ void HEDO::InvalAllDdg(CNO cno)
 bool HEDO::FExportText(void)
 {
     AssertThis(0);
-    FNI fni;
+    Filename fni;
     PFIL pfil;
     MSFIL msfil;
 
@@ -242,7 +242,7 @@ bool HEDO::FExportText(void)
     Resume searching in the topic at or after the given one, according to
     fAdvance.
 ***************************************************************************/
-void HEDO::DoFindNext(PHETD phetd, CNO cno, bool fAdvance)
+void HEDO::DoFindNext(PHETD phetd, ChunkNumber cno, bool fAdvance)
 {
     AssertThis(0);
     AssertNilOrPo(phetd, 0);
@@ -319,8 +319,8 @@ PHETD HEDO::PhetdOpenNext(PHETD phetd)
     AssertNilOrPo(phetd, 0);
     Assert(pvNil == phetd || phetd->PdocbPar() == this, "bad topic doc");
     long icki;
-    CKI cki;
-    PDOCB pdocb;
+    ChunkIdentification cki;
+    PDocumentBase pdocb;
 
     if (pvNil == phetd)
     {
@@ -382,8 +382,8 @@ PHETD HEDO::PhetdOpenPrev(PHETD phetd)
     AssertNilOrPo(phetd, 0);
     Assert(pvNil == phetd || phetd->PdocbPar() == this, "bad topic doc");
     long icki;
-    CKI cki;
-    PDOCB pdocb;
+    ChunkIdentification cki;
+    PDocumentBase pdocb;
     PHETD phetdNew;
 
     if (pvNil == phetd || (cki.cno = phetd->Cno()) == cnoNil)
@@ -435,7 +435,7 @@ void HEDO::AssertValid(ulong grf)
 /***************************************************************************
     Constructor for TSEL class.
 ***************************************************************************/
-TSEL::TSEL(PCFL pcfl)
+TSEL::TSEL(PChunkyFile pcfl)
 {
     AssertPo(pcfl, 0);
     _pcfl = pcfl;
@@ -460,7 +460,7 @@ void TSEL::_SetNil(void)
 bool TSEL::FSetIcki(long icki)
 {
     AssertThis(0);
-    CKI cki;
+    ChunkIdentification cki;
 
     if (icki == ivNil || !_pcfl->FGetCkiCtg(kctgHelpTopic, icki, &cki))
     {
@@ -477,7 +477,7 @@ bool TSEL::FSetIcki(long icki)
 /***************************************************************************
     Set the selection to the given cno.
 ***************************************************************************/
-bool TSEL::FSetCno(CNO cno)
+bool TSEL::FSetCno(ChunkNumber cno)
 {
     AssertThis(0);
 
@@ -520,7 +520,7 @@ void TSEL::AssertValid(ulong grf)
 /***************************************************************************
     Constructor for the HEDG.
 ***************************************************************************/
-HEDG::HEDG(PHEDO phedo, PCFL pcfl, PGCB pgcb) : DDG(phedo, pgcb), _tsel(pcfl)
+HEDG::HEDG(PHEDO phedo, PChunkyFile pcfl, PGCB pgcb) : DocumentDisplayGraphicsObject(phedo, pgcb), _tsel(pcfl)
 {
     AssertPo(pcfl, 0);
     RC rc;
@@ -541,7 +541,7 @@ HEDG::HEDG(PHEDO phedo, PCFL pcfl, PGCB pgcb) : DDG(phedo, pgcb), _tsel(pcfl)
 /***************************************************************************
     Static method to create a new HEDG.
 ***************************************************************************/
-PHEDG HEDG::PhedgNew(PHEDO phedo, PCFL pcfl, PGCB pgcb)
+PHEDG HEDG::PhedgNew(PHEDO phedo, PChunkyFile pcfl, PGCB pgcb)
 {
     PHEDG phedg;
 
@@ -565,7 +565,7 @@ PHEDG HEDG::PhedgNew(PHEDO phedo, PCFL pcfl, PGCB pgcb)
 void HEDG::_Activate(bool fActive)
 {
     AssertThis(0);
-    DDG::_Activate(fActive);
+    DocumentDisplayGraphicsObject::_Activate(fActive);
 
     GNV gnv(this);
     _DrawSel(&gnv);
@@ -575,7 +575,7 @@ void HEDG::_Activate(bool fActive)
     Invalidate the display from cno to the end of the display.  If we're
     the active HEDG, also redraw.
 ***************************************************************************/
-void HEDG::InvalCno(CNO cno)
+void HEDG::InvalCno(ChunkNumber cno)
 {
     AssertThis(0);
     long icki, ickiT;
@@ -617,7 +617,7 @@ void HEDG::Draw(PGNV pgnv, RC *prcClip)
     RC rc;
     long yp, xp;
     long icki;
-    CKI cki;
+    ChunkIdentification cki;
 
     pgnv->ClipRc(prcClip);
     pgnv->FillRc(prcClip, kacrWhite);
@@ -625,7 +625,7 @@ void HEDG::Draw(PGNV pgnv, RC *prcClip)
     xp = _XpFromIch(0);
 
     // draw the header
-    stn = PszLit("  Hex         CNO     Name");
+    stn = PszLit("  Hex         ChunkNumber     Name");
     pgnv->DrawStn(&stn, xp, 0);
     pgnv->GetRcSrc(&rc);
     rc.ypTop = _dypHeader - 1;
@@ -673,7 +673,7 @@ void HEDG::_DrawSel(PGNV pgnv)
     this uses the cno, otherwise it uses the icki.  If both are nil, it
     clears the selection.
 ***************************************************************************/
-void HEDG::_SetSel(long icki, CNO cno)
+void HEDG::_SetSel(long icki, ChunkNumber cno)
 {
     AssertThis(0);
 
@@ -843,7 +843,7 @@ bool HEDG::FEnableHedgCmd(PCMD pcmd, ulong *pgrfeds)
     AssertThis(0);
     AssertVarMem(pcmd);
     AssertVarMem(pgrfeds);
-    CKI cki;
+    ChunkIdentification cki;
     STN stn;
 
     *pgrfeds = fedsEnable;
@@ -926,7 +926,7 @@ bool HEDG::FCmdExport(PCMD pcmd)
 /***************************************************************************
     Opens a window onto the given topic.
 ***************************************************************************/
-void HEDG::_EditTopic(CNO cno)
+void HEDG::_EditTopic(ChunkNumber cno)
 {
     AssertThis(0);
     PHETD phetd;
@@ -948,11 +948,11 @@ void HEDG::_EditTopic(CNO cno)
 /***************************************************************************
     Copy the selection to a new document.
 ***************************************************************************/
-bool HEDG::_FCopySel(PDOCB *ppdocb)
+bool HEDG::_FCopySel(PDocumentBase *ppdocb)
 {
     AssertThis(0);
     AssertNilOrVarMem(ppdocb);
-    CNO cno;
+    ChunkNumber cno;
     PHEDO phedo;
 
     if (ivNil == _tsel.Icki())
@@ -977,7 +977,7 @@ bool HEDG::_FCopySel(PDOCB *ppdocb)
 void HEDG::_ClearSel(void)
 {
     AssertThis(0);
-    CNO cno;
+    ChunkNumber cno;
 
     if (ivNil == _tsel.Icki())
         return;
@@ -991,15 +991,15 @@ void HEDG::_ClearSel(void)
 /***************************************************************************
     Paste all the topics of the given document into the current document.
 ***************************************************************************/
-bool HEDG::_FPaste(PCLIP pclip, bool fDoIt, long cid)
+bool HEDG::_FPaste(PClipboardObject pclip, bool fDoIt, long cid)
 {
     AssertThis(0);
     AssertPo(pclip, 0);
     PHEDO phedo;
-    PCFL pcfl;
+    PChunkyFile pcfl;
     long icki;
-    CKI cki;
-    CNO cnoSel;
+    ChunkIdentification cki;
+    ChunkNumber cnoSel;
     bool fFailed = fFalse;
 
     if (cidPaste != cid || !pclip->FGetFormat(kclsHEDO))
@@ -1008,7 +1008,7 @@ bool HEDG::_FPaste(PCLIP pclip, bool fDoIt, long cid)
     if (!fDoIt)
         return fTrue;
 
-    if (!pclip->FGetFormat(kclsHEDO, (PDOCB *)&phedo))
+    if (!pclip->FGetFormat(kclsHEDO, (PDocumentBase *)&phedo))
         return fFalse;
 
     if (pvNil == (pcfl = phedo->Pcfl()) || pcfl->CckiCtg(kctgHelpTopic) <= 0)
@@ -1173,8 +1173,8 @@ bool HEDG::FCmdPrint(PCMD pcmd)
     const long kdypFontTitle = 9;
     const long kdzpBox = 2;
     long icki;
-    CKI cki;
-    PDOCB pdocb;
+    ChunkIdentification cki;
+    PDocumentBase pdocb;
     PRINTDLG pd;
     DOCINFO di;
     STN stn, stnT;
@@ -1185,7 +1185,7 @@ bool HEDG::FCmdPrint(PCMD pcmd)
     long dxpTopic;
     long dypLine, dyp;
     long ilin;
-    HTOP htop;
+    Topic htop;
 
     PHETD phetd = pvNil;
     PHETG phetg = pvNil;
@@ -1281,7 +1281,7 @@ bool HEDG::FCmdPrint(PCMD pcmd)
         if (pvNil == (phetg = (PHETG)phetd->PddgGet(0)))
         {
             // need to open a window onto the doc.
-            GCB gcb(khidDdg, this);
+            GraphicsObjectBlock gcb(khidDdg, this);
             if (pvNil == (phetg = (PHETG)phetd->PddgNew(&gcb)))
                 goto LFail;
         }
@@ -1435,8 +1435,8 @@ bool HEDG::FCmdCheckSpelling(PCMD pcmd)
     AssertVarMem(pcmd);
 
 #ifdef SPELL
-    CNO cno;
-    PDMD pdmd;
+    ChunkNumber cno;
+    PDocumentMDIWindow pdmd;
     long cactT;
     PHETD phetd, phetdT;
     PHETG phetg;
@@ -1526,9 +1526,9 @@ bool HEDG::FCmdDump(PCMD pcmd)
     const long kcchEop = MacWin(1, 2);
     achar rgchEop[] = {kchReturn, kchLineFeed};
     long icki;
-    CKI cki;
-    PDOCB pdocb;
-    FNI fni;
+    ChunkIdentification cki;
+    PDocumentBase pdocb;
+    Filename fni;
     PFIL pfil;
     long cpMac;
     long cp;
@@ -1626,12 +1626,12 @@ void HEDG::AssertValid(ulong grf)
 #endif // DEBUG
 
 /***************************************************************************
-    Static method:  For all HETD children of the DOCB, checks if the chunk
+    Static method:  For all HETD children of the DocumentBase, checks if the chunk
     still exists and nukes the HETD if not.
 ***************************************************************************/
-void HETD::CloseDeletedHetd(PDOCB pdocb)
+void HETD::CloseDeletedHetd(PDocumentBase pdocb)
 {
-    PDOCB pdocbNext;
+    PDocumentBase pdocbNext;
     PHETD phetd;
 
     for (pdocb = pdocb->PdocbChd(); pvNil != pdocb; pdocb = pdocbNext)
@@ -1656,7 +1656,7 @@ void HETD::CloseDeletedHetd(PDOCB pdocb)
 /***************************************************************************
     Static method to look for a HETD for the given chunk.
 ***************************************************************************/
-PHETD HETD::PhetdFromChunk(PDOCB pdocb, CNO cno)
+PHETD HETD::PhetdFromChunk(PDocumentBase pdocb, ChunkNumber cno)
 {
     AssertPo(pdocb, 0);
     Assert(cnoNil != cno, 0);
@@ -1677,7 +1677,7 @@ PHETD HETD::PhetdFromChunk(PDOCB pdocb, CNO cno)
 /***************************************************************************
     Constructor for a help topic document.
 ***************************************************************************/
-HETD::HETD(PDOCB pdocb, PRCA prca, PCFL pcfl, CNO cno) : TXHD(prca, pdocb)
+HETD::HETD(PDocumentBase pdocb, PRCA prca, PChunkyFile pcfl, ChunkNumber cno) : TextDocument(prca, pdocb)
 {
     AssertNilOrPo(pcfl, 0);
     _pcfl = pcfl;
@@ -1697,12 +1697,12 @@ HETD::~HETD(void)
     (pcfl, cno) and using the given prca as the source for pictures
     and buttons.
 ***************************************************************************/
-PHETD HETD::PhetdNew(PDOCB pdocb, PRCA prca, PCFL pcfl, CNO cno)
+PHETD HETD::PhetdNew(PDocumentBase pdocb, PRCA prca, PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertNilOrPo(pdocb, 0);
     AssertPo(prca, 0);
     AssertNilOrPo(pcfl, 0);
-    Assert(pcfl != pvNil || cnoNil == cno, "non-nil cno with nil CFL");
+    Assert(pcfl != pvNil || cnoNil == cno, "non-nil cno with nil ChunkyFile");
     PHETD phetd;
 
     if (pvNil == (phetd = NewObj HETD(pdocb, prca, pcfl, cno)))
@@ -1731,13 +1731,13 @@ PHETD HETD::PhetdNew(PDOCB pdocb, PRCA prca, PCFL pcfl, CNO cno)
 }
 
 /***************************************************************************
-    Read the given chunk into this TXRD.
+    Read the given chunk into this RichTextDocument.
 ***************************************************************************/
-bool HETD::_FReadChunk(PCFL pcfl, CTG ctg, CNO cno, bool fCopyText)
+bool HETD::_FReadChunk(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, bool fCopyText)
 {
     AssertPo(pcfl, 0);
-    BLCK blck;
-    KID kid;
+    DataBlock blck;
+    ChildChunkIdentification kid;
 
     if (!HETD_PAR::_FReadChunk(pcfl, ctg, cno, pvNil, fCopyText ? ftxhdCopyText : ftxhdNil))
     {
@@ -1747,7 +1747,7 @@ bool HETD::_FReadChunk(PCFL pcfl, CTG ctg, CNO cno, bool fCopyText)
     if (pcfl->FGetKidChidCtg(ctg, cno, 0, kctgGst, &kid))
     {
         // read the string table
-        if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (_pgst = GST::PgstRead(&blck)) ||
+        if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (_pgst = StringTable::PgstRead(&blck)) ||
             _pgst->IvMac() != 6 && (_pgst->IvMac() != 5 || !_pgst->FAddRgch(PszLit(""), 0)))
         {
             return fFalse;
@@ -1795,7 +1795,7 @@ void HETD::GetName(PSTN pstn)
 bool HETD::FSave(long cid)
 {
     AssertThis(0);
-    CKI cki;
+    ChunkIdentification cki;
 
     if (cidSave != cid)
     {
@@ -1837,13 +1837,13 @@ bool HETD::FSave(long cid)
     Save a help topic to the given chunky file.  Fill in *pcki with where
     we put the root chunk.
 ***************************************************************************/
-bool HETD::FSaveToChunk(PCFL pcfl, CKI *pcki, bool fRedirectText)
+bool HETD::FSaveToChunk(PChunkyFile pcfl, ChunkIdentification *pcki, bool fRedirectText)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     AssertVarMem(pcki);
-    BLCK blck;
-    CNO cno;
+    DataBlock blck;
+    ChunkNumber cno;
 
     if (!HETD_PAR::FSaveToChunk(pcfl, pcki, fRedirectText))
         return fFalse;
@@ -1865,14 +1865,14 @@ bool HETD::FSaveToChunk(PCFL pcfl, CKI *pcki, bool fRedirectText)
 /***************************************************************************
     Create a new Document MDI window for this help topic.
 ***************************************************************************/
-PDMD HETD::PdmdNew(void)
+PDocumentMDIWindow HETD::PdmdNew(void)
 {
     AssertThis(0);
-    PDMD pdmd;
-    PGOB pgob;
+    PDocumentMDIWindow pdmd;
+    PGraphicsObject pgob;
     RC rcRel, rcAbs;
     long dxpLig, ypT;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if (pvNil == (pdmd = HETD_PAR::PdmdNew()))
         return pvNil;
@@ -1925,9 +1925,9 @@ PDMD HETD::PdmdNew(void)
 }
 
 /***************************************************************************
-    Create a new DDG for the HETD.
+    Create a new DocumentDisplayGraphicsObject for the HETD.
 ***************************************************************************/
-PDDG HETD::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject HETD::PddgNew(PGCB pgcb)
 {
     AssertThis(0);
     return HETG::PhetgNew(this, pgcb);
@@ -1966,7 +1966,7 @@ void HETD::EditHtop(void)
     long dxp;
     STN stn;
 
-    if (pvNil == (pdlg = DLG::PdlgNew(dlidTopicInfo)))
+    if (pvNil == (pdlg = Dialog::PdlgNew(dlidTopicInfo)))
         return;
 
     if (pvNil != _pgst)
@@ -1985,7 +1985,7 @@ void HETD::EditHtop(void)
         _pgst->GetStn(5, &stn);
         pdlg->FPutStn(kiditCnoSoundStnTopic, &stn);
     }
-    else if (pvNil == (_pgst = GST::PgstNew(0, 6, 0)))
+    else if (pvNil == (_pgst = StringTable::PgstNew(0, 6, 0)))
         return;
     else
     {
@@ -2125,7 +2125,7 @@ bool HETD::FDoReplace(long cp1, long cp2, long *pcpMin, long *pcpLim)
 }
 
 /***************************************************************************
-    Get a string corresponding to an entry in the HTOP. -1 means get the
+    Get a string corresponding to an entry in the Topic. -1 means get the
     topic description.
 ***************************************************************************/
 void HETD::GetHtopStn(long istn, PSTN pstn)
@@ -2228,7 +2228,7 @@ enum
 /***************************************************************************
     Insert a picture into the help text document.
 ***************************************************************************/
-bool HETG::FInsertPicture(PCRF pcrf, CTG ctg, CNO cno)
+bool HETG::FInsertPicture(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcrf, 0);
@@ -2239,7 +2239,7 @@ bool HETG::FInsertPicture(PCRF pcrf, CTG ctg, CNO cno)
     long cb;
     byte rgb[kcbMaxDataStn];
 
-    pdlg = DLG::PdlgNew(dlidFormatPicture);
+    pdlg = Dialog::PdlgNew(dlidFormatPicture);
     if (pvNil == pdlg)
         return fFalse;
 
@@ -2328,7 +2328,7 @@ bool _FDlgFormatButton(PDLG pdlg, long *pidit, void *pv)
 /***************************************************************************
     Insert a button into the help text document.
 ***************************************************************************/
-bool HETG::FInsertButton(PCRF pcrf, CTG ctg, CNO cno)
+bool HETG::FInsertButton(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcrf, 0);
@@ -2340,7 +2340,7 @@ bool HETG::FInsertButton(PCRF pcrf, CTG ctg, CNO cno)
     byte rgb[2 * kcbMaxDataStn];
     long cb;
 
-    pdlg = DLG::PdlgNew(dlidFormatButton, _FDlgFormatButton);
+    pdlg = Dialog::PdlgNew(dlidFormatButton, _FDlgFormatButton);
     if (pvNil == pdlg)
         return fFalse;
 
@@ -2369,7 +2369,7 @@ bool HETG::FInsertButton(PCRF pcrf, CTG ctg, CNO cno)
     cb += stn.CbData();
     ReleasePpo(&pdlg);
 
-    if (Phetd()->FInsertButton(cno, (CNO)lw, rgb, cb, cpMin, cpLim - cpMin, _fValidChp ? &_chpIns : pvNil))
+    if (Phetd()->FInsertButton(cno, (ChunkNumber)lw, rgb, cb, cpMin, cpLim - cpMin, _fValidChp ? &_chpIns : pvNil))
     {
         cpMin++;
         SetSel(cpMin, cpMin);
@@ -2438,10 +2438,10 @@ bool HETG::FCmdInsertEdit(PCMD pcmd)
     AssertVarMem(pcmd);
     long cpMin, cpLim;
     PDLG pdlg;
-    ECOS ecos;
+    EditControl ecos;
 
     ecos.ctg = 'EDIT';
-    pdlg = DLG::PdlgNew(dlidFormatEdit, _FDlgFormatEdit);
+    pdlg = Dialog::PdlgNew(dlidFormatEdit, _FDlgFormatEdit);
     if (pvNil == pdlg)
         return fFalse;
 
@@ -2475,7 +2475,7 @@ bool HETG::FCmdInsertEdit(PCMD pcmd)
 /***************************************************************************
     Copy the selection.
 ***************************************************************************/
-bool HETG::_FCopySel(PDOCB *ppdocb)
+bool HETG::_FCopySel(PDocumentBase *ppdocb)
 {
     AssertNilOrVarMem(ppdocb);
     PHETD phetd;
@@ -2493,7 +2493,7 @@ bool HETG::_FCopySel(PDOCB *ppdocb)
 
         phetd->SetInternal();
         phetd->SuspendUndo();
-        if (!phetd->FReplaceTxrd((PTXRD)_ptxtb, cpMin, cpLim - cpMin, 0, 0, fdocNil))
+        if (!phetd->FReplaceTxrd((PRichTextDocument)_ptxtb, cpMin, cpLim - cpMin, 0, 0, fdocNil))
         {
             ReleasePpo(&phetd);
         }
@@ -2547,7 +2547,7 @@ void HETG::Draw(PGNV pgnv, RC *prcClip)
 {
     AssertThis(0);
     RC rc;
-    APT apt = {0x88, 0x00, 0x00, 0x00, 0x22, 0x00, 0x00, 0x00};
+    AbstractPattern apt = {0x88, 0x00, 0x00, 0x00, 0x22, 0x00, 0x00, 0x00};
 
     GetRc(&rc, cooLocal);
     pgnv->FillRcApt(prcClip, &apt, kacrLtGray, kacrWhite);
@@ -2573,7 +2573,7 @@ bool HETG::FCmdGroupText(PCMD pcmd)
     AssertVarMem(pcmd);
     long cpAnchor, cpOther;
     PDLG pdlg;
-    CNO cnoTopic;
+    ChunkNumber cnoTopic;
     STN stnTopic;
     byte bGroup;
     long lw;
@@ -2582,7 +2582,7 @@ bool HETG::FCmdGroupText(PCMD pcmd)
         return fTrue;
 
     _SwitchSel(fFalse, ginNil);
-    pdlg = DLG::PdlgNew(dlidGroupText);
+    pdlg = Dialog::PdlgNew(dlidGroupText);
     if (pvNil == pdlg)
         goto LCancel;
     Phetd()->FGrouped(LwMin(_cpAnchor, _cpOther), pvNil, pvNil, &bGroup, &cnoTopic, &stnTopic);
@@ -2651,7 +2651,7 @@ bool HETG::FCmdLineSpacing(PCMD pcmd)
     PAP pap, papOld;
     long lw;
 
-    pdlg = DLG::PdlgNew(dlidSpacing);
+    pdlg = Dialog::PdlgNew(dlidSpacing);
     if (pvNil == pdlg)
         return fTrue;
     _FetchPap(LwMin(_cpAnchor, _cpOther), &pap);
@@ -2721,9 +2721,9 @@ bool HETG::FEnableHetgCmd(PCMD pcmd, ulong *pgrfeds)
         cp = LwMin(_cpAnchor, _cpOther);
         if (!Phetd()->FFetchObject(cp, &cpT, &pv, &cb))
             break;
-        if (cp == cpT && cb >= size(CKI))
+        if (cp == cpT && cb >= size(ChunkIdentification))
         {
-            switch (*(CTG *)pv)
+            switch (*(ChunkTag *)pv)
             {
             case kctgMbmp:
                 if (pcmd->cid == cidFormatPicture)
@@ -2763,9 +2763,9 @@ bool HETG::FCmdFormatPicture(PCMD pcmd)
     void *pv;
     PDLG pdlg;
     long cp, cpT, cb;
-    byte rgb[size(CKI) + kcbMaxDataStn];
+    byte rgb[size(ChunkIdentification) + kcbMaxDataStn];
     STN stn;
-    CKI *pcki = (CKI *)rgb;
+    ChunkIdentification *pcki = (ChunkIdentification *)rgb;
 
     if (LwAbs(_cpAnchor - _cpOther) > 1)
         return fTrue;
@@ -2774,7 +2774,7 @@ bool HETG::FCmdFormatPicture(PCMD pcmd)
     if (!Phetd()->FFetchObject(cp, &cpT, &pv, &cb))
         return fTrue;
 
-    if (cp != cpT || !FIn(cb, size(CKI), size(rgb) + 1) || ((CKI *)pv)->ctg != kctgMbmp)
+    if (cp != cpT || !FIn(cb, size(ChunkIdentification), size(rgb) + 1) || ((ChunkIdentification *)pv)->ctg != kctgMbmp)
     {
         FreePpv(&pv);
         return fFalse;
@@ -2783,11 +2783,11 @@ bool HETG::FCmdFormatPicture(PCMD pcmd)
     CopyPb(pv, rgb, cb);
     FreePpv(&pv);
 
-    pdlg = DLG::PdlgNew(dlidFormatPicture);
+    pdlg = Dialog::PdlgNew(dlidFormatPicture);
     if (pvNil == pdlg)
         return fFalse;
 
-    if (cb > size(CKI) && stn.FSetData(rgb + size(CKI), cb - size(CKI)))
+    if (cb > size(ChunkIdentification) && stn.FSetData(rgb + size(ChunkIdentification), cb - size(ChunkIdentification)))
     {
         _TokenizeStn(&stn);
         pdlg->FPutStn(kiditNamePicture, &stn);
@@ -2802,8 +2802,8 @@ bool HETG::FCmdFormatPicture(PCMD pcmd)
 
     pdlg->GetStn(kiditNamePicture, &stn);
     _TokenizeStn(&stn);
-    cb = stn.CbData() + size(CKI);
-    stn.GetData(rgb + size(CKI));
+    cb = stn.CbData() + size(ChunkIdentification);
+    stn.GetData(rgb + size(ChunkIdentification));
     ReleasePpo(&pdlg);
 
     if (Phetd()->FApplyObjectProps(rgb, cb, cp))
@@ -2829,8 +2829,8 @@ bool HETG::FCmdFormatButton(PCMD pcmd)
     PDLG pdlg;
     long cp, cpT, cb, ib, cbRead;
     STN stn;
-    byte rgb[size(CKI) + size(long) + 2 * kcbMaxDataStn];
-    CKI *pcki = (CKI *)rgb;
+    byte rgb[size(ChunkIdentification) + size(long) + 2 * kcbMaxDataStn];
+    ChunkIdentification *pcki = (ChunkIdentification *)rgb;
     long *plw = (long *)(pcki + 1);
 
     if (LwAbs(_cpAnchor - _cpOther) > 1)
@@ -2840,7 +2840,7 @@ bool HETG::FCmdFormatButton(PCMD pcmd)
     if (!Phetd()->FFetchObject(cp, &cpT, &pv, &cb))
         return fTrue;
 
-    if (cp != cpT || !FIn(cb, size(CKI) + size(long), size(rgb) + 1) || ((CKI *)pv)->ctg != kctgGokd)
+    if (cp != cpT || !FIn(cb, size(ChunkIdentification) + size(long), size(rgb) + 1) || ((ChunkIdentification *)pv)->ctg != kctgGokd)
     {
         FreePpv(&pv);
         return fFalse;
@@ -2849,11 +2849,11 @@ bool HETG::FCmdFormatButton(PCMD pcmd)
     CopyPb(pv, rgb, cb);
     FreePpv(&pv);
 
-    pdlg = DLG::PdlgNew(dlidFormatButton, _FDlgFormatButton);
+    pdlg = Dialog::PdlgNew(dlidFormatButton, _FDlgFormatButton);
     if (pvNil == pdlg)
         return fFalse;
 
-    ib = size(CKI) + size(long);
+    ib = size(ChunkIdentification) + size(long);
     if (cb > ib && stn.FSetData(rgb + ib, cb - ib, &cbRead))
     {
         _TokenizeStn(&stn);
@@ -2875,7 +2875,7 @@ bool HETG::FCmdFormatButton(PCMD pcmd)
 
     pdlg->GetStn(kiditNameButton, &stn);
     _TokenizeStn(&stn);
-    ib = size(CKI) + size(long);
+    ib = size(ChunkIdentification) + size(long);
     stn.GetData(rgb + ib);
     ib += stn.CbData();
     pdlg->GetStn(kiditTopicNameButton, &stn);
@@ -2906,7 +2906,7 @@ bool HETG::FCmdFormatEdit(PCMD pcmd)
     void *pv;
     PDLG pdlg;
     long cp, cpT, cb;
-    ECOS ecos;
+    EditControl ecos;
 
     if (LwAbs(_cpAnchor - _cpOther) > 1)
         return fTrue;
@@ -2915,7 +2915,7 @@ bool HETG::FCmdFormatEdit(PCMD pcmd)
     if (!Phetd()->FFetchObject(cp, &cpT, &pv, &cb))
         return fTrue;
 
-    if (cp != cpT || cb != size(ecos) || *(CTG *)pv != kctgEditControl)
+    if (cp != cpT || cb != size(ecos) || *(ChunkTag *)pv != kctgEditControl)
     {
         FreePpv(&pv);
         return fFalse;
@@ -2924,7 +2924,7 @@ bool HETG::FCmdFormatEdit(PCMD pcmd)
     CopyPb(pv, &ecos, size(ecos));
     FreePpv(&pv);
 
-    pdlg = DLG::PdlgNew(dlidFormatEdit, _FDlgFormatEdit);
+    pdlg = Dialog::PdlgNew(dlidFormatEdit, _FDlgFormatEdit);
     if (pvNil == pdlg)
         return fFalse;
 
@@ -2992,7 +2992,7 @@ bool HETG::FCmdNextTopic(PCMD pcmd)
     if (phetdThis->Cno() == cnoNil || phetdThis->FDirty())
         phetdThis = pvNil;
 
-    // open a DMD onto the topic
+    // open a DocumentMDIWindow onto the topic
     if (phetd->Cddg() == 0)
     {
         // need to open a window onto the doc.
@@ -3269,7 +3269,7 @@ bool HETG::FCheckSpelling(long *pcactChanges)
         }
 
         // put up the dialog
-        if (pvNil == pdlg && pvNil == (pdlg = DLG::PdlgNew(dlidCheckSpelling)))
+        if (pvNil == pdlg && pvNil == (pdlg = Dialog::PdlgNew(dlidCheckSpelling)))
         {
             vpappb->TGiveAlertSz(PszLit("Couldn't create spelling dialog!"), bkOk, cokExclamation);
             return fFalse;
@@ -3389,7 +3389,7 @@ bool HETG::_FGetOtherSize(long *pdypFont)
     PDLG pdlg;
     bool fRet;
 
-    if (pvNil == (pdlg = DLG::PdlgNew(dlidFontSize)))
+    if (pvNil == (pdlg = Dialog::PdlgNew(dlidFontSize)))
         return fFalse;
 
     pdlg->FPutLwInEdit(kiditSizeSize, *pdypFont);
@@ -3424,7 +3424,7 @@ bool HETG::_FGetOtherSubSuper(long *pdypOffset)
     PDLG pdlg;
     bool fRet;
 
-    if (pvNil == (pdlg = DLG::PdlgNew(dlidSubSuper)))
+    if (pvNil == (pdlg = Dialog::PdlgNew(dlidSubSuper)))
         return fFalse;
 
     pdlg->FPutLwInEdit(kiditSizeSize, LwAbs(*pdypOffset));
@@ -3464,7 +3464,7 @@ long HETG::DypLine(long ilin)
 /***************************************************************************
     Constructor for a text ruler.
 ***************************************************************************/
-HTRU::HTRU(GCB *pgcb, PTXTG ptxtg) : HTRU_PAR(pgcb)
+HTRU::HTRU(GraphicsObjectBlock *pgcb, PTextDocumentGraphicsObject ptxtg) : HTRU_PAR(pgcb)
 {
     AssertPo(ptxtg, 0);
     _ptxtg = ptxtg;
@@ -3473,7 +3473,7 @@ HTRU::HTRU(GCB *pgcb, PTXTG ptxtg) : HTRU_PAR(pgcb)
 /***************************************************************************
     Create a new text ruler.
 ***************************************************************************/
-PHTRU HTRU::PhtruNew(GCB *pgcb, PTXTG ptxtg, long dxpTab, long dxpDoc, long dypDoc, long xpLeft, long onn, long dypFont,
+PHTRU HTRU::PhtruNew(GraphicsObjectBlock *pgcb, PTextDocumentGraphicsObject ptxtg, long dxpTab, long dxpDoc, long dypDoc, long xpLeft, long onn, long dypFont,
                      ulong grfont)
 {
     AssertVarMem(pgcb);
@@ -3623,7 +3623,7 @@ bool HETG::FCmdFontDialog(PCMD pcmd)
     STN stn;
     long onn;
 
-    if (pvNil == (pdlg = DLG::PdlgNew(dlidChooseFont)))
+    if (pvNil == (pdlg = Dialog::PdlgNew(dlidChooseFont)))
         return fTrue;
 
     // fill in the font list
@@ -3809,7 +3809,7 @@ bool _FDoFindDlg(void)
     STN stn;
     bool fRet = fFalse;
 
-    if (pvNil == (pdlg = DLG::PdlgNew(dlidFind, _FDlgFind)))
+    if (pvNil == (pdlg = Dialog::PdlgNew(dlidFind, _FDlgFind)))
         return fFalse;
     vpstrg->FGet(kstidFind, &stn);
     pdlg->FPutStn(kiditFindFind, &stn);

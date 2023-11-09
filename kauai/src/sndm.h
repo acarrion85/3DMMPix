@@ -17,8 +17,8 @@
 #define SNDM_H
 
 const long siiNil = 0;
-const FTG kftgMidi = MacWin('MIDI', 'MID'); // REVIEW shonk: Mac: file type
-const FTG kftgWave = MacWin('WAVE', 'WAV'); // REVIEW shonk: Mac: file type
+const FileType kftgMidi = MacWin('MIDI', 'MID'); // REVIEW shonk: Mac: file type
+const FileType kftgWave = MacWin('WAVE', 'WAV'); // REVIEW shonk: Mac: file type
 
 /***************************************************************************
     Sound device - like audioman or our midi player.
@@ -45,7 +45,7 @@ class SNDV : public SNDV_PAR
     virtual void SetVlm(long vlm) = 0;
     virtual long VlmCur(void) = 0;
 
-    virtual long SiiPlay(PRCA prca, CTG ctg, CNO cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
+    virtual long SiiPlay(PRCA prca, ChunkTag ctg, ChunkNumber cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
                          ulong dtsStart = 0, long spr = 0, long scl = sclNil) = 0;
 
     virtual void Stop(long sii) = 0;
@@ -80,11 +80,11 @@ class SNDM : public SNDM_PAR
   protected:
     struct SNDMPE
     {
-        CTG ctg;
+        ChunkTag ctg;
         PSNDV psndv;
     };
 
-    PGL _pglsndmpe; // sound type to device mapper
+    PDynamicArray _pglsndmpe; // sound type to device mapper
 
     long _cactSuspend;  // nesting level for suspending
     bool _fActive : 1;  // whether the app is active
@@ -92,16 +92,16 @@ class SNDM : public SNDM_PAR
 
     SNDM(void);
     bool _FInit(void);
-    bool _FFindCtg(CTG ctg, SNDMPE *psndmpe, long *pisndmpe = pvNil);
+    bool _FFindCtg(ChunkTag ctg, SNDMPE *psndmpe, long *pisndmpe = pvNil);
 
   public:
     static PSNDM PsndmNew(void);
     ~SNDM(void);
 
     // new methods
-    virtual bool FAddDevice(CTG ctg, PSNDV psndv);
-    virtual PSNDV PsndvFromCtg(CTG ctg);
-    virtual void RemoveSndv(CTG ctg);
+    virtual bool FAddDevice(ChunkTag ctg, PSNDV psndv);
+    virtual PSNDV PsndvFromCtg(ChunkTag ctg);
+    virtual void RemoveSndv(ChunkTag ctg);
 
     // inherited methods
     virtual bool FActive(void);
@@ -110,7 +110,7 @@ class SNDM : public SNDM_PAR
     virtual void SetVlm(long vlm);
     virtual long VlmCur(void);
 
-    virtual long SiiPlay(PRCA prca, CTG ctg, CNO cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
+    virtual long SiiPlay(PRCA prca, ChunkTag ctg, ChunkNumber cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
                          ulong dtsStart = 0, long spr = 0, long scl = sclNil);
 
     virtual void Stop(long sii);
@@ -152,7 +152,7 @@ class SNDMQ : public SNDMQ_PAR
         long sqn;
     };
 
-    PGL _pglsnqd; // the queues
+    PDynamicArray _pglsnqd; // the queues
 
     long _cactSuspend;
     bool _fActive : 1;
@@ -171,7 +171,7 @@ class SNDMQ : public SNDMQ_PAR
     virtual void Activate(bool fActive);
     virtual void Suspend(bool fSuspend);
 
-    virtual long SiiPlay(PRCA prca, CTG ctg, CNO cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
+    virtual long SiiPlay(PRCA prca, ChunkTag ctg, ChunkNumber cno, long sqn = ksqnNone, long vlm = kvlmFull, long cactPlay = 1,
                          ulong dtsStart = 0, long spr = 0, long scl = sclNil);
 
     virtual void Stop(long sii);
@@ -194,7 +194,7 @@ class SNDMQ : public SNDMQ_PAR
 ***************************************************************************/
 struct SNDIN
 {
-    PBACO pbaco;    // the sound to play
+    PBaseCacheableObject pbaco;    // the sound to play
     long sii;       // the sound instance id
     long vlm;       // volume to play at
     long cactPlay;  // how many times to play
@@ -218,7 +218,7 @@ class SNQUE : public SNQUE_PAR
     MARKMEM
 
   protected:
-    PGL _pglsndin;   // the queue
+    PDynamicArray _pglsndin;   // the queue
     long _isndinCur; // SNDIN that we should be playing
 
     SNQUE(void);
@@ -227,7 +227,7 @@ class SNQUE : public SNQUE_PAR
     virtual void _Queue(long isndinMin) = 0;
     virtual void _PauseQueue(long isndinMin) = 0;
     virtual void _ResumeQueue(long isndinMin) = 0;
-    virtual PBACO _PbacoFetch(PRCA prca, CTG ctg, CNO cno) = 0;
+    virtual PBaseCacheableObject _PbacoFetch(PRCA prca, ChunkTag ctg, ChunkNumber cno) = 0;
 
     virtual void _Enter(void);
     virtual void _Leave(void);
@@ -236,7 +236,7 @@ class SNQUE : public SNQUE_PAR
   public:
     ~SNQUE(void);
 
-    void Enqueue(long sii, PRCA prca, CTG ctg, CNO cno, long vlm, long cactPlay, ulong dtsStart, long spr, long scl);
+    void Enqueue(long sii, PRCA prca, ChunkTag ctg, ChunkNumber cno, long vlm, long cactPlay, ulong dtsStart, long spr, long scl);
 
     long SprCur(void);
     void Stop(long sii);

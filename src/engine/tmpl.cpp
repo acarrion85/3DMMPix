@@ -16,23 +16,23 @@
      |
      +--GLBS (chid 0) - body part sets for BODY
      |
-     +--GGCM (chid 0) - custom costumes per body part set (GG of cmids)
+     +--GGCM (chid 0) - custom costumes per body part set (GeneralGroup of cmids)
      |
      +--CMTL* (chid <cmid>) - custom material...see mtrl.h
      |   |
      |   +--MTRL*
      |       |
-     |       +--TMAP
+     |       +--TextureMap
      |
      +--MODL* - models used in this template
      |
      +--ACTN* (chid <anid>) - action for this template
          |
-         +--GGCL (chid 0) - GG of cels for this action
+         +--GGCL (chid 0) - GeneralGroup of cels for this action
          |
-         +--GLXF (chid 0) - GL of transformation matrices for this action
+         +--GLXF (chid 0) - DynamicArray of transformation matrices for this action
          |
-         +--GLMS (chid 0) - GL of motionmatch sounds for cels of this action
+         +--GLMS (chid 0) - DynamicArray of motionmatch sounds for cels of this action
 
     About Actions: An action is an activity that a body can perform, such
     as walking, jumping, breathing, or resting.  Actions are broken down
@@ -72,7 +72,7 @@ RTCLASS(TMPL)
 /***************************************************************************
     Create a new action
 ***************************************************************************/
-PACTN ACTN::PactnNew(PGG pggcel, PGL pglbmat34, ulong grfactn)
+PACTN ACTN::PactnNew(PGeneralGroup pggcel, PDynamicArray pglbmat34, ulong grfactn)
 {
     AssertPo(pggcel, 0);
     AssertPo(pglbmat34, 0);
@@ -105,7 +105,7 @@ LFail:
 /***************************************************************************
     A PFNRPO (chunky resource reader function) to read an ACTN from a file
 ***************************************************************************/
-bool ACTN::FReadActn(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool ACTN::FReadActn(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -140,12 +140,12 @@ bool ACTN::FReadActn(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 /***************************************************************************
     Read an ACTN from a chunk
 ***************************************************************************/
-bool ACTN::_FInit(PCFL pcfl, CTG ctg, CNO cno)
+bool ACTN::_FInit(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertPo(pcfl, 0);
 
-    KID kid;
-    BLCK blck;
+    ChildChunkIdentification kid;
+    DataBlock blck;
     ACTNF actnf;
     short bo;
     long icel;
@@ -162,12 +162,12 @@ bool ACTN::_FInit(PCFL pcfl, CTG ctg, CNO cno)
     Assert(kboCur == actnf.bo, "bad ACTNF");
     _grfactn = actnf.grfactn;
 
-    // read GG of cels (chid 0, ctg kctgGgcl):
+    // read GeneralGroup of cels (chid 0, ctg kctgGgcl):
     if (!pcfl->FGetKidChidCtg(ctg, cno, 0, kctgGgcl, &kid))
         return fFalse;
     if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
         return fFalse;
-    _pggcel = GG::PggRead(&blck, &bo);
+    _pggcel = GeneralGroup::PggRead(&blck, &bo);
     if (pvNil == _pggcel)
         return fFalse;
     AssertBomRglw(kbomCel, size(CEL));
@@ -181,12 +181,12 @@ bool ACTN::_FInit(PCFL pcfl, CTG ctg, CNO cno)
         }
     }
 
-    // read GL of transforms (chid 0, ctg kctgGlxf):
+    // read DynamicArray of transforms (chid 0, ctg kctgGlxf):
     if (!pcfl->FGetKidChidCtg(ctg, cno, 0, kctgGlxf, &kid))
         return fFalse;
     if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
         return fFalse;
-    _pglbmat34 = GL::PglRead(&blck, &bo);
+    _pglbmat34 = DynamicArray::PglRead(&blck, &bo);
     if (pvNil == _pglbmat34)
         return fFalse;
     AssertBomRglw(kbomBmat34, size(BMAT34));
@@ -195,12 +195,12 @@ bool ACTN::_FInit(PCFL pcfl, CTG ctg, CNO cno)
         SwapBytesRglw(_pglbmat34->QvGet(0), LwMul(_pglbmat34->IvMac(), size(BMAT34) / size(long)));
     }
 
-    // read (optional) GL of motion-match sounds (chid 0, ctg kctgGlms):
+    // read (optional) DynamicArray of motion-match sounds (chid 0, ctg kctgGlms):
     if (pcfl->FGetKidChidCtg(ctg, cno, 0, kctgGlms, &kid))
     {
         if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
             return fFalse;
-        _pgltagSnd = GL::PglRead(&blck, &bo);
+        _pgltagSnd = DynamicArray::PglRead(&blck, &bo);
         if (pvNil == _pgltagSnd)
             return fFalse;
         AssertBomRglw(kbomTag, size(TAG));
@@ -250,7 +250,7 @@ void ACTN::GetCps(long icel, long icps, CPS *pcps)
 }
 
 /***************************************************************************
-    Get a sound for icel.  If there is no sound, ptag's CTG is set to
+    Get a sound for icel.  If there is no sound, ptag's ChunkTag is set to
     ctgNil.
 ***************************************************************************/
 void ACTN::GetSnd(long icel, PTAG ptag)
@@ -310,7 +310,7 @@ void ACTN::MarkMem(void)
 /***************************************************************************
     A PFNRPO (chunky resource reader function) to read TMPL objects.
 ***************************************************************************/
-bool TMPL::FReadTmpl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool TMPL::FReadTmpl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -318,7 +318,7 @@ bool TMPL::FReadTmpl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
     AssertVarMem(pcb);
 
     TMPL *ptmpl;
-    KID kid;
+    ChildChunkIdentification kid;
 
     *pcb = pblck->Cb(fTrue); // estimate TMPL size (not a good estimate)
     if (pvNil == ppbaco)
@@ -352,11 +352,11 @@ bool TMPL::FReadTmpl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 /***************************************************************************
     Read a TMPL from a chunk
 ***************************************************************************/
-bool TMPL::_FReadTmplf(PCFL pcfl, CTG ctg, CNO cno)
+bool TMPL::_FReadTmplf(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertBaseThis(0);
 
-    BLCK blck;
+    DataBlock blck;
     TMPLF tmplf;
 
     if (!pcfl->FFind(ctg, cno, &blck) || !blck.FUnpackData())
@@ -380,12 +380,12 @@ bool TMPL::_FReadTmplf(PCFL pcfl, CTG ctg, CNO cno)
 }
 
 /***************************************************************************
-    Write the TMPLF chunk.  Creates a new chunk and returns the CNO in pcno.
+    Write the TMPLF chunk.  Creates a new chunk and returns the ChunkNumber in pcno.
 
     Note: In Socrates, normal actor templates are read-only, but this
     function will get called for TDTs.
 ***************************************************************************/
-bool TMPL::_FWriteTmplf(PCFL pcfl, CTG ctg, CNO *pcno)
+bool TMPL::_FWriteTmplf(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
@@ -414,13 +414,13 @@ bool TMPL::_FWriteTmplf(PCFL pcfl, CTG ctg, CNO *pcno)
 /***************************************************************************
     Read a TMPL from a chunk
 ***************************************************************************/
-bool TMPL::_FInit(PCFL pcfl, CTG ctg, CNO cno)
+bool TMPL::_FInit(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertPo(pcfl, 0);
 
-    KID kid;
+    ChildChunkIdentification kid;
     short bo;
-    BLCK blck;
+    DataBlock blck;
     long ibact;
     short ibset;
 
@@ -432,7 +432,7 @@ bool TMPL::_FInit(PCFL pcfl, CTG ctg, CNO cno)
         return fFalse;
     if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
         return fFalse;
-    _pglibactPar = GL::PglRead(&blck, &bo);
+    _pglibactPar = DynamicArray::PglRead(&blck, &bo);
     if (pvNil == _pglibactPar)
         return fFalse;
     Assert(_pglibactPar->CbEntry() == size(short), "Bad _pglibactPar!");
@@ -444,7 +444,7 @@ bool TMPL::_FInit(PCFL pcfl, CTG ctg, CNO cno)
         return fFalse;
     if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
         return fFalse;
-    _pglibset = GL::PglRead(&blck, &bo);
+    _pglibset = DynamicArray::PglRead(&blck, &bo);
     if (pvNil == _pglibset)
         return fFalse;
     Assert(_pglibset->CbEntry() == size(short), "Bad TMPL _pglibset!");
@@ -486,7 +486,7 @@ bool TMPL::_FInit(PCFL pcfl, CTG ctg, CNO cno)
     }
     if (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck))
         return fFalse;
-    _pggcmid = GG::PggRead(&blck, &bo);
+    _pggcmid = GeneralGroup::PggRead(&blck, &bo);
     if (pvNil == _pggcmid)
         return fFalse;
     Assert(_pggcmid->CbFixed() == size(long), "Bad TMPL _pggcmid");
@@ -504,17 +504,17 @@ bool TMPL::_FInit(PCFL pcfl, CTG ctg, CNO cno)
 LBuildGgcm:
     long ikid;
     PCMTL pcmtl;
-    PCRF pcrf;
+    PChunkyResourceFile pcrf;
     long rgcmid[50];
     long ccmid;
 
     Warn("missing GGCM...building one on the fly");
 
-    pcrf = CRF::PcrfNew(pcfl, 0);
+    pcrf = ChunkyResourceFile::PcrfNew(pcfl, 0);
     if (pvNil == pcrf)
         return fFalse;
 
-    _pggcmid = GG::PggNew(size(long));
+    _pggcmid = GeneralGroup::PggNew(size(long));
     if (pvNil == _pggcmid)
     {
         ReleasePpo(&pcrf);
@@ -567,12 +567,12 @@ TMPL::~TMPL(void)
     return value of pvNil does not mean an error occurred, but simply that
     this TMPL has no embedded tags.
 ***************************************************************************/
-PGL TMPL::PgltagFetch(PCFL pcfl, CTG ctg, CNO cno, bool *pfError)
+PDynamicArray TMPL::PgltagFetch(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, bool *pfError)
 {
     AssertPo(pcfl, 0);
     AssertVarMem(pfError);
 
-    KID kid;
+    ChildChunkIdentification kid;
 
     *pfError = fFalse;
     if (pcfl->FGetKidChidCtg(ctg, cno, 0, kctgTdt, &kid))
@@ -583,7 +583,7 @@ PGL TMPL::PgltagFetch(PCFL pcfl, CTG ctg, CNO cno, bool *pfError)
 
 /***************************************************************************
     Creates a new tree of body parts (br_actors) based on this template.
-    Note: ACTR also calls FSetDefaultCost after creating the body, but
+    Note: Actor also calls FSetDefaultCost after creating the body, but
     by calling it here, it is guaranteed that the body will have a material
     on each body part (no null pointers for bact->material).  So the user
     will never see a body part that isn't texture mapped.
@@ -610,7 +610,7 @@ bool TMPL::FGetActnName(long anid, PSTN pstn)
     AssertIn(anid, 0, _cactn);
     AssertPo(pstn, 0);
 
-    KID kid;
+    ChildChunkIdentification kid;
 
     if (!Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), anid, kctgActn, &kid))
         return fFalse;
@@ -625,9 +625,9 @@ PACTN TMPL::_PactnFetch(long anid)
     AssertThis(0);
     AssertIn(anid, 0, _cactn);
 
-    KID kid;
+    ChildChunkIdentification kid;
     ACTN *pactn;
-    CHID chidActn = anid;
+    ChildChunkID chidActn = anid;
 
     if (!Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), chidActn, kctgActn, &kid))
     {
@@ -641,11 +641,11 @@ PACTN TMPL::_PactnFetch(long anid)
 /***************************************************************************
     Reads a MODL chunk from disk
 ***************************************************************************/
-PMODL TMPL::_PmodlFetch(CHID chidModl)
+PMODL TMPL::_PmodlFetch(ChildChunkID chidModl)
 {
     AssertThis(0);
 
-    KID kid;
+    ChildChunkIdentification kid;
     MODL *pmodl;
 
     if (!Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), chidModl, kctgBmdl, &kid))
@@ -909,7 +909,7 @@ bool TMPL::FBsetIsAccessory(long ibset)
     AssertIn(ibset, 0, _cbset);
 
     long cmid;
-    KID kid;
+    ChildChunkIdentification kid;
 
     if (pvNil == Pcrf())
         return fFalse; // probably a TDT
@@ -981,8 +981,8 @@ bool TMPL::FSameAccCmids(long cmid1, long cmid2)
 {
     AssertThis(0);
 
-    KID kid1;
-    KID kid2;
+    ChildChunkIdentification kid1;
+    ChildChunkIdentification kid2;
 
     if (!Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), cmid1, kctgCmtl, &kid1) ||
         !Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), cmid2, kctgCmtl, &kid2))
@@ -1001,7 +1001,7 @@ PCMTL TMPL::PcmtlFetch(long cmid)
     AssertIn(cmid, 0, _ccmid);
 
     PCMTL pcmtl;
-    KID kid;
+    ChildChunkIdentification kid;
 
     if (!Pcrf()->Pcfl()->FGetKidChidCtg(Ctg(), Cno(), cmid, kctgCmtl, &kid))
     {

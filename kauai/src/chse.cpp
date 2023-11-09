@@ -13,12 +13,16 @@
 #include "util.h"
 ASSERTNAME
 
-RTCLASS(CHSE)
+namespace Chunky {
+
+using ScriptCompiler::PCompilerBase;
+
+RTCLASS(SourceEmitter)
 
 /***************************************************************************
     Constructor for a chunky source emitter.
 ***************************************************************************/
-CHSE::CHSE(void)
+SourceEmitter::SourceEmitter(void)
 {
     AssertBaseThis(0);
     _pmsnkError = pvNil;
@@ -29,7 +33,7 @@ CHSE::CHSE(void)
 /***************************************************************************
     Destructor for a chunky source emitter.
 ***************************************************************************/
-CHSE::~CHSE(void)
+SourceEmitter::~SourceEmitter(void)
 {
     Uninit();
 }
@@ -37,7 +41,7 @@ CHSE::~CHSE(void)
 /***************************************************************************
     Initialize the chunky source emitter.
 ***************************************************************************/
-void CHSE::Init(PMSNK pmsnkDump, PMSNK pmsnkError)
+void SourceEmitter::Init(PMSNK pmsnkDump, PMSNK pmsnkError)
 {
     AssertThis(0);
     AssertPo(pmsnkDump, 0);
@@ -57,7 +61,7 @@ void CHSE::Init(PMSNK pmsnkDump, PMSNK pmsnkError)
 /***************************************************************************
     Clean up and return the chse to an inactive state.
 ***************************************************************************/
-void CHSE::Uninit(void)
+void SourceEmitter::Uninit(void)
 {
     AssertThis(0);
     ReleasePpo(&_pmsnkDump);
@@ -68,11 +72,11 @@ void CHSE::Uninit(void)
 
 #ifdef DEBUG
 /***************************************************************************
-    Assert the validity of a CHSE.
+    Assert the validity of a SourceEmitter.
 ***************************************************************************/
-void CHSE::AssertValid(ulong grfchse)
+void SourceEmitter::AssertValid(ulong grfchse)
 {
-    CHSE_PAR::AssertValid(0);
+    SourceEmitter_PAR::AssertValid(0);
     AssertPo(&_bsf, 0);
     if (grfchse & fchseDump)
         AssertPo(_pmsnkDump, 0);
@@ -80,12 +84,12 @@ void CHSE::AssertValid(ulong grfchse)
 }
 
 /***************************************************************************
-    Mark memory for the CHSE.
+    Mark memory for the SourceEmitter.
 ***************************************************************************/
-void CHSE::MarkMem(void)
+void SourceEmitter::MarkMem(void)
 {
     AssertValid(0);
-    CHSE_PAR::MarkMem();
+    SourceEmitter_PAR::MarkMem();
     MarkMemObj(_pmsnkError);
     MarkMemObj(_pmsnkDump);
     MarkMemObj(&_bsf);
@@ -95,7 +99,7 @@ void CHSE::MarkMem(void)
 /***************************************************************************
     Dumps chunk header.
 ***************************************************************************/
-void CHSE::DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack)
+void SourceEmitter::DumpHeader(ChunkTag ctg, ChunkNumber cno, PSTN pstnName, bool fPack)
 {
     AssertThis(fchseDump);
     AssertNilOrPo(pstnName, 0);
@@ -121,7 +125,7 @@ void CHSE::DumpHeader(CTG ctg, CNO cno, PSTN pstnName, bool fPack)
 /***************************************************************************
     Dump a raw data chunk
 ***************************************************************************/
-void CHSE::DumpBlck(PBLCK pblck)
+void SourceEmitter::DumpBlck(PDataBlock pblck)
 {
     AssertThis(fchseDump);
     AssertPo(pblck, 0);
@@ -143,7 +147,7 @@ void CHSE::DumpBlck(PBLCK pblck)
 /***************************************************************************
     Dump raw data from memory.
 ***************************************************************************/
-void CHSE::DumpRgb(void *prgb, long cb, long cactTab)
+void SourceEmitter::DumpRgb(void *prgb, long cb, long cactTab)
 {
     AssertThis(fchseDump);
     AssertIn(cb, 0, kcbMax);
@@ -159,7 +163,7 @@ void CHSE::DumpRgb(void *prgb, long cb, long cactTab)
 /***************************************************************************
     Dump a parent directive
 ***************************************************************************/
-void CHSE::DumpParentCmd(CTG ctgPar, CNO cnoPar, CHID chid)
+void SourceEmitter::DumpParentCmd(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid)
 {
     AssertThis(fchseDump);
 
@@ -172,7 +176,7 @@ void CHSE::DumpParentCmd(CTG ctgPar, CNO cnoPar, CHID chid)
 /***************************************************************************
     Dump a bitmap directive
 ***************************************************************************/
-void CHSE::DumpBitmapCmd(byte bTransparent, long dxp, long dyp, PSTN pstnFile)
+void SourceEmitter::DumpBitmapCmd(byte bTransparent, long dxp, long dyp, PSTN pstnFile)
 {
     AssertThis(fchseDump);
     AssertPo(pstnFile, 0);
@@ -186,7 +190,7 @@ void CHSE::DumpBitmapCmd(byte bTransparent, long dxp, long dyp, PSTN pstnFile)
 /***************************************************************************
     Dump a file directive
 ***************************************************************************/
-void CHSE::DumpFileCmd(PSTN pstnFile, bool fPacked)
+void SourceEmitter::DumpFileCmd(PSTN pstnFile, bool fPacked)
 {
     AssertThis(fchseDump);
     AssertPo(pstnFile, 0);
@@ -203,7 +207,7 @@ void CHSE::DumpFileCmd(PSTN pstnFile, bool fPacked)
 /***************************************************************************
     Dump an adopt directive
 ***************************************************************************/
-void CHSE::DumpAdoptCmd(CKI *pcki, KID *pkid)
+void SourceEmitter::DumpAdoptCmd(ChunkIdentification *pcki, ChildChunkIdentification *pkid)
 {
     AssertThis(fchseDump);
     AssertVarMem(pcki);
@@ -219,7 +223,7 @@ void CHSE::DumpAdoptCmd(CKI *pcki, KID *pkid)
 /***************************************************************************
     Dump the data in the _bsf
 ***************************************************************************/
-void CHSE::_DumpBsf(long cactTab)
+void SourceEmitter::_DumpBsf(long cactTab)
 {
     AssertThis(fchseDump);
     AssertIn(cactTab, 0, kcchMaxStn + 1);
@@ -279,7 +283,7 @@ void CHSE::_DumpBsf(long cactTab)
     Disassembles a script (pscpt) using the given script compiler (psccb)
     and dumps the result (including a "SCRIPTPF" directive).
 ******************************************************************************/
-bool CHSE::FDumpScript(PSCPT pscpt, PSCCB psccb)
+bool SourceEmitter::FDumpScript(PScript pscpt, PCompilerBase psccb)
 {
     AssertThis(fchseDump);
     AssertPo(pscpt, 0);
@@ -295,10 +299,10 @@ bool CHSE::FDumpScript(PSCPT pscpt, PSCCB psccb)
 }
 
 /******************************************************************************
-    Dumps a GL or AL, including the GL or AL directive. pglb is the GL or AL
+    Dumps a DynamicArray or AllocatedArray, including the DynamicArray or AllocatedArray directive. pglb is the DynamicArray or AllocatedArray
     to dump.
 ******************************************************************************/
-void CHSE::DumpList(PGLB pglb)
+void SourceEmitter::DumpList(PVirtualArray pglb)
 {
     AssertThis(fchseDump);
     AssertPo(pglb, 0);
@@ -306,11 +310,11 @@ void CHSE::DumpList(PGLB pglb)
     long cbEntry;
     long iv, ivMac;
     STN stn;
-    bool fAl = pglb->FIs(kclsAL);
+    bool fAl = pglb->FIs(kclsAllocatedArray);
 
-    Assert(fAl || pglb->FIs(kclsGL), "neither a GL or AL!");
+    Assert(fAl || pglb->FIs(kclsDynamicArray), "neither a DynamicArray or AllocatedArray!");
 
-    // have a valid GL or AL -- print it out in readable format
+    // have a valid DynamicArray or AllocatedArray -- print it out in readable format
     cbEntry = pglb->CbEntry();
     AssertIn(cbEntry, 0, kcbMax);
     ivMac = pglb->IvMac();
@@ -334,10 +338,10 @@ void CHSE::DumpList(PGLB pglb)
 }
 
 /******************************************************************************
-    Dumps a GG or AG, including the GG or AG directive. pggb is the GG or AG
+    Dumps a GeneralGroup or AllocatedGroup, including the GeneralGroup or AllocatedGroup directive. pggb is the GeneralGroup or AllocatedGroup
     to dump.
 ******************************************************************************/
-void CHSE::DumpGroup(PGGB pggb)
+void SourceEmitter::DumpGroup(PVirtualGroup pggb)
 {
     AssertThis(fchseDump);
     AssertPo(pggb, 0);
@@ -345,11 +349,11 @@ void CHSE::DumpGroup(PGGB pggb)
     long cbFixed, cb;
     long iv, ivMac;
     STN stnT;
-    bool fAg = pggb->FIs(kclsAG);
+    bool fAg = pggb->FIs(kclsAllocatedGroup);
 
-    Assert(fAg || pggb->FIs(kclsGG), "neither a GG or AG!");
+    Assert(fAg || pggb->FIs(kclsGeneralGroup), "neither a GeneralGroup or AllocatedGroup!");
 
-    // have a valid GG or AG -- print it out in readable format
+    // have a valid GeneralGroup or AllocatedGroup -- print it out in readable format
     cbFixed = pggb->CbFixed();
     AssertIn(cbFixed, 0, kcbMax);
     ivMac = pggb->IvMac();
@@ -383,10 +387,10 @@ void CHSE::DumpGroup(PGGB pggb)
 }
 
 /******************************************************************************
-    Dumps a GST or AST, including the GST or AST directive. pggb is the GST or
-    AST to dump.
+    Dumps a StringTable or AllocatedStringTable, including the StringTable or AllocatedStringTable directive. pggb is the StringTable or
+    AllocatedStringTable to dump.
 ******************************************************************************/
-bool CHSE::FDumpStringTable(PGSTB pgstb)
+bool SourceEmitter::FDumpStringTable(PVirtualStringTable pgstb)
 {
     AssertThis(fchseDump);
     AssertPo(pgstb, 0);
@@ -396,11 +400,11 @@ bool CHSE::FDumpStringTable(PGSTB pgstb)
     STN stn1;
     STN stn2;
     void *pvExtra = pvNil;
-    bool fAst = pgstb->FIs(kclsAST);
+    bool fAst = pgstb->FIs(kclsAllocatedStringTable);
 
-    Assert(fAst || pgstb->FIs(kclsGST), "neither a GST or AST!");
+    Assert(fAst || pgstb->FIs(kclsStringTable), "neither a StringTable or AllocatedStringTable!");
 
-    // have a valid GST or AST -- print it out in readable format
+    // have a valid StringTable or AllocatedStringTable -- print it out in readable format
     cbExtra = pgstb->CbExtra();
     AssertIn(cbExtra, 0, kcbMax);
     ivMac = pgstb->IvMac();
@@ -437,3 +441,5 @@ bool CHSE::FDumpStringTable(PGSTB pgstb)
     FreePpv(&pvExtra);
     return fTrue;
 }
+
+} // end of namespace Chunky

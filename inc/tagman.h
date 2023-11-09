@@ -11,12 +11,12 @@
     BASE ---> TAGM
 
     A TAG is a reference to a piece of content: a background, actor
-    template, sound, etc.  In addition to a CTG and CNO, a TAG specifies
+    template, sound, etc.  In addition to a ChunkTag and ChunkNumber, a TAG specifies
     a SID, or source ID, that helps TAGM find the content.
 
     A source (identified by a SID) is a group of chunky files (managed
-    by a CRM) in one directory of one disk whose chunks all have unique
-    CTG/CNOs.  Each Socrates series member will be a source, and the
+    by a ChunkyResourceManager) in one directory of one disk whose chunks all have unique
+    ChunkTag/CNOs.  Each Socrates series member will be a source, and the
     user rolls might also be implemented as a source.  A SID of less
     than 0 is invalid; a TAG with a negative SID is an invalid TAG.
 
@@ -27,7 +27,7 @@
 
     TAGM supports caching chunks to the local hard disk.  In Socrates,
     the studio should call FCacheTagToHD as soon as the chunk is
-    requested by the kid, and when the tag is resolved to a BACO, the
+    requested by the kid, and when the tag is resolved to a BaseCacheableObject, the
     HD copy is used.  This reduces headaches about dealing with a missing
     CD all over the place.
 
@@ -54,11 +54,11 @@ struct TAG
 #endif // DEBUG
 
     long sid;  // Source ID (or ksidUseCrf)
-    PCRF pcrf; // File to look in for this chunk if sid is ksidUseCrf
-    CTG ctg;   // CTG of chunk
-    CNO cno;   // CNO of chunk
+    PChunkyResourceFile pcrf; // File to look in for this chunk if sid is ksidUseCrf
+    ChunkTag ctg;   // ChunkTag of chunk
+    ChunkNumber cno;   // ChunkNumber of chunk
 };
-const BOM kbomTag = 0xFF000000;
+const ByteOrderMask kbomTag = 0xFF000000;
 
 // FNINSCD is a client-supplied callback function to alert the user to
 // insert the given CD.  The name of the source is passed to the callback.
@@ -71,7 +71,7 @@ enum
 {
     ftagmNil = 0x0000,
     ftagmFile = 0x0001,   // for ClearCache: clear HD cache
-    ftagmMemory = 0x0002, // for ClearCache: clear CRF RAM cache
+    ftagmMemory = 0x0002, // for ClearCache: clear ChunkyResourceFile RAM cache
 };
 
 /****************************************
@@ -87,10 +87,10 @@ class TAGM : public TAGM_PAR
     ASSERT
 
   protected:
-    FNI _fniHDRoot;     // Root HD directory to search for content
-    long _cbCache;      // Size of RAM Cache on files in CRM for each source
-    PGL _pglsfs;        // GL of source file structs
-    PGST _pgstSource;   // String table of source descriptions
+    Filename _fniHDRoot;     // Root HD directory to search for content
+    long _cbCache;      // Size of RAM Cache on files in ChunkyResourceManager for each source
+    PDynamicArray _pglsfs;        // DynamicArray of source file structs
+    PStringTable _pgstSource;   // String table of source descriptions
     PFNINSCD _pfninscd; // Function to call when source is not found
 
   protected:
@@ -101,41 +101,41 @@ class TAGM : public TAGM_PAR
     bool _FGetStnMergedOfSid(long sid, PSTN pstn);
     bool _FGetStnSplitOfSid(long sid, PSTN pstnLong, PSTN pstnShort);
     bool _FRetry(long sid);
-    bool _FEnsureFniCD(long sid, PFNI pfniCD, PSTN pstn = pvNil);
-    bool _FFindFniCD(long sid, PFNI pfniCD, bool *pfFniChanged);
+    bool _FEnsureFniCD(long sid, PFilename pfniCD, PSTN pstn = pvNil);
+    bool _FFindFniCD(long sid, PFilename pfniCD, bool *pfFniChanged);
     bool _FDetermineIfSourceHD(long sid, bool *pfSourceIsOnHD);
-    bool _FDetermineIfContentOnFni(PFNI pfni, bool *pfContentOnFni);
+    bool _FDetermineIfContentOnFni(PFilename pfni, bool *pfContentOnFni);
 
-    bool _FGetFniHD(long sid, PFNI pfniHD);
-    bool _FGetFniCD(long sid, PFNI pfniHD, bool fAskForCD);
+    bool _FGetFniHD(long sid, PFilename pfniHD);
+    bool _FGetFniCD(long sid, PFilename pfniHD, bool fAskForCD);
 
-    bool _FBuildFniHD(long sid, PFNI pfniHD, bool *pfExists);
-    PCRM _PcrmSourceNew(long sid, PFNI pfniInfo);
-    PCRM _PcrmSourceGet(long sid, bool fDontHitCD = fFalse);
-    PCFL _PcflFindTag(PTAG ptag);
+    bool _FBuildFniHD(long sid, PFilename pfniHD, bool *pfExists);
+    PChunkyResourceManager _PcrmSourceNew(long sid, PFilename pfniInfo);
+    PChunkyResourceManager _PcrmSourceGet(long sid, bool fDontHitCD = fFalse);
+    PChunkyFile _PcflFindTag(PTAG ptag);
 
   public:
-    static PTAGM PtagmNew(PFNI pfniHDRoot, PFNINSCD pfninscd, long cbCache);
+    static PTAGM PtagmNew(PFilename pfniHDRoot, PFNINSCD pfninscd, long cbCache);
     ~TAGM(void);
 
     // GstSource stuff:
-    PGST PgstSource(void);
-    bool FMergeGstSource(PGST pgst, short bo, short osk);
+    PStringTable PgstSource(void);
+    bool FMergeGstSource(PStringTable pgst, short bo, short osk);
     bool FAddStnSource(PSTN pstnMerged, long sid);
     bool FGetSid(PSTN pstn, long *psid); // pstn can be short or long
 
-    bool FFindFile(long sid, PSTN pstn, PFNI pfni, bool fAskForCD);
+    bool FFindFile(long sid, PSTN pstn, PFilename pfni, bool fAskForCD);
     void SplitString(PSTN pstnMerged, PSTN pstnLong, PSTN pstnShort);
 
-    bool FBuildChildTag(PTAG ptagPar, CHID chid, CTG ctgChild, PTAG ptagChild);
+    bool FBuildChildTag(PTAG ptagPar, ChildChunkID chid, ChunkTag ctgChild, PTAG ptagChild);
     bool FCacheTagToHD(PTAG ptag, bool fCacheChildChunks = fTrue);
-    PBACO PbacoFetch(PTAG ptag, PFNRPO pfnrpo, bool fUseCD = fFalse);
+    PBaseCacheableObject PbacoFetch(PTAG ptag, PFNRPO pfnrpo, bool fUseCD = fFalse);
     void ClearCache(long sid = sidNil,
                     ulong grftagm = ftagmFile | ftagmMemory); // sidNil clears all caches
 
     // For ksidUseCrf tags:
-    static bool FOpenTag(PTAG ptag, PCRF pcrfDest, PCFL pcflSrc = pvNil);
-    static bool FSaveTag(PTAG ptag, PCRF pcrf, bool fRedirect);
+    static bool FOpenTag(PTAG ptag, PChunkyResourceFile pcrfDest, PChunkyFile pcflSrc = pvNil);
+    static bool FSaveTag(PTAG ptag, PChunkyResourceFile pcrf, bool fRedirect);
     static void DupTag(PTAG ptag); // call this when you're copying a tag
     static void CloseTag(PTAG ptag);
 

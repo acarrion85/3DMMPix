@@ -9,7 +9,7 @@
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
     TDT, the 3-D Text class, is a derived class of TMPL.  Most clients
-    (ACTR, MVIE, etc) can treat TDTs like regular TMPLs.  But they have
+    (Actor, Movie, etc) can treat TDTs like regular TMPLs.  But they have
     some extra functionality and work internally very differently from
     TMPLs.  Chunkwise, all the information for a TDT is in the TMPL
     chunk or the single TDT child chunk:
@@ -42,18 +42,18 @@ ASSERTNAME
 
 RTCLASS(TDT)
 
-const CHID kchidTdt = 0; // CHID of TDT under TMPL chunk
+const ChildChunkID kchidTdt = 0; // ChildChunkID of TDT under TMPL chunk
 
 // All actions have a step size of kdwrStep, except tdaWalk
 const BRS kdwrStepWalk = BR_SCALAR(1.0); // step size for walk action
 const BRS kdwrStep = BR_SCALAR(5.0);     // step size for all other actions
 
-PGST TDT::_pgstAction = pvNil;
+PStringTable TDT::_pgstAction = pvNil;
 
 /***************************************************************************
-    Set the GST of action names for TDTs
+    Set the StringTable of action names for TDTs
 ***************************************************************************/
-bool TDT::FSetActionNames(PGST pgstAction)
+bool TDT::FSetActionNames(PStringTable pgstAction)
 {
     AssertPo(pgstAction, 0);
     Assert(pvNil == _pgstAction, "you already set the action names");
@@ -74,7 +74,7 @@ struct TDTF
     long tdts;
     TAG tagTdf;
 };
-const BOM kbomTdtf = (0x5C000000 | kbomTag >> 6);
+const ByteOrderMask kbomTdtf = (0x5C000000 | kbomTag >> 6);
 
 /***************************************************************************
     Return a list of all tags embedded in this TDT.  Note that a
@@ -85,18 +85,18 @@ const BOM kbomTdtf = (0x5C000000 | kbomTag >> 6);
     if an error occurs.  The point is, look at *pfError, not the return
     value.
 ***************************************************************************/
-PGL TDT::PgltagFetch(PCFL pcfl, CTG ctg, CNO cno, bool *pfError)
+PDynamicArray TDT::PgltagFetch(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, bool *pfError)
 {
     AssertPo(pcfl, 0);
     AssertVarMem(pfError);
 
-    PGL pgltag;
-    KID kid;
-    BLCK blck;
+    PDynamicArray pgltag;
+    ChildChunkIdentification kid;
+    DataBlock blck;
     TDTF tdtf;
 
     *pfError = fFalse;
-    pgltag = GL::PglNew(size(TAG));
+    pgltag = DynamicArray::PglNew(size(TAG));
     if (pvNil == pgltag)
         goto LFail;
     if (!pcfl->FGetKidChidCtg(ctg, cno, kchidTdt, kctgTdt, &kid))
@@ -163,13 +163,13 @@ PTDT TDT::PtdtNew(PSTN pstn, long tdts, PTAG ptagTdf)
     Read the generic TMPL info and the TDT-specific info (tdts and tagTdf),
     then call _FInitLists to build the rest of the TDT.
 ***************************************************************************/
-bool TDT::_FInit(PCFL pcfl, CTG ctgTmpl, CNO cnoTmpl)
+bool TDT::_FInit(PChunkyFile pcfl, ChunkTag ctgTmpl, ChunkNumber cnoTmpl)
 {
     AssertBaseThis(0);
     AssertPo(pcfl, 0);
 
-    KID kid;
-    BLCK blck;
+    ChildChunkIdentification kid;
+    DataBlock blck;
     TDTF tdtf;
 
     if (!_FReadTmplf(pcfl, ctgTmpl, cnoTmpl))
@@ -208,9 +208,9 @@ bool TDT::_FInitLists(void)
     AssertIn(_tdts, 0, tdtsLim);
 
     long cch;
-    PGL pglibactParNew = pvNil;
-    PGL pglibsetNew = pvNil;
-    PGG pggcmidNew = pvNil;
+    PDynamicArray pglibactParNew = pvNil;
+    PDynamicArray pglibsetNew = pvNil;
+    PGeneralGroup pggcmidNew = pvNil;
     PMTRL pmtrlDefaultNew = pvNil;
 
     pglibactParNew = _PglibactParBuild();
@@ -292,8 +292,8 @@ PACTN TDT::_PactnBuild(long tda)
     AssertIn(tda, 0, tdaLim);
 
     PACTN pactn;
-    PGG pggcel;
-    PGL pglbmat34 = pvNil;
+    PGeneralGroup pggcel;
+    PDynamicArray pglbmat34 = pvNil;
     ulong grfactn;
 
     pggcel = _PggcelBuild(tda);
@@ -344,7 +344,7 @@ bool TDT::FGetActnName(long anid, PSTN pstn)
 /***************************************************************************
     Fetch the given model for this TDT (use the TDT's current font)
 ***************************************************************************/
-PMODL TDT::_PmodlFetch(CHID chidModl)
+PMODL TDT::_PmodlFetch(ChildChunkID chidModl)
 {
     AssertThis(0);
     AssertIn(chidModl, 0, _stn.Cch());
@@ -361,19 +361,19 @@ PMODL TDT::_PmodlFetch(CHID chidModl)
 }
 
 /***************************************************************************
-    Build the BACT tree GL for BODY creation.  TDTs all have the same
+    Build the BACT tree DynamicArray for BODY creation.  TDTs all have the same
     body part tree: every part is a child of the root.
 ***************************************************************************/
-PGL TDT::_PglibactParBuild(void)
+PDynamicArray TDT::_PglibactParBuild(void)
 {
     AssertBaseThis(0);
 
     long cch = _stn.Cch();
     long ich;
     short ibactPar = ivNil;
-    PGL pglibactPar;
+    PDynamicArray pglibactPar;
 
-    pglibactPar = GL::PglNew(size(short), cch); // ibacts are shorts
+    pglibactPar = DynamicArray::PglNew(size(short), cch); // ibacts are shorts
     if (pvNil == pglibactPar)
         return pvNil;
     AssertDo(pglibactPar->FSetIvMac(cch), "PglNew should have ensured space!");
@@ -383,19 +383,19 @@ PGL TDT::_PglibactParBuild(void)
 }
 
 /***************************************************************************
-    Build the body part set GL for BODY creation.  For TDTs, all body parts
+    Build the body part set DynamicArray for BODY creation.  For TDTs, all body parts
     belong to a single body part set
 ***************************************************************************/
-PGL TDT::_PglibsetBuild(void)
+PDynamicArray TDT::_PglibsetBuild(void)
 {
     AssertBaseThis(0);
 
     long cch = _stn.Cch();
     long ich;
     short ibset = 0;
-    PGL pglibset;
+    PDynamicArray pglibset;
 
-    pglibset = GL::PglNew(size(short), cch);
+    pglibset = DynamicArray::PglNew(size(short), cch);
     if (pvNil == pglibset)
         return pvNil;
     AssertDo(pglibset->FSetIvMac(cch), "PglNew should have ensured space!");
@@ -405,19 +405,19 @@ PGL TDT::_PglibsetBuild(void)
 }
 
 /***************************************************************************
-    Build the costume GG for TMPL creation.  For TDTs, the costume is
+    Build the costume GeneralGroup for TMPL creation.  For TDTs, the costume is
     simple: all body part sets get cmid 0.
 ***************************************************************************/
-PGG TDT::_PggcmidBuild(void)
+PGeneralGroup TDT::_PggcmidBuild(void)
 {
     AssertBaseThis(0);
 
     long cch = _stn.Cch();
     long lwOne = 1;
-    PGG pggcmid;
+    PGeneralGroup pggcmid;
     long cmid = 0;
 
-    pggcmid = GG::PggNew(size(long), 1, size(long));
+    pggcmid = GeneralGroup::PggNew(size(long), 1, size(long));
     if (pvNil == pggcmid)
         return pvNil;
     if (!pggcmid->FAdd(size(long), pvNil, &cmid, &lwOne))
@@ -429,9 +429,9 @@ PGG TDT::_PggcmidBuild(void)
 }
 
 /***************************************************************************
-    Build a GL of matrices for the action
+    Build a DynamicArray of matrices for the action
 ***************************************************************************/
-PGL TDT::_Pglbmat34Build(long tda)
+PDynamicArray TDT::_Pglbmat34Build(long tda)
 {
     AssertBaseThis(0);
     AssertIn(tda, 0, tdaLim);
@@ -440,7 +440,7 @@ PGL TDT::_Pglbmat34Build(long tda)
     long cch = _stn.Cch();
     long ich;
     BMAT34 bmat34;
-    PGL pglbmat34 = pvNil;
+    PDynamicArray pglbmat34 = pvNil;
     BRS dxrTotal;     // width of string (before scaling)
     BRS dxrTotal2;    // width of string (after scaling)
     BRS dxrHalf;      // half width of string (before scaling)
@@ -460,7 +460,7 @@ PGL TDT::_Pglbmat34Build(long tda)
 
     ccel = _CcelOfTda(tda);
 
-    pglbmat34 = GL::PglNew(size(BMAT34), LwMul(ccel, cch));
+    pglbmat34 = DynamicArray::PglNew(size(BMAT34), LwMul(ccel, cch));
     if (pvNil == pglbmat34)
         goto LFail;
     AssertDo(pglbmat34->FSetIvMac(LwMul(ccel, cch)), "PglNew should have ensured space!");
@@ -535,16 +535,16 @@ LFail:
 }
 
 /***************************************************************************
-    Build a GG of cels for the action
+    Build a GeneralGroup of cels for the action
 ***************************************************************************/
-PGG TDT::_PggcelBuild(long tda)
+PGeneralGroup TDT::_PggcelBuild(long tda)
 {
     AssertBaseThis(0);
     AssertIn(tda, 0, tdaLim);
 
     long cch = _stn.Cch();
     long ich;
-    PGG pggcel;
+    PGeneralGroup pggcel;
     CEL cel;
     CPS *prgcps = pvNil;
     long iv;
@@ -553,7 +553,7 @@ PGG TDT::_PggcelBuild(long tda)
 
     ccel = _CcelOfTda(tda);
 
-    pggcel = GG::PggNew(size(CEL));
+    pggcel = GeneralGroup::PggNew(size(CEL));
     if (pvNil == pggcel)
         goto LFail;
     if (!FAllocPv((void **)&prgcps, LwMul(cch, size(CPS)), fmemClear, mprNormal))
@@ -712,15 +712,15 @@ PCMTL TDT::PcmtlFetch(long cmid)
 /***************************************************************************
     Write the TDT out as a TMPL hierarchy.
 ***************************************************************************/
-bool TDT::FWrite(PCFL pcfl, CTG ctg, CNO *pcno)
+bool TDT::FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     AssertVarMem(pcno);
 
     TDTF tdtf;
-    CNO cnoTdt;
-    BLCK blck;
+    ChunkNumber cnoTdt;
+    DataBlock blck;
 
     if (!_FWriteTmplf(pcfl, ctg, pcno))
         return fFalse;
@@ -1068,7 +1068,7 @@ void TDT::MarkMem(void)
 }
 
 /***************************************************************************
-    Mark memory used by the TDT action GST
+    Mark memory used by the TDT action StringTable
 ***************************************************************************/
 void TDT::MarkActionNames(void)
 {

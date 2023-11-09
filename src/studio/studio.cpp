@@ -14,52 +14,52 @@
 #include "studio.h"
 
 ASSERTNAME
-RTCLASS(STDIO)
-RTCLASS(SMCC)
+RTCLASS(Studio)
+RTCLASS(StudioClientCallbacks)
 
-BEGIN_CMD_MAP(STDIO, CMH)
-ON_CID_GEN(cidNew, &STDIO::FCmdOpen, pvNil)
-ON_CID_GEN(cidOpen, &STDIO::FCmdOpen, pvNil)
-ON_CID_GEN(cidXYAxis, &STDIO::FCmdXYAxis, pvNil)
-ON_CID_GEN(cidXZAxis, &STDIO::FCmdXZAxis, pvNil)
-ON_CID_GEN(cidSetTool, &STDIO::FCmdSetTool, pvNil)
-ON_CID_GEN(cidPlay, &STDIO::FCmdPlay, pvNil)
-ON_CID_GEN(cidNewScene, &STDIO::FCmdNewScene, pvNil)
-ON_CID_GEN(cidRespectGround, &STDIO::FCmdRespectGround, pvNil)
-ON_CID_GEN(cidPauseUntilClick, &STDIO::FCmdPause, pvNil)
-ON_CID_GEN(cidPauseForSound, &STDIO::FCmdPause, pvNil)
-ON_CID_GEN(cidClearPause, &STDIO::FCmdPause, pvNil)
-ON_CID_GEN(cidBrowserReady, &STDIO::FCmdBrowserReady, pvNil)
-ON_CID_GEN(cidFrameScrollbar, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidFrameThumb, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidSceneScrollbar, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidSceneThumb, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidStartScroll, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidEndScroll, &STDIO::FCmdScroll, pvNil)
-ON_CID_GEN(cidSooner, &STDIO::FCmdSooner, pvNil)
-ON_CID_GEN(cidLater, &STDIO::FCmdLater, pvNil)
-ON_CID_GEN(cidNewSpletter, &STDIO::FCmdNewSpletter, pvNil)
-ON_CID_GEN(cidTextBkgdColor, &STDIO::FCmdCreatePopup, pvNil)
-ON_CID_GEN(cidTextColor, &STDIO::FCmdCreatePopup, pvNil)
-ON_CID_GEN(cidTextFont, &STDIO::FCmdCreatePopup, pvNil)
-ON_CID_GEN(cidTextSize, &STDIO::FCmdCreatePopup, pvNil)
-ON_CID_GEN(cidTextStyle, &STDIO::FCmdCreatePopup, pvNil)
-ON_CID_GEN(cidTextSetColor, &STDIO::FCmdTextSetColor, pvNil)
-ON_CID_GEN(cidTextSetBkgdColor, &STDIO::FCmdTextSetBkgdColor, pvNil)
-ON_CID_GEN(cidTextSetFont, &STDIO::FCmdTextSetFont, pvNil)
-ON_CID_GEN(cidTextSetSize, &STDIO::FCmdTextSetSize, pvNil)
-ON_CID_GEN(cidTextSetStyle, &STDIO::FCmdTextSetStyle, pvNil)
-ON_CID_GEN(cidOpenSoundRecord, &STDIO::FCmdOpenSoundRecord, pvNil)
-ON_CID_GEN(cidToggleXY, &STDIO::FCmdToggleXY, pvNil)
-ON_CID_GEN(cidHelpBook, &STDIO::FCmdHelpBook, pvNil)
-ON_CID_GEN(cidMovieGoto, &STDIO::FCmdMovieGoto, pvNil)
-ON_CID_GEN(cidLoadProjectMovie, &STDIO::FCmdLoadProjectMovie, pvNil)
-ON_CID_GEN(cidSoundsEnabled, &STDIO::FCmdSoundsEnabled, pvNil)
-ON_CID_GEN(cidCreateTbox, &STDIO::FCmdCreateTbox, pvNil)
-ON_CID_GEN(cidActorEaselOpen, &STDIO::FCmdActorEaselOpen, pvNil)
-ON_CID_GEN(cidListenerEaselOpen, &STDIO::FCmdListenerEaselOpen, pvNil)
+BEGIN_CMD_MAP(Studio, CMH)
+ON_CID_GEN(cidNew, &Studio::FCmdOpen, pvNil)
+ON_CID_GEN(cidOpen, &Studio::FCmdOpen, pvNil)
+ON_CID_GEN(cidXYAxis, &Studio::FCmdXYAxis, pvNil)
+ON_CID_GEN(cidXZAxis, &Studio::FCmdXZAxis, pvNil)
+ON_CID_GEN(cidSetTool, &Studio::FCmdSetTool, pvNil)
+ON_CID_GEN(cidPlay, &Studio::FCmdPlay, pvNil)
+ON_CID_GEN(cidNewScene, &Studio::FCmdNewScene, pvNil)
+ON_CID_GEN(cidRespectGround, &Studio::FCmdRespectGround, pvNil)
+ON_CID_GEN(cidPauseUntilClick, &Studio::FCmdPause, pvNil)
+ON_CID_GEN(cidPauseForSound, &Studio::FCmdPause, pvNil)
+ON_CID_GEN(cidClearPause, &Studio::FCmdPause, pvNil)
+ON_CID_GEN(cidBrowserReady, &Studio::FCmdBrowserReady, pvNil)
+ON_CID_GEN(cidFrameScrollbar, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidFrameThumb, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidSceneScrollbar, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidSceneThumb, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidStartScroll, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidEndScroll, &Studio::FCmdScroll, pvNil)
+ON_CID_GEN(cidSooner, &Studio::FCmdSooner, pvNil)
+ON_CID_GEN(cidLater, &Studio::FCmdLater, pvNil)
+ON_CID_GEN(cidNewSpletter, &Studio::FCmdNewSpletter, pvNil)
+ON_CID_GEN(cidTextBkgdColor, &Studio::FCmdCreatePopup, pvNil)
+ON_CID_GEN(cidTextColor, &Studio::FCmdCreatePopup, pvNil)
+ON_CID_GEN(cidTextFont, &Studio::FCmdCreatePopup, pvNil)
+ON_CID_GEN(cidTextSize, &Studio::FCmdCreatePopup, pvNil)
+ON_CID_GEN(cidTextStyle, &Studio::FCmdCreatePopup, pvNil)
+ON_CID_GEN(cidTextSetColor, &Studio::FCmdTextSetColor, pvNil)
+ON_CID_GEN(cidTextSetBkgdColor, &Studio::FCmdTextSetBkgdColor, pvNil)
+ON_CID_GEN(cidTextSetFont, &Studio::FCmdTextSetFont, pvNil)
+ON_CID_GEN(cidTextSetSize, &Studio::FCmdTextSetSize, pvNil)
+ON_CID_GEN(cidTextSetStyle, &Studio::FCmdTextSetStyle, pvNil)
+ON_CID_GEN(cidOpenSoundRecord, &Studio::FCmdOpenSoundRecord, pvNil)
+ON_CID_GEN(cidToggleXY, &Studio::FCmdToggleXY, pvNil)
+ON_CID_GEN(cidHelpBook, &Studio::FCmdHelpBook, pvNil)
+ON_CID_GEN(cidMovieGoto, &Studio::FCmdMovieGoto, pvNil)
+ON_CID_GEN(cidLoadProjectMovie, &Studio::FCmdLoadProjectMovie, pvNil)
+ON_CID_GEN(cidSoundsEnabled, &Studio::FCmdSoundsEnabled, pvNil)
+ON_CID_GEN(cidCreateTbox, &Studio::FCmdCreateTbox, pvNil)
+ON_CID_GEN(cidActorEaselOpen, &Studio::FCmdActorEaselOpen, pvNil)
+ON_CID_GEN(cidListenerEaselOpen, &Studio::FCmdListenerEaselOpen, pvNil)
 #ifdef DEBUG
-ON_CID_GEN(cidWriteBmps, &STDIO::FCmdWriteBmps, pvNil)
+ON_CID_GEN(cidWriteBmps, &Studio::FCmdWriteBmps, pvNil)
 #endif // DEBUG
 END_CMD_MAP_NIL()
 
@@ -71,7 +71,7 @@ const long kcbCursorCache = 1024;
  *
  * Parameters:
  *  hid - The hid to use for the studio
- *  pcrmStudio - CRM to read script chunks from
+ *  pcrmStudio - ChunkyResourceManager to read script chunks from
  *  pfniUserDoc - movie file to open, or pvNil
  *  fFailIfDocOpenFailed - if fTrue, this function fails if pfniUserDoc
  *     cannot be opened.  If fFalse, this function creates a blank document
@@ -81,20 +81,20 @@ const long kcbCursorCache = 1024;
  *  Pointer to the studio if successful, else pvNil.
  *
  **************************************************************************/
-PSTDIO STDIO::PstdioNew(long hid, PCRM pcrmStudio, PFNI pfniUserDoc, bool fFailIfDocOpenFailed)
+PStudio Studio::PstdioNew(long hid, PChunkyResourceManager pcrmStudio, PFilename pfniUserDoc, bool fFailIfDocOpenFailed)
 {
     AssertPo(pcrmStudio, 0);
     AssertNilOrPo(pfniUserDoc, ffniFile);
     AssertPo(((APP *)vpappb)->Pkwa(), 0);
 
     bool fSuccess = fFalse;
-    PSTDIO pstdio;
-    PMVIE pmvie = pvNil;
-    GCB gcb;
-    BLCK blck;
+    PStudio pstdio;
+    PMovie pmvie = pvNil;
+    GraphicsObjectBlock gcb;
+    DataBlock blck;
 
     gcb.Set(hid, ((APP *)vpappb)->Pkwa());
-    pstdio = NewObj STDIO(&gcb);
+    pstdio = NewObj Studio(&gcb);
 
     if (pstdio == pvNil)
     {
@@ -104,7 +104,7 @@ PSTDIO STDIO::PstdioNew(long hid, PCRM pcrmStudio, PFNI pfniUserDoc, bool fFailI
     pstdio->_pcrm = pcrmStudio;
     pstdio->_pcrm->AddRef();
 
-    pstdio->_psmcc = NewObj SMCC(kdxpWorkspace, kdypWorkspace, kcbStudioCache, pvNil, pstdio);
+    pstdio->_psmcc = NewObj StudioClientCallbacks(kdxpWorkspace, kdypWorkspace, kcbStudioCache, pvNil, pstdio);
 
     if (pstdio->_psmcc == pvNil)
     {
@@ -156,7 +156,7 @@ LFail:
  *  None.
  *
  **************************************************************************/
-STDIO::~STDIO(void)
+Studio::~Studio(void)
 {
     ReleasePpo(&_pmvie);
     ReleasePpo(&_psmcc);
@@ -168,7 +168,7 @@ STDIO::~STDIO(void)
     ReleasePpo(&_pglclr);
     ReleaseBrcn();
 
-    PGOB pgobStudio = ((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+    PGraphicsObject pgobStudio = ((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
     ReleasePpo(&pgobStudio);
 }
 
@@ -183,19 +183,19 @@ STDIO::~STDIO(void)
  *  fTrue if successful, else fFalse.
  *
  **************************************************************************/
-bool STDIO::_FOpenStudio(bool fPaletteFade)
+bool Studio::_FOpenStudio(bool fPaletteFade)
 {
     AssertBaseThis(0);
 
-    PSCPT pscpt = pvNil;
-    PSSCB psscb = pvNil;
-    PSCEG psceg = pvNil;
+    PScript pscpt = pvNil;
+    PStudioScrollbars psscb = pvNil;
+    PGraphicsObjectInterpreter psceg = pvNil;
     STN stn;
     RC rcAbs, rcRel;
-    BLCK blck;
+    DataBlock blck;
     bool fRet = fFalse;
     long icrf;
-    PCRF pcrf;
+    PChunkyResourceFile pcrf;
     long lwParm;
 
     vapp.BeginLongOp();
@@ -206,7 +206,7 @@ bool STDIO::_FOpenStudio(bool fPaletteFade)
         pcrf = _pcrm->PcrfGet(icrf);
         if (pcrf->Pcfl()->FFind(kctgGst, kcnoGstMisc, &blck))
         {
-            _pgstMisc = GST::PgstRead(&blck);
+            _pgstMisc = StringTable::PgstRead(&blck);
             break;
         }
     }
@@ -226,7 +226,7 @@ bool STDIO::_FOpenStudio(bool fPaletteFade)
         pcrf = _pcrm->PcrfGet(icrf);
         if (pcrf->Pcfl()->FFind(kctgColorTable, kidPalette, &blck))
         {
-            _pglclr = GL::PglRead(&blck);
+            _pglclr = DynamicArray::PglRead(&blck);
             if (_pglclr != pvNil)
             {
                 break;
@@ -237,7 +237,7 @@ bool STDIO::_FOpenStudio(bool fPaletteFade)
     // kidStudio should be kcnoStudio according to Hungarian, but the "kid"
     // prefix is entrenched into the script/help stuff and can't be easily
     // all changed to kcno.
-    if (pvNil == (pscpt = (PSCPT)_pcrm->PbacoFetch(kctgScript, kidStudio, SCPT::FReadScript)))
+    if (pvNil == (pscpt = (PScript)_pcrm->PbacoFetch(kctgScript, kidStudio, Script::FReadScript)))
     {
         goto LFail;
     }
@@ -251,7 +251,7 @@ bool STDIO::_FOpenStudio(bool fPaletteFade)
     }
 
     // Create the scroll bars
-    if (pvNil == (psscb = SSCB::PsscbNew(_pmvie)))
+    if (pvNil == (psscb = StudioScrollbars::PsscbNew(_pmvie)))
     {
         goto LFail;
     }
@@ -283,7 +283,7 @@ LFail:
 /***************************************************************************
     Set the portfolio doc from one of Melanie's project documents
 ***************************************************************************/
-bool STDIO::FCmdLoadProjectMovie(PCMD pcmd)
+bool Studio::FCmdLoadProjectMovie(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -291,7 +291,7 @@ bool STDIO::FCmdLoadProjectMovie(PCMD pcmd)
     long stid = pcmd->rglw[0];
     STN stn;
     STN stnLeaf;
-    FNI fni;
+    Filename fni;
     bool fLoaded = fFalse;
 
     if (!vpapp->Pkwa()->Pstrg()->FGet(stid, &stnLeaf))
@@ -339,7 +339,7 @@ LEnd:
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FLoadMovie(PFNI pfni, CNO cno)
+bool Studio::FLoadMovie(PFilename pfni, ChunkNumber cno)
 #ifdef BUG1959
 {
     bool fRet, fClosedOld;
@@ -358,16 +358,16 @@ LDone:
     return fRet;
 }
 
-bool STDIO::_FLoadMovie(PFNI pfni, CNO cno, bool *pfClosedOld)
+bool Studio::_FLoadMovie(PFilename pfni, ChunkNumber cno, bool *pfClosedOld)
 #endif // BUG1959
 {
     AssertBaseThis(0);
     AssertNilOrPo(pfni, 0);
 
     bool fRet = fFalse;
-    PMVU pmvu;
-    PMVIE pmvie = pvNil, pmvieOld = pvNil;
-    PBKGD pbkgd = pvNil;
+    PMovieView pmvu;
+    PMovie pmvie = pvNil, pmvieOld = pvNil;
+    PBackground pbkgd = pvNil;
 
 #ifdef BUG1959
     *pfClosedOld = fTrue;
@@ -375,9 +375,9 @@ bool STDIO::_FLoadMovie(PFNI pfni, CNO cno, bool *pfClosedOld)
 
     if (_pmvie != pvNil)
     {
-        PSCEN pscen;
+        PScene pscen;
 
-        pmvu = (PMVU)_pmvie->PddgActive();
+        pmvu = (PMovieView)_pmvie->PddgActive();
         AssertPo(pmvu, 0);
 
         if (!pmvu->FCloseDoc(fFalse, fTrue))
@@ -398,7 +398,7 @@ bool STDIO::_FLoadMovie(PFNI pfni, CNO cno, bool *pfClosedOld)
         }
     }
 
-    pmvie = MVIE::PmvieNew(vpapp->FSlowCPU(), _psmcc, pfni, cno);
+    pmvie = Movie::PmvieNew(vpapp->FSlowCPU(), _psmcc, pfni, cno);
     if (pmvie == pvNil)
     {
         ReleasePpo(&pmvieOld);
@@ -409,11 +409,11 @@ bool STDIO::_FLoadMovie(PFNI pfni, CNO cno, bool *pfClosedOld)
 
     if (fRet)
     {
-        PGOK pgok;
+        PKidspaceGraphicObject pgok;
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
 
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK) && (_pmvie->Pscen() != pvNil))
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject) && (_pmvie->Pscen() != pvNil))
         {
             AssertPo(pgok, 0);
             pgok->FRunScript((kstDefault << 16) | kchidOpenDoorsAll);
@@ -438,11 +438,11 @@ LFail:
     {
         bool fResetLites = (_pmvie->Pscen() != pvNil && _pmvie->Pscen()->Pbkgd() == pbkgd);
 
-        Assert(!fResetLites || pbkgd->CactRef() > 1, "Not enough refs for BKGD");
+        Assert(!fResetLites || pbkgd->CactRef() > 1, "Not enough refs for Background");
         pmvieOld->CloseAllDdg();
         ReleasePpo(&pmvieOld);
 
-        /* Turn lights back on, in new BWLD (they got turned off when releasing
+        /* Turn lights back on, in new World (they got turned off when releasing
             the old movie) */
         if (fResetLites)
             pbkgd->TurnOnLights(_pmvie->Pbwld());
@@ -467,15 +467,15 @@ LFail:
  *  fTrue if it was succesful, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FSetMovie(PMVIE pmvie)
+bool Studio::FSetMovie(PMovie pmvie)
 {
     AssertPo(pmvie, 0);
 
     bool fRet = fFalse;
-    PMVU pmvu = pvNil;
+    PMovieView pmvu = pvNil;
     RC rcRel, rcAbs;
-    PGOK pgok;
-    GCB gcb;
+    PKidspaceGraphicObject pgok;
+    GraphicsObjectBlock gcb;
 
     vapp.BeginLongOp();
 
@@ -490,7 +490,7 @@ bool STDIO::FSetMovie(PMVIE pmvie)
     rcRel.Set(krelZero, krelZero, krelOne, krelOne);
     rcAbs.Set(0, 0, 0, 0);
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidWorkspace);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidWorkspace);
     AssertPo(pgok, 0);
 
     if (pvNil == _psmcc->Psscb())
@@ -500,7 +500,7 @@ bool STDIO::FSetMovie(PMVIE pmvie)
     // Create the view
     //
     gcb.Set(khidDdg, pgok, fgobNil, kginDefault, &rcAbs, &rcRel);
-    pmvu = (PMVU)_pmvie->PddgNew(&gcb);
+    pmvu = (PMovieView)_pmvie->PddgNew(&gcb);
     if (pmvu == pvNil)
         goto LFail;
     AssertPo(pmvu, 0);
@@ -525,9 +525,9 @@ bool STDIO::FSetMovie(PMVIE pmvie)
     pmvu->SetTool(toolDefault);
     _psmcc->UpdateRollCall();
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         pgok->FChangeState(kstOpen);
     }
@@ -557,18 +557,18 @@ LFail:
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdXYAxis(PCMD pcmd)
+bool Studio::FCmdXYAxis(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu;
+    PMovieView pmvu;
     BRS rgr[3][3] = {{rOne, rZero, rZero}, {rZero, rOne, rZero}, {rZero, rZero, -rOne}};
 
     if (pvNil != _pmvie)
     {
         AssertPo(_pmvie, 0);
-        pmvu = (PMVU)_pmvie->PddgActive();
+        pmvu = (PMovieView)_pmvie->PddgActive();
         pmvu->SetAxis(rgr);
 
         if ((pmvu->Tool() != toolCompose) && (pmvu->Tool() != toolRecordSameAction) && (pmvu->Tool() != toolAction) &&
@@ -593,16 +593,16 @@ bool STDIO::FCmdXYAxis(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdXZAxis(PCMD pcmd)
+bool Studio::FCmdXZAxis(PCMD pcmd)
 {
     AssertThis(0);
-    PMVU pmvu;
+    PMovieView pmvu;
     BRS rgr[3][3] = {{rOne, rZero, rZero}, {rZero, rZero, rOne}, {rZero, -rOne, rZero}};
 
     if (pvNil != _pmvie)
     {
         AssertPo(_pmvie, 0);
-        pmvu = (PMVU)_pmvie->PddgActive();
+        pmvu = (PMovieView)_pmvie->PddgActive();
         pmvu->SetAxis(rgr);
 
         if ((pmvu->Tool() != toolCompose) && (pmvu->Tool() != toolRecordSameAction) && (pmvu->Tool() != toolAction) &&
@@ -627,17 +627,17 @@ bool STDIO::FCmdXZAxis(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdSetTool(PCMD pcmd)
+bool Studio::FCmdSetTool(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu;
+    PMovieView pmvu;
 
     if (pvNil != _pmvie)
     {
         AssertPo(_pmvie, 0);
-        pmvu = (PMVU)_pmvie->PddgActive();
+        pmvu = (PMovieView)_pmvie->PddgActive();
 
         switch (pcmd->rglw[0])
         {
@@ -769,31 +769,31 @@ bool STDIO::FCmdSetTool(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdPlay(PCMD pcmd)
+bool Studio::FCmdPlay(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
     if (pvNil != _pmvie)
     {
         AssertPo(_pmvie, 0);
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsActionBrowser);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsActionBrowser);
 
         if (_pmvie->FPlaying())
         {
 
             vpappb->FSetProp(kpridToolTipDelay, _dtimToolTipDelay);
-            if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+            if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
             {
                 AssertPo(pgok, 0);
                 pgok->FChangeState(kstDefault);
             }
 
-            pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidWorkspace);
-            if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+            pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidWorkspace);
+            if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
             {
                 AssertPo(pgok, 0);
                 pgok->SetZPlane(0);
@@ -808,7 +808,7 @@ bool STDIO::FCmdPlay(PCMD pcmd)
             }
 
             vpappb->FSetProp(kpridToolTipDelay, 0x0FFFFFFF);
-            if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+            if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
             {
                 AssertPo(pgok, 0);
                 pgok->FChangeState(kstFreeze);
@@ -835,7 +835,7 @@ bool STDIO::FCmdPlay(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdNewScene(PCMD pcmd)
+bool Studio::FCmdNewScene(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -875,12 +875,12 @@ bool STDIO::FCmdNewScene(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdRespectGround(PCMD pcmd)
+bool Studio::FCmdRespectGround(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu = (PMVU)_pmvie->PddgGet(0);
+    PMovieView pmvu = (PMovieView)_pmvie->PddgGet(0);
     AssertPo(pmvu, 0);
     pmvu->SetFRespectGround(pcmd->rglw[0]);
 
@@ -905,7 +905,7 @@ bool STDIO::FCmdRespectGround(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdPause(PCMD pcmd)
+bool Studio::FCmdPause(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -939,7 +939,7 @@ bool STDIO::FCmdPause(PCMD pcmd)
     Open an existing or new chunky file for editing.
     Handles cidNew and cidOpen.
 ***************************************************************************/
-bool STDIO::FCmdOpen(PCMD pcmd)
+bool Studio::FCmdOpen(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -953,7 +953,7 @@ bool STDIO::FCmdOpen(PCMD pcmd)
     case cidNew:
         if (_fDisplayCast && vpappb->GrfcustCur() & fcustShift)
         {
-            FNI fni;
+            Filename fni;
             STN stn;
 
             _fDisplayCast = fFalse;
@@ -970,7 +970,7 @@ bool STDIO::FCmdOpen(PCMD pcmd)
         break;
 
     case cidOpen: {
-        FNI fni;
+        Filename fni;
 
         _fDisplayCast = fFalse;
         if (FGetFniMovieOpen(&fni))
@@ -996,7 +996,7 @@ bool STDIO::FCmdOpen(PCMD pcmd)
     Returns: nothing
 
 ******************************************************************************/
-bool STDIO::FCmdScroll(PCMD pcmd)
+bool Studio::FCmdScroll(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -1018,22 +1018,22 @@ bool STDIO::FCmdScroll(PCMD pcmd)
     returns fTrue.
 
 ******************************************************************************/
-bool STDIO::FCmdSooner(PCMD pcmd)
+bool Studio::FCmdSooner(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
     if (!Pmvie()->FSoonerLaterActr(Pmvie()->Pscen()->Nfrm() - 1))
     {
-        PMVU pmvu;
-        PGOK pgok;
+        PMovieView pmvu;
+        PKidspaceGraphicObject pgok;
 
-        pmvu = (PMVU)Pmvie()->PddgActive();
+        pmvu = (PMovieView)Pmvie()->PddgActive();
         pmvu->SetTool(toolCompose);
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
 
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         {
             AssertPo(pgok, 0);
             pgok->FChangeState(kstClosed);
@@ -1050,22 +1050,22 @@ bool STDIO::FCmdSooner(PCMD pcmd)
     returns fTrue.
 
 ******************************************************************************/
-bool STDIO::FCmdLater(PCMD pcmd)
+bool Studio::FCmdLater(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
     if (!Pmvie()->FSoonerLaterActr(Pmvie()->Pscen()->Nfrm() + 1))
     {
-        PMVU pmvu;
-        PGOK pgok;
+        PMovieView pmvu;
+        PKidspaceGraphicObject pgok;
 
-        pmvu = (PMVU)Pmvie()->PddgActive();
+        pmvu = (PMovieView)Pmvie()->PddgActive();
         pmvu->SetTool(toolCompose);
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
 
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         {
             AssertPo(pgok, 0);
             pgok->FChangeState(kstClosed);
@@ -1082,14 +1082,14 @@ bool STDIO::FCmdLater(PCMD pcmd)
     returns fTrue.
 
 ******************************************************************************/
-bool STDIO::FCmdNewSpletter(PCMD pcmd)
+bool Studio::FCmdNewSpletter(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
     STN stn;
     TAG tagTdf;
-    CKI cki;
+    ChunkIdentification cki;
     PBCL pbcl;
     THD thd;
 
@@ -1125,7 +1125,7 @@ bool STDIO::FCmdNewSpletter(PCMD pcmd)
 /******************************************************************************
     Start the sound recording easel
 ******************************************************************************/
-bool STDIO::FCmdOpenSoundRecord(PCMD pcmd)
+bool Studio::FCmdOpenSoundRecord(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -1153,7 +1153,7 @@ bool STDIO::FCmdOpenSoundRecord(PCMD pcmd)
     Returns: nothing
 
 ************************************************************ PETED ***********/
-void STDIO::SceneChange(void)
+void Studio::SceneChange(void)
 {
 }
 
@@ -1168,12 +1168,12 @@ void STDIO::SceneChange(void)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdCreatePopup(PCMD pcmd)
+bool Studio::FCmdCreatePopup(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    CKI ckiRoot;
+    ChunkIdentification ckiRoot;
     long cid, kid, thumSel = ivNil;
     ulong grfchp;
     BWS bws = kbwsCnoRoot;
@@ -1182,8 +1182,8 @@ bool STDIO::FCmdCreatePopup(PCMD pcmd)
 
     ckiRoot.cno = cnoNil;
 
-    Assert(_pmvie != pvNil, "No current MVIE");
-    Assert(_pmvie->Pscen() != pvNil, "No current SCEN");
+    Assert(_pmvie != pvNil, "No current Movie");
+    Assert(_pmvie->Pscen() != pvNil, "No current Scene");
     if ((ptbox = _pmvie->Pscen()->PtboxSelected()) != pvNil)
         ptbox->FetchChpSel(&chp, &grfchp);
     else
@@ -1225,10 +1225,10 @@ bool STDIO::FCmdCreatePopup(PCMD pcmd)
         MP::PmpNew(kidBackground, kid, _pcrm, pcmd, bws, thumSel, ksidInvalid, ckiRoot, ctgNil, this, cid, fFalse);
         break;
     case cidTextFont: {
-        PGST pgst;
+        PStringTable pgst;
         long onnCur, onnSystem = vntl.OnnSystem();
 
-        if ((pgst = GST::PgstNew(size(onnCur))) == pvNil)
+        if ((pgst = StringTable::PgstNew(size(onnCur))) == pvNil)
             break;
 
         for (onnCur = 0; onnCur < vntl.OnnMac(); onnCur++)
@@ -1271,15 +1271,15 @@ bool STDIO::FCmdCreatePopup(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdTextSetBkgdColor(PCMD pcmd)
+bool Studio::FCmdTextSetBkgdColor(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
     AssertIn(pcmd->rglw[0], 0, kbMax);
 
     byte iscr = (byte)pcmd->rglw[0];
-    ACR acr(iscr);
-    PMVU pmvu = (PMVU)_pmvie->PddgActive();
+    AbstractColor acr(iscr);
+    PMovieView pmvu = (PMovieView)_pmvie->PddgActive();
 
     if (iscr == 0)
         acr.SetToClear();
@@ -1301,15 +1301,15 @@ bool STDIO::FCmdTextSetBkgdColor(PCMD pcmd)
  *  fTrue if it handled the command, else fFalse.
  *
  **************************************************************************/
-bool STDIO::FCmdTextSetColor(PCMD pcmd)
+bool Studio::FCmdTextSetColor(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
     AssertIn(pcmd->rglw[0], 0, kbMax);
 
     byte iscr = (byte)pcmd->rglw[0];
-    ACR acr(iscr);
-    PMVU pmvu = (PMVU)_pmvie->PddgActive();
+    AbstractColor acr(iscr);
+    PMovieView pmvu = (PMovieView)_pmvie->PddgActive();
 
     if (iscr == 0)
         acr.SetToClear();
@@ -1330,12 +1330,12 @@ bool STDIO::FCmdTextSetColor(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ PETED ***********/
-bool STDIO::FCmdTextSetSize(PCMD pcmd)
+bool Studio::FCmdTextSetSize(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu = _pmvie->PmvuCur();
+    PMovieView pmvu = _pmvie->PmvuCur();
 
     _pmvie->SetDypFontTextCur(pcmd->rglw[0]);
     pmvu->SetTool(toolTboxSize);
@@ -1356,13 +1356,13 @@ bool STDIO::FCmdTextSetSize(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ PETED ***********/
-bool STDIO::FCmdTextSetStyle(PCMD pcmd)
+bool Studio::FCmdTextSetStyle(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
     ulong grfont;
-    PMVU pmvu = _pmvie->PmvuCur();
+    PMovieView pmvu = _pmvie->PmvuCur();
 
     grfont = pmvu->GrfontStyleTextCur();
     grfont &= ~((ulong)pcmd->rglw[0]);
@@ -1385,12 +1385,12 @@ bool STDIO::FCmdTextSetStyle(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ PETED ***********/
-bool STDIO::FCmdTextSetFont(PCMD pcmd)
+bool Studio::FCmdTextSetFont(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu = _pmvie->PmvuCur();
+    PMovieView pmvu = _pmvie->PmvuCur();
 
     _pmvie->SetOnnTextCur(pcmd->rglw[0]);
     pmvu->SetTool(toolTboxFont);
@@ -1403,7 +1403,7 @@ bool STDIO::FCmdTextSetFont(PCMD pcmd)
     Load a cursor only.  Do not set the tool permanently.  Used for
     roll over cursors.
 ***************************************************************************/
-void STDIO::SetCurs(long tool)
+void Studio::SetCurs(long tool)
 {
     PCURS pcurs;
     long cursID;
@@ -1560,23 +1560,23 @@ void STDIO::SetCurs(long tool)
 /***************************************************************************
     Tell the play button to go back to Play
 ***************************************************************************/
-void STDIO::PlayStopped(void)
+void Studio::PlayStopped(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPlay);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPlay);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK) && (pgok->Sno() != kstDefault))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject) && (pgok->Sno() != kstDefault))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstDefault);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsActionBrowser);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsActionBrowser);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstDefault);
@@ -1588,26 +1588,26 @@ void STDIO::PlayStopped(void)
 /***************************************************************************
     The movie engine changed the tool, now change the UI
 ***************************************************************************/
-void STDIO::ChangeTool(long tool)
+void Studio::ChangeTool(long tool)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
     if (tool == toolTboxMove)
     {
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsCover);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsCover);
     }
     else if (tool == toolDefault)
     {
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsCover);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsCover);
     }
     else
     {
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCover);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCover);
     }
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK) && (pgok->Sno() != kstOpen))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject) && (pgok->Sno() != kstOpen))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstOpen);
@@ -1618,19 +1618,19 @@ void STDIO::ChangeTool(long tool)
     switch (tool)
     {
     case toolCompose:
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCompose);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCompose);
         break;
 
     case toolRecordSameAction:
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsContinue);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsContinue);
         break;
 
     case toolTboxMove:
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsSelect);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsSelect);
         break;
 
     case toolDefault:
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsBackground);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSettingsBackground);
         pgok->FRunScript((kstDefault << 16) | kchidResetTools);
         return;
 
@@ -1638,7 +1638,7 @@ void STDIO::ChangeTool(long tool)
         break;
     }
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK) && (pgok->Sno() != kstSelected))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject) && (pgok->Sno() != kstSelected))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstSelected);
@@ -1648,11 +1648,11 @@ void STDIO::ChangeTool(long tool)
 /***************************************************************************
     The movie engine deleted the scene.
 ***************************************************************************/
-void STDIO::SceneNuked(void)
+void Studio::SceneNuked(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
     if (_pmvie->Pscen() == pvNil)
     {
@@ -1660,9 +1660,9 @@ void STDIO::SceneNuked(void)
         _SetToolStates();
         _psmcc->UpdateRollCall();
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndosCover);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndosCover);
 
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         {
             AssertPo(pgok, 0);
             pgok->FChangeState(kstOpen);
@@ -1673,7 +1673,7 @@ void STDIO::SceneNuked(void)
 /***************************************************************************
     The movie engine Undeleted a scene.
 ***************************************************************************/
-void STDIO::SceneUnnuked(void)
+void Studio::SceneUnnuked(void)
 {
     AssertThis(0);
 
@@ -1699,7 +1699,7 @@ void STDIO::SceneUnnuked(void)
 /***************************************************************************
     The movie engine deleted an actor.
 ***************************************************************************/
-void STDIO::ActorNuked(void)
+void Studio::ActorNuked(void)
 {
     AssertThis(0);
 
@@ -1712,15 +1712,15 @@ void STDIO::ActorNuked(void)
 /***************************************************************************
     Enables/Disables the tools
 ***************************************************************************/
-void STDIO::_SetToolStates(void)
+void Studio::_SetToolStates(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK) && (_pmvie->Pscen() == pvNil))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject) && (_pmvie->Pscen() == pvNil))
     {
         AssertPo(pgok, 0);
         pgok->FRunScript((kstDefault << 16) | kchidResetTools);
@@ -1730,47 +1730,47 @@ void STDIO::_SetToolStates(void)
     //
     // Enable everything, since we now have a scene.
     //
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FRunScript((kstDefault << 16) | kchidEnableSceneTools);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstClosed);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSoundsCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidSoundsCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstClosed);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidTextsCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstClosed);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidScrollbarsCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidScrollbarsCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstOpen);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndosCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndosCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstOpen);
@@ -1778,9 +1778,9 @@ void STDIO::_SetToolStates(void)
 
     SetUndo(_pmvie->CundbUndo() != 0 ? undoUndo : _pmvie->CundbRedo() != 0 ? undoRedo : undoDisabled);
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBooksCover);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBooksCover);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstOpen);
@@ -1790,15 +1790,15 @@ void STDIO::_SetToolStates(void)
 /***************************************************************************
     The movie engine inserted the first actor into the movie.
 ***************************************************************************/
-void STDIO::EnableActorTools(void)
+void Studio::EnableActorTools(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FRunScript((kstDefault << 16) | kchidEnableActorTools);
@@ -1808,15 +1808,15 @@ void STDIO::EnableActorTools(void)
 /***************************************************************************
     The movie engine inserted the first actor into the movie.
 ***************************************************************************/
-void STDIO::EnableTboxTools(void)
+void Studio::EnableTboxTools(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FRunScript((kstDefault << 16) | kchidEnableTboxTools);
@@ -1826,7 +1826,7 @@ void STDIO::EnableTboxTools(void)
 /***************************************************************************
     The movie engine has a new selected textbox.
 ***************************************************************************/
-void STDIO::TboxSelected(void)
+void Studio::TboxSelected(void)
 {
     AssertThis(0);
 }
@@ -1834,15 +1834,15 @@ void STDIO::TboxSelected(void)
 /***************************************************************************
     The movie engine has a new undo buffer state
 ***************************************************************************/
-void STDIO::SetUndo(long undo)
+void Studio::SetUndo(long undo)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndo);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidUndo);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(undo == undoUndo ? kstOpen : (undo == undoRedo ? kstClosed : kstDisabled));
@@ -1853,7 +1853,7 @@ void STDIO::SetUndo(long undo)
     Put up the costume changer / 3-D Text easel.  Returns fTrue if user
     made changes, else fFalse.
 ***************************************************************************/
-void STDIO::ActorEasel(bool *pfActrChanged)
+void Studio::ActorEasel(bool *pfActrChanged)
 {
     AssertThis(0);
     AssertVarMem(pfActrChanged);
@@ -1866,12 +1866,12 @@ void STDIO::ActorEasel(bool *pfActrChanged)
     Put up the costume changer / 3-D Text easel.  Returns fTrue if user
     made changes, else fFalse.
 ***************************************************************************/
-bool STDIO::FCmdActorEaselOpen(PCMD pcmd)
+bool Studio::FCmdActorEaselOpen(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PACTR pactr = _pmvie->Pscen()->PactrSelected();
+    PActor pactr = _pmvie->Pscen()->PactrSelected();
     AssertPo(pactr, 0);
 
     vapp.BeginLongOp();
@@ -1896,19 +1896,19 @@ bool STDIO::FCmdActorEaselOpen(PCMD pcmd)
 /***************************************************************************
     This frame has a pause type.
 ***************************************************************************/
-void STDIO::PauseType(WIT wit)
+void Studio::PauseType(WIT wit)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
     long fFlag;
 
     fFlag = FPure(wit == witUntilSnd);
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPausesSound);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPausesSound);
     AssertNilOrPo(pgok, 0);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
 
         if (fFlag)
@@ -1923,7 +1923,7 @@ void STDIO::PauseType(WIT wit)
     else
     {
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
         if (pgok != pvNil)
         {
             pgok->FRunScript((kstDefault << 16) | kchidSetPauseType, &fFlag, 1);
@@ -1939,13 +1939,13 @@ void STDIO::PauseType(WIT wit)
 /***************************************************************************
     The movie engine is recording
 ***************************************************************************/
-void STDIO::Recording(bool fRecording, bool fRecord)
+void Studio::Recording(bool fRecording, bool fRecord)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPlay);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidPlay);
     AssertNilOrPo(pgok, 0);
 
     if (pgok == pvNil)
@@ -1974,13 +1974,13 @@ void STDIO::Recording(bool fRecording, bool fRecord)
 /***************************************************************************
     The movie engine has an actor ready to be sooner/latered
 ***************************************************************************/
-void STDIO::StartSoonerLater(void)
+void Studio::StartSoonerLater(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
     AssertNilOrPo(pgok, 0);
 
     if (pgok == pvNil)
@@ -1990,12 +1990,12 @@ void STDIO::StartSoonerLater(void)
 
     pgok->FChangeState(kstOpen);
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsLaterButton);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsLaterButton);
     AssertNilOrPo(pgok, 0);
 
     if (pgok == pvNil)
     {
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
         AssertPo(pgok, 0);
         pgok->FChangeState(kstClosed);
         return;
@@ -2011,18 +2011,18 @@ void STDIO::StartSoonerLater(void)
 /***************************************************************************
     The movie engine has completed a sooner/later
 ***************************************************************************/
-void STDIO::EndSoonerLater(void)
+void Studio::EndSoonerLater(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
     if (!_fStartedSoonerLater)
         return;
 
     _psmcc->Psscb()->EndNoAutoadjust();
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsSoonerButton);
     AssertNilOrPo(pgok, 0);
 
     if (pgok != pvNil)
@@ -2030,7 +2030,7 @@ void STDIO::EndSoonerLater(void)
         pgok->FChangeState(kstClosed);
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsLaterButton);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsLaterButton);
     AssertNilOrPo(pgok, 0);
 
     if (pgok != pvNil)
@@ -2045,20 +2045,20 @@ void STDIO::EndSoonerLater(void)
 /***************************************************************************
     The movie engine has placed an actor.
 ***************************************************************************/
-void STDIO::NewActor(void)
+void Studio::NewActor(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
-    PMVU pmvu;
+    PKidspaceGraphicObject pgok;
+    PMovieView pmvu;
 
-    pmvu = (PMVU)_pmvie->PddgGet(0);
+    pmvu = (PMovieView)_pmvie->PddgGet(0);
     AssertPo(pmvu, 0);
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsXY);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsXY);
     AssertNilOrPo(pgok, 0);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         if (pgok->Sno() == kstOpen)
         {
@@ -2071,18 +2071,18 @@ void STDIO::NewActor(void)
 
         pmvu->SetAxis(rgr);
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         {
             AssertPo(pgok, 0);
             pgok->FRunScript((kstDefault << 16) | kchidResetXZAxisAndGround);
         }
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsGround);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsGround);
     AssertNilOrPo(pgok, 0);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         if (pgok->Sno() == kstClosed)
         {
@@ -2093,27 +2093,27 @@ void STDIO::NewActor(void)
     {
         pmvu->SetFRespectGround(fFalse);
 
-        pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
-        if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+        pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+        if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         {
             AssertPo(pgok, 0);
             pgok->FRunScript((kstDefault << 16) | kchidResetXZAxisAndGround);
         }
     }
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCompose);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidActorsCompose);
     AssertNilOrPo(pgok, 0);
 
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
     {
         pgok->FChangeState(kstSelected);
     }
 }
 
 /***************************************************************************
-    The RollCall needs a mapping from Tmpl CNO's to the GOKD thumb cno
+    The RollCall needs a mapping from Tmpl ChunkNumber's to the KidspaceGraphicObjectDescriptor thumb cno
 ***************************************************************************/
-bool STDIO::FAddCmg(CNO cnoTmpl, CNO cnoGokd)
+bool Studio::FAddCmg(ChunkNumber cnoTmpl, ChunkNumber cnoGokd)
 {
     AssertThis(0);
 
@@ -2140,7 +2140,7 @@ bool STDIO::FAddCmg(CNO cnoTmpl, CNO cnoGokd)
 /***************************************************************************
     Return the cnoGokd corres to the cnoTmpl
 ***************************************************************************/
-CNO STDIO::CnoGokdFromCnoTmpl(CNO cnoTmpl)
+ChunkNumber Studio::CnoGokdFromCnoTmpl(ChunkNumber cnoTmpl)
 {
     AssertThis(0);
 
@@ -2160,16 +2160,16 @@ CNO STDIO::CnoGokdFromCnoTmpl(CNO cnoTmpl)
 /***************************************************************************
     The movie engine needs the action browser for the currently selected actor
 ***************************************************************************/
-void STDIO::StartActionBrowser(void)
+void Studio::StartActionBrowser(void)
 {
     AssertThis(0);
     AssertPo(_pmvie->Pscen(), 0);
     AssertPo(_pmvie->Pscen()->PactrSelected(), 0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
     CMD cmd;
 
-    pgok = (PGOK)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
+    pgok = (PKidspaceGraphicObject)((APP *)vpappb)->Pkwa()->PgobFromHid(kidBackground);
 
     if (pgok != pvNil)
     {
@@ -2184,7 +2184,7 @@ void STDIO::StartActionBrowser(void)
 /***************************************************************************
     Start the listener easel
 ***************************************************************************/
-void STDIO::StartListenerEasel(void)
+void Studio::StartListenerEasel(void)
 {
     AssertThis(0);
 
@@ -2194,7 +2194,7 @@ void STDIO::StartListenerEasel(void)
 /***************************************************************************
     Start the listener easel
 ***************************************************************************/
-bool STDIO::FCmdListenerEaselOpen(PCMD pcmd)
+bool Studio::FCmdListenerEaselOpen(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -2210,16 +2210,16 @@ bool STDIO::FCmdListenerEaselOpen(PCMD pcmd)
     bother clearing the caches (since it's slow and requires the CD(s) to
     be in.)
 ***************************************************************************/
-bool STDIO::FShutdown(bool fClearCache)
+bool Studio::FShutdown(bool fClearCache)
 {
     AssertThis(0);
 
     bool fRet = fTrue;
-    PMVU pmvu;
+    PMovieView pmvu;
 
     if (_pmvie != pvNil)
     {
-        pmvu = (PMVU)_pmvie->PddgActive();
+        pmvu = (PMovieView)_pmvie->PddgActive();
         AssertPo(pmvu, 0);
 
         fRet = pmvu->FCloseDoc(fFalse);
@@ -2234,12 +2234,12 @@ bool STDIO::FShutdown(bool fClearCache)
 /***************************************************************************
     Static function to stop the action button animation
 ***************************************************************************/
-void STDIO::PauseActionButton(void)
+void Studio::PauseActionButton(void)
 {
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidActorsActionBrowser);
-    if (pgok != pvNil && pgok->FIs(kclsGOK))
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidActorsActionBrowser);
+    if (pgok != pvNil && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstFreeze);
@@ -2249,12 +2249,12 @@ void STDIO::PauseActionButton(void)
 /***************************************************************************
     Static function to resume the action button animation
 ***************************************************************************/
-void STDIO::ResumeActionButton(void)
+void Studio::ResumeActionButton(void)
 {
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidActorsActionBrowser);
-    if (pgok != pvNil && pgok->FIs(kclsGOK))
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidActorsActionBrowser);
+    if (pgok != pvNil && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         pgok->FChangeState(kstDefault);
@@ -2264,13 +2264,15 @@ void STDIO::ResumeActionButton(void)
 /***************************************************************************
     The movie engine is using the tool, now play the sound
 ***************************************************************************/
-void STDIO::PlayUISound(long tool, long grfcust)
+void Studio::PlayUISound(long tool, long grfcust)
 {
     AssertThis(0);
 
-    PCRF pcrf;
+    PChunkyResourceFile pcrf;
     long cactRepeat = 1;
     long cno;
+
+    return; // hack to disable UI sounds
 
     _fStopUISound = fFalse;
 
@@ -2477,7 +2479,7 @@ void STDIO::PlayUISound(long tool, long grfcust)
 /***************************************************************************
     The movie engine is done using the tool, now stop the sound
 ***************************************************************************/
-void STDIO::StopUISound(void)
+void Studio::StopUISound(void)
 {
     AssertThis(0);
 
@@ -2490,7 +2492,7 @@ void STDIO::StopUISound(void)
 /***************************************************************************
     Read a Misc Studio stn
 ***************************************************************************/
-void STDIO::GetStnMisc(long ids, PSTN pstn)
+void Studio::GetStnMisc(long ids, PSTN pstn)
 {
     AssertBaseThis(0);
     AssertDo(_pgstMisc->FFindExtra(&ids, pstn), "Invalid studio.cht or ids");
@@ -2506,15 +2508,15 @@ void STDIO::GetStnMisc(long ids, PSTN pstn)
     Returns:  fTrue; always handles the command
 
 ************************************************************ SEANSE ***********/
-bool STDIO::FCmdToggleXY(PCMD pcmd)
+bool Studio::FCmdToggleXY(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidActorsXY);
-    if (pgok != pvNil && pgok->FIs(kclsGOK))
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidActorsXY);
+    if (pgok != pvNil && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         vpcex->EnqueueCid(cidClicked, pgok, pvNil, pvNil);
@@ -2533,16 +2535,16 @@ bool STDIO::FCmdToggleXY(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ SEANSE ***********/
-bool STDIO::FCmdHelpBook(PCMD pcmd)
+bool Studio::FCmdHelpBook(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidBook);
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidBook);
 
-    if (pgok != pvNil && pgok->FIs(kclsGOK))
+    if (pgok != pvNil && pgok->FIs(kclsKidspaceGraphicObject))
     {
         AssertPo(pgok, 0);
         vpcex->EnqueueCid(cidClicked, pgok, pvNil, pvNil);
@@ -2561,7 +2563,7 @@ bool STDIO::FCmdHelpBook(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ SEANSE ***********/
-bool STDIO::FCmdMovieGoto(PCMD pcmd)
+bool Studio::FCmdMovieGoto(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -2581,7 +2583,7 @@ bool STDIO::FCmdMovieGoto(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ SEANSE ***********/
-bool STDIO::FCmdSoundsEnabled(PCMD pcmd)
+bool Studio::FCmdSoundsEnabled(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -2599,7 +2601,7 @@ bool STDIO::FCmdSoundsEnabled(PCMD pcmd)
     Returns:  fTrue; always handles the command
 
 ************************************************************ SEANSE ***********/
-bool STDIO::FCmdCreateTbox(PCMD pcmd)
+bool Studio::FCmdCreateTbox(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -2626,7 +2628,7 @@ bool STDIO::FCmdCreateTbox(PCMD pcmd)
  *  None.
  *
  ****************************************************/
-void STDIO::UpdateTitle(PSTN pstnTitle)
+void Studio::UpdateTitle(PSTN pstnTitle)
 {
     AssertThis(0);
     AssertPo(pstnTitle, 0);
@@ -2661,7 +2663,7 @@ void STDIO::UpdateTitle(PSTN pstnTitle)
 /******************************************************************************
         Tells the movie to write bitmaps as it plays, and plays the movie.
 ************************************************************ PETED ***********/
-bool STDIO::FCmdWriteBmps(PCMD pcmd)
+bool Studio::FCmdWriteBmps(PCMD pcmd)
 {
     if (_pmvie != pvNil)
     {
@@ -2676,7 +2678,7 @@ bool STDIO::FCmdWriteBmps(PCMD pcmd)
 #ifdef DEBUG
 
 /****************************************************
- * Mark memory used by the STDIO
+ * Mark memory used by the Studio
  *
  * Parameters:
  *  None.
@@ -2685,10 +2687,10 @@ bool STDIO::FCmdWriteBmps(PCMD pcmd)
  *  None.
  *
  ****************************************************/
-void STDIO::MarkMem(void)
+void Studio::MarkMem(void)
 {
     AssertThis(0);
-    STDIO_PAR::MarkMem();
+    Studio_PAR::MarkMem();
     MarkMemObj(_pmvie);
     MarkMemObj(_psmcc);
     MarkMemObj(_pcrm);
@@ -2719,7 +2721,7 @@ void STDIO::MarkMem(void)
 
 /***************************************************************************
  *
- * Assert the validity of the STDIO.
+ * Assert the validity of the Studio.
  *
  * Parameters:
  *  grf - Bit field of options
@@ -2728,9 +2730,9 @@ void STDIO::MarkMem(void)
  *  None.
  *
  **************************************************************************/
-void STDIO::AssertValid(ulong grf)
+void Studio::AssertValid(ulong grf)
 {
-    STDIO_PAR::AssertValid(fobjAllocated);
+    Studio_PAR::AssertValid(fobjAllocated);
     AssertNilOrPo(_pmvie, 0);
     AssertPo(_pcrm, 0);
     AssertPo(_pgstMisc, 0);
@@ -2745,9 +2747,9 @@ void STDIO::AssertValid(ulong grf)
 #endif // DEBUG
 
 /***************************************************************************
-    Constructor for SMCC.
+    Constructor for StudioClientCallbacks.
 ***************************************************************************/
-SMCC::SMCC(long dxp, long dyp, long cbCache, PSSCB psscb, PSTDIO pstdio) : MCC(dxp, dyp, cbCache)
+StudioClientCallbacks::StudioClientCallbacks(long dxp, long dyp, long cbCache, PStudioScrollbars psscb, PStudio pstdio) : MovieClientCallbacks(dxp, dyp, cbCache)
 {
     AssertNilOrPo(psscb, 0);
     // Note: Would like to do an AssertPo here but can't
@@ -2766,7 +2768,7 @@ SMCC::SMCC(long dxp, long dyp, long cbCache, PSSCB psscb, PSTDIO pstdio) : MCC(d
  * Update RollCall
  *
  **************************************************************************/
-void SMCC::UpdateRollCall(void)
+void StudioClientCallbacks::UpdateRollCall(void)
 {
     AssertThis(0);
 
@@ -2803,7 +2805,7 @@ void SMCC::UpdateRollCall(void)
     DypTextDef
         Retrieve a default text size for a textbox in a movie.
 ************************************************************ PETED ***********/
-long SMCC::DypTboxDef(void)
+long StudioClientCallbacks::DypTboxDef(void)
 {
     if (_dypTextTbox == 0)
     {
@@ -2824,7 +2826,7 @@ long SMCC::DypTboxDef(void)
     Returns: fTrue if the user wants the sounds purged
 
 ************************************************************ PETED ***********/
-bool SMCC::FQueryPurgeSounds(void)
+bool StudioClientCallbacks::FQueryPurgeSounds(void)
 {
     AssertThis(0);
 
@@ -2836,21 +2838,21 @@ bool SMCC::FQueryPurgeSounds(void)
 
 #ifdef DEBUG
 /***************************************************************************
-    Assert the validity of the SMCC
+    Assert the validity of the StudioClientCallbacks
 ***************************************************************************/
-void SMCC::AssertValid(ulong grf)
+void StudioClientCallbacks::AssertValid(ulong grf)
 {
-    SMCC_PAR::AssertValid(0);
+    StudioClientCallbacks_PAR::AssertValid(0);
     AssertPo(_psscb, 0);
 }
 
 /***************************************************************************
-    Mark memory used by the SMCC
+    Mark memory used by the StudioClientCallbacks
 ***************************************************************************/
-void SMCC::MarkMem(void)
+void StudioClientCallbacks::MarkMem(void)
 {
     AssertThis(0);
-    SMCC_PAR::MarkMem();
+    StudioClientCallbacks_PAR::MarkMem();
     MarkMemObj(_psscb);
 }
 

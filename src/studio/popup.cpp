@@ -25,15 +25,15 @@ END_CMD_MAP_NIL()
     Create a new popup menu
 ***************************************************************************/
 PMP MP::PmpNew(long kidParent, long kidMenu, PRCA prca, PCMD pcmd, BWS bws, long ithumSelect, long sidSelect,
-               CKI ckiRoot, CTG ctg, PCMH pcmh, long cid, bool fMoveTop)
+               ChunkIdentification ckiRoot, ChunkTag ctg, PCMH pcmh, long cid, bool fMoveTop)
 {
     AssertPo(prca, 0);
     AssertVarMem(pcmd);
     AssertPo(pcmh, 0);
 
     PMP pmp;
-    GCB gcb;
-    PSTDIO pstdio;
+    GraphicsObjectBlock gcb;
+    PStudio pstdio;
     long cthum;
     long cfrm;
 
@@ -78,7 +78,7 @@ PMP MP::PmpNew(long kidParent, long kidMenu, PRCA prca, PCMD pcmd, BWS bws, long
 
     if (cthum <= cfrm)
     {
-        PGOB pgob;
+        PGraphicsObject pgob;
         long dypFrm;
         long dypTop;
         RC rc;
@@ -210,15 +210,15 @@ END_CMD_MAP_NIL()
 /***************************************************************************
     Create a new font menu
 ***************************************************************************/
-PMPFNT MPFNT::PmpfntNew(PRCA prca, long kidParent, long kidMenu, PCMD pcmd, long ithumSelect, PGST pgst)
+PMPFNT MPFNT::PmpfntNew(PRCA prca, long kidParent, long kidMenu, PCMD pcmd, long ithumSelect, PStringTable pgst)
 {
     AssertPo(prca, 0);
     AssertVarMem(pcmd);
     AssertPo(pgst, 0);
 
     PMPFNT pmpfnt;
-    GCB gcb;
-    PSTDIO pstdio = vpapp->Pstdio();
+    GraphicsObjectBlock gcb;
+    PStudio pstdio = vpapp->Pstdio();
 
     if (pstdio == pvNil)
     {
@@ -228,7 +228,7 @@ PMPFNT MPFNT::PmpfntNew(PRCA prca, long kidParent, long kidMenu, PCMD pcmd, long
 
     if (pgst->CbExtra() != size(long))
     {
-        Bug("GST CbExtra isn't the right size for an onn");
+        Bug("StringTable CbExtra isn't the right size for an onn");
         return pvNil;
     }
 
@@ -272,7 +272,7 @@ LFail:
 /***************************************************************************
     Set the font of the TGOB to the font listed in the menu item
 ***************************************************************************/
-bool MPFNT::_FSetThumFrame(long istn, PGOB pgobPar)
+bool MPFNT::_FSetThumFrame(long istn, PGraphicsObject pgobPar)
 {
     if (MPFNT_PAR::_FSetThumFrame(istn, pgobPar))
     {
@@ -282,7 +282,7 @@ bool MPFNT::_FSetThumFrame(long istn, PGOB pgobPar)
         /* By the time we get this far, MPFNT_PAR should have already checked
             these */
         Assert(ptgob != pvNil, "No TGOB for the text");
-        Assert(ptgob->FIs(kclsTGOB), "GOB isn't a TGOB");
+        Assert(ptgob->FIs(kclsTGOB), "GraphicsObject isn't a TGOB");
 
         _pgst->GetExtra(istn, &onn);
         ptgob->SetFont(onn);
@@ -310,7 +310,7 @@ void MPFNT::_ApplySelection(long ithumSelect, long sid)
 ***************************************************************************/
 void MPFNT::_AdjustRc(long cthum, long cfrm)
 {
-    PGOB pgob;
+    PGraphicsObject pgob;
     long dypFrm;
     long dypTop;
     RC rc;

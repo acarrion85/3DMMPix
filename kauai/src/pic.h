@@ -16,16 +16,16 @@
 #ifndef PIC_H
 #define PIC_H
 
-const FTG kftgPict = 'PICT';
-const FTG kftgMeta = 'WMF';
-const FTG kftgEnhMeta = 'EMF';
+const FileType kftgPict = 'PICT';
+const FileType kftgMeta = 'WMF';
+const FileType kftgEnhMeta = 'EMF';
 
 /***************************************************************************
     Picture class.  This is a wrapper around a system picture (Mac Pict or
     Win MetaFile).
 ***************************************************************************/
 typedef class PIC *PPIC;
-#define PIC_PAR BACO
+#define PIC_PAR BaseCacheableObject
 #define kclsPIC 'PIC'
 class PIC : public PIC_PAR
 {
@@ -44,15 +44,15 @@ class PIC : public PIC_PAR
 
     PIC(void);
 #ifdef WIN
-    static HPIC _HpicReadWmf(FNI *pfni);
+    static HPIC _HpicReadWmf(Filename *pfni);
 #endif // WIN
 
   public:
     ~PIC(void);
 
-    static PPIC PpicFetch(PCFL pcfl, CTG ctg, CNO cno, CHID chid = 0);
-    static PPIC PpicRead(PBLCK pblck);
-    static PPIC PpicReadNative(FNI *pfni);
+    static PPIC PpicFetch(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, ChildChunkID chid = 0);
+    static PPIC PpicRead(PDataBlock pblck);
+    static PPIC PpicReadNative(Filename *pfni);
     static PPIC PpicNew(HPIC hpic, RC *prc);
 
     void GetRc(RC *prc);
@@ -60,13 +60,13 @@ class PIC : public PIC_PAR
     {
         return _hpic;
     }
-    bool FAddToCfl(PCFL pcfl, CTG ctg, CNO *pcno, CHID chid = 0);
-    bool FPutInCfl(PCFL pcfl, CTG ctg, CNO cno, CHID chid = 0);
+    bool FAddToCfl(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno, ChildChunkID chid = 0);
+    bool FPutInCfl(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, ChildChunkID chid = 0);
     virtual long CbOnFile(void);
-    virtual bool FWrite(PBLCK pblck);
+    virtual bool FWrite(PDataBlock pblck);
 };
 
 // a chunky resource reader to read picture 0 from a GRAF chunk
-bool FReadMainPic(PCFL pcfl, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
+bool FReadMainPic(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
 
 #endif //! PIC_H

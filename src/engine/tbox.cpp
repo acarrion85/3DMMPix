@@ -36,7 +36,7 @@ RTCLASS(TCLP)
 //
 typedef class TUNT *PTUNT;
 
-#define TUNT_PAR MUNB
+#define TUNT_PAR MovieUndo
 #define kclsTUNT 'TUNT'
 class TUNT : public TUNT_PAR
 {
@@ -64,8 +64,8 @@ class TUNT : public TUNT_PAR
         _itbox = itbox;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 RTCLASS(TUNT)
@@ -75,7 +75,7 @@ RTCLASS(TUNT)
 //
 typedef class TUNS *PTUNS;
 
-#define TUNS_PAR MUNB
+#define TUNS_PAR MovieUndo
 #define kclsTUNS 'TUNS'
 class TUNS : public TUNS_PAR
 {
@@ -103,8 +103,8 @@ class TUNS : public TUNS_PAR
         _itbox = itbox;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 RTCLASS(TUNS)
@@ -114,7 +114,7 @@ RTCLASS(TUNS)
 //
 typedef class TUNH *PTUNH;
 
-#define TUNH_PAR MUNB
+#define TUNH_PAR MovieUndo
 #define kclsTUNH 'TUNH'
 class TUNH : public TUNH_PAR
 {
@@ -148,8 +148,8 @@ class TUNH : public TUNH_PAR
         _itbox = itbox;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 RTCLASS(TUNH)
@@ -159,7 +159,7 @@ RTCLASS(TUNH)
 //
 typedef class TUND *PTUND;
 
-#define TUND_PAR MUNB
+#define TUND_PAR MovieUndo
 #define kclsTUND 'TUND'
 class TUND : public TUND_PAR
 {
@@ -168,14 +168,14 @@ class TUND : public TUND_PAR
     ASSERT
 
   protected:
-    PUNDB _pundb;
+    PUndoBase _pundb;
     long _itbox;
     TUND(void)
     {
     }
 
   public:
-    static PTUND PtundNew(PUNDB pundb);
+    static PTUND PtundNew(PUndoBase pundb);
     ~TUND(void);
 
     void SetItbox(long itbox)
@@ -183,8 +183,8 @@ class TUND : public TUND_PAR
         _itbox = itbox;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 RTCLASS(TUND)
@@ -194,7 +194,7 @@ RTCLASS(TUND)
 //
 typedef class TUNC *PTUNC;
 
-#define TUNC_PAR MUNB
+#define TUNC_PAR MovieUndo
 #define kclsTUNC 'TUNC'
 class TUNC : public TUNC_PAR
 {
@@ -204,7 +204,7 @@ class TUNC : public TUNC_PAR
 
   protected:
     long _itbox;
-    ACR _acr;
+    AbstractColor _acr;
     TUNC(void)
     {
     }
@@ -217,13 +217,13 @@ class TUNC : public TUNC_PAR
     {
         _itbox = itbox;
     }
-    void SetAcrBack(ACR acr)
+    void SetAcrBack(AbstractColor acr)
     {
         _acr = acr;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 RTCLASS(TUNC)
@@ -248,12 +248,12 @@ RTCLASS(TUNC)
 PTBXB TBXB::PtbxbNew(PTBOX ptbox, PGCB pgcb)
 {
     AssertPo(ptbox, 0);
-    AssertPvCb(pgcb, size(GCB));
+    AssertPvCb(pgcb, size(GraphicsObjectBlock));
 
     PTBXB ptbxb;
     PTBXG ptbxg;
     RC rcRel, rcAbs;
-    ACR acr;
+    AbstractColor acr;
 
     //
     // Create the border
@@ -265,7 +265,7 @@ PTBXB TBXB::PtbxbNew(PTBOX ptbox, PGCB pgcb)
     }
 
     //
-    // Now create the DDG area for the text
+    // Now create the DocumentDisplayGraphicsObject area for the text
     //
     rcAbs.Set(kdzpBorderTbox, kdzpBorderTbox, -kdzpBorderTbox, -kdzpBorderTbox);
     rcRel.Set(krelZero, krelZero, krelOne, krelOne);
@@ -303,7 +303,7 @@ void TBXB::Draw(PGNV pgnv, RC *prcClip)
     RC rcClip;
     long lwSave;
 
-    Assert(_ptbox->FIsVisible(), "DDG existing for invisible tbox");
+    Assert(_ptbox->FIsVisible(), "DocumentDisplayGraphicsObject existing for invisible tbox");
 
     if (!_ptbox->FSelected())
     {
@@ -437,13 +437,13 @@ bool TBXB::FCmdTrackMouse(PCMD_MOUSE pcmd)
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu;
+    PMovieView pmvu;
     PT pt;
     RC rc, rcOld;
     RC rcBound(0, 0, _ptbox->Pscen()->Pmvie()->Pmcc()->Dxp(), _ptbox->Pscen()->Pmvie()->Pmcc()->Dyp());
     static long itbox = ivNil;
 
-    pmvu = (PMVU)_ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)_ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     pt.xp = pcmd->xp;
@@ -676,9 +676,9 @@ bool TBXB::FCmdMouseMove(PCMD_MOUSE pcmd)
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    PMVU pmvu;
+    PMovieView pmvu;
 
-    pmvu = (PMVU)_ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)_ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     //
@@ -828,7 +828,7 @@ TBXT TBXB::_TbxtAnchor(long xp, long yp)
  **************************************************************************/
 void TBXB::Activate(bool fActive)
 {
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
 
     pddg = _ptbox->PddgGet(0);
     AssertPo(pddg, 0);
@@ -856,9 +856,9 @@ bool TBXB::FPtIn(long xp, long yp)
 {
     AssertThis(0);
 
-    PMVU pmvu;
+    PMovieView pmvu;
 
-    pmvu = (PMVU)_ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)_ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     //
@@ -890,10 +890,10 @@ void TBXB::AttachToMouse(void)
 {
     AssertThis(0);
 
-    PMVU pmvu;
+    PMovieView pmvu;
     PT pt;
 
-    pmvu = (PMVU)_ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)_ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     _fTrackingMouse = fTrue;
@@ -951,7 +951,7 @@ void TBXB::AssertValid(ulong grf)
 // Disable the some default rich text functionality,
 // and then intercept other commands.
 //
-BEGIN_CMD_MAP(TBXG, DDG)
+BEGIN_CMD_MAP(TBXG, DocumentDisplayGraphicsObject)
 ON_CID_GEN(cidSave, pvNil, pvNil)
 ON_CID_GEN(cidClose, pvNil, pvNil)
 ON_CID_GEN(cidSaveAndClose, pvNil, pvNil)
@@ -991,7 +991,7 @@ TBXG::~TBXG()
 PTBXG TBXG::PtbxgNew(PTBOX ptbox, PGCB pgcb)
 {
     AssertPo(ptbox, 0);
-    AssertPvCb(pgcb, size(GCB));
+    AssertPvCb(pgcb, size(GraphicsObjectBlock));
 
     PTBXG ptbxg;
 
@@ -1032,12 +1032,12 @@ void TBXG::Draw(PGNV pgnv, RC *prcClip)
 
     //
     // In order to do scrolling text boxex, the easiest
-    // way to get the text to scroll is to grow the DDG
+    // way to get the text to scroll is to grow the DocumentDisplayGraphicsObject
     // upward (to the top of the screen), but then clip
     // the drawing to within the border.
     //
-    // The DDG will automatically be clipped to within
-    // the border GOB, but the drawn border (dashes and
+    // The DocumentDisplayGraphicsObject will automatically be clipped to within
+    // the border GraphicsObject, but the drawn border (dashes and
     // anchors) must then be subtracted.
     //
     GetRc(&rc, cooParent);
@@ -1086,11 +1086,11 @@ void TBXG::Activate(bool fActive)
  **************************************************************************/
 void TBXG::InvalCp(long cp, long ccpIns, long ccpDel)
 {
-    PMVU pmvu;
+    PMovieView pmvu;
     PTBOX ptbox = (PTBOX)_pdocb;
     AssertPo(ptbox, 0);
 
-    pmvu = (PMVU)ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     if (((pmvu->Tool() == toolTboxPaintText) || (pmvu->Tool() == toolTboxFont) || (pmvu->Tool() == toolTboxSize) ||
@@ -1121,9 +1121,9 @@ bool TBXG::FCmdMouseMove(PCMD_MOUSE pcmd)
     AssertVarMem(pcmd);
 
     PTBOX ptbox = (PTBOX)_pdocb;
-    PMVU pmvu;
+    PMovieView pmvu;
 
-    pmvu = (PMVU)ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     //
@@ -1177,13 +1177,13 @@ bool TBXG::FCmdTrackMouse(PCMD_MOUSE pcmd)
     AssertVarMem(pcmd);
 
     PTBOX ptbox = (PTBOX)_pdocb;
-    PMVU pmvu;
+    PMovieView pmvu;
     CHP chpNew, chpDiff;
 
     chpNew.Clear();
     chpDiff.Clear();
 
-    pmvu = (PMVU)ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     //
@@ -1304,11 +1304,11 @@ bool TBXG::FPtIn(long xp, long yp)
     AssertThis(0);
 
     PTBOX ptbox = (PTBOX)_pdocb;
-    PMVU pmvu;
+    PMovieView pmvu;
 
     AssertPo(ptbox, 0);
 
-    pmvu = (PMVU)ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     //
@@ -1403,10 +1403,10 @@ bool TBXG::FCmdClip(PCMD pcmd)
     AssertVarMem(pcmd);
 
     PTBOX ptbox = (PTBOX)_pdocb;
-    PDOCB pdocb;
-    PMVU pmvu;
+    PDocumentBase pdocb;
+    PMovieView pmvu;
 
-    pmvu = (PMVU)ptbox->Pscen()->Pmvie()->PddgGet(0);
+    pmvu = (PMovieView)ptbox->Pscen()->Pmvie()->PddgGet(0);
     AssertPo(pmvu, 0);
 
     Assert(pmvu->FTextMode(), "Bad mode");
@@ -1422,7 +1422,7 @@ bool TBXG::FCmdClip(PCMD pcmd)
             return (fTrue);
         }
         //
-        // Pass this onto the MVU for pasting
+        // Pass this onto the MovieView for pasting
         //
 
         cmd = *pcmd;
@@ -1608,7 +1608,7 @@ bool TBXG::_FDoClip(long tool)
 
     case toolPasteObject:
 
-        if (vpclip->FGetFormat(kclsTCLP, (PDOCB *)&ptclp))
+        if (vpclip->FGetFormat(kclsTCLP, (PDocumentBase *)&ptclp))
         {
             AssertPo(ptclp, 0);
             bool fRet;
@@ -1792,7 +1792,7 @@ struct TBOXH
     long xpRight;
     long ypTop;
     long ypBottom;
-    CHID chid;
+    ChildChunkID chid;
     bool fStory;
 };
 
@@ -1802,15 +1802,15 @@ struct TBOXH
  *
  * Parameters:
  *	pscen - Scene which owns this textbox.
- *	prcRel - The bounding rectangle of the DDG for the text box within the
- *		the owning MVU.
+ *	prcRel - The bounding rectangle of the DocumentDisplayGraphicsObject for the text box within the
+ *		the owning MovieView.
  *	fStory - Is this a story text box?
  *
  * Returns:
  *  None.
  *
  ****************************************************/
-PTBOX TBOX::PtboxNew(PSCEN pscen, RC *prcRel, bool fStory)
+PTBOX TBOX::PtboxNew(PScene pscen, RC *prcRel, bool fStory)
 {
     AssertNilOrPo(pscen, 0);
     AssertPvCb(prcRel, size(RC));
@@ -1878,16 +1878,16 @@ void TBOX::SetDirty(bool fDirty)
  *  Pointer to a new tbox, else pvNil.
  *
  ****************************************************/
-PTBOX TBOX::PtboxRead(PCRF pcrf, CNO cno, PSCEN pscen)
+PTBOX TBOX::PtboxRead(PChunkyResourceFile pcrf, ChunkNumber cno, PScene pscen)
 {
     AssertPo(pcrf, 0);
     AssertNilOrPo(pscen, 0);
 
     PTBOX ptbox;
-    BLCK blck;
+    DataBlock blck;
     TBOXH tboxh;
-    KID kid;
-    PCFL pcfl = pcrf->Pcfl();
+    ChildChunkIdentification kid;
+    PChunkyFile pcfl = pcrf->Pcfl();
 
     //
     // Find the chunk and read in the header.
@@ -1951,13 +1951,13 @@ PTBOX TBOX::PtboxRead(PCRF pcrf, CNO cno, PSCEN pscen)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TBOX::FWrite(PCFL pcfl, CNO cno)
+bool TBOX::FWrite(PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
 
     TBOXH tboxh;
-    CKI cki;
+    ChunkIdentification cki;
 
     tboxh.bo = kboCur;
     tboxh.osk = koskCur;
@@ -2003,7 +2003,7 @@ bool TBOX::FWrite(PCFL pcfl, CNO cno)
  *  None.
  *
  ****************************************************/
-void TBOX::SetScen(PSCEN pscen)
+void TBOX::SetScen(PScene pscen)
 {
     AssertThis(0);
     AssertPo(pscen, 0);
@@ -2247,7 +2247,7 @@ bool TBOX::FGotoFrame(long nfrm)
 {
     AssertThis(0);
 
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     PTBXG ptbxg;
     PTBXB ptbxb;
 
@@ -2270,7 +2270,7 @@ bool TBOX::FGotoFrame(long nfrm)
         {
 
             //
-            // Create a GOB for this text box
+            // Create a GraphicsObject for this text box
             //
             gcb.Set(khidDdg, Pscen()->Pmvie()->PddgActive(), fgobNil, kginMark, &_rc, pvNil);
             ptbxb = TBXB::PtbxbNew(this, &gcb);
@@ -2289,7 +2289,7 @@ bool TBOX::FGotoFrame(long nfrm)
     if (!FIsVisible() && (ptbxg != pvNil))
     {
         //
-        // Release the GOB for the text box.
+        // Release the GraphicsObject for the text box.
         //
         ptbxb = ptbxg->Ptbxb();
         ReleasePpo(&ptbxb);
@@ -2489,7 +2489,7 @@ bool TBOX::FDup(PTBOX *pptbox)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TBOX::FSetAcrBack(ACR acr)
+bool TBOX::FSetAcrBack(AbstractColor acr)
 {
     AssertThis(0);
 
@@ -2530,7 +2530,7 @@ bool TBOX::FSetAcrBack(ACR acr)
  *  fTrue if possible, else fFalse.
  *
  ****************************************************/
-bool TBOX::FSetAcrText(ACR acr)
+bool TBOX::FSetAcrText(AbstractColor acr)
 {
     AssertThis(0);
 
@@ -2573,7 +2573,7 @@ bool TBOX::FSetDypFontText(long dypFont)
     if (ptbxg == pvNil)
         return fFalse;
     AssertPo(ptbxg, 0);
-    Assert(ptbxg->FIs(kclsTBXG), "DDG isn't a TBXG");
+    Assert(ptbxg->FIs(kclsTBXG), "DocumentDisplayGraphicsObject isn't a TBXG");
 
     chpNew.Clear();
     chpDiff.Clear();
@@ -2603,7 +2603,7 @@ bool TBOX::FSetStyleText(ulong grfont)
     if (ptbxg == pvNil)
         return fFalse;
     AssertPo(ptbxg, 0);
-    Assert(ptbxg->FIs(kclsTBXG), "DDG isn't a TBXG");
+    Assert(ptbxg->FIs(kclsTBXG), "DocumentDisplayGraphicsObject isn't a TBXG");
 
     chpNew.Clear();
     chpDiff.Clear();
@@ -2633,7 +2633,7 @@ bool TBOX::FSetOnnText(long onn)
     if (ptbxg == pvNil)
         return fFalse;
     AssertPo(ptbxg, 0);
-    Assert(ptbxg->FIs(kclsTBXG), "DDG isn't a TBXG");
+    Assert(ptbxg->FIs(kclsTBXG), "DocumentDisplayGraphicsObject isn't a TBXG");
 
     chpNew.Clear();
     chpDiff.Clear();
@@ -2645,7 +2645,7 @@ bool TBOX::FSetOnnText(long onn)
 /******************************************************************************
     FetchChpSel
         Gets the character formatting for the current selection of the active
-        DDG for this TBOX.  Returns the formatting of the first character of
+        DocumentDisplayGraphicsObject for this TBOX.  Returns the formatting of the first character of
         the selection in the CHP, and sets the corresponding bit in *pgrfchp
         if that particular formatting holds for the entire selection.
 
@@ -2662,14 +2662,14 @@ void TBOX::FetchChpSel(PCHP pchp, ulong *pgrfchp)
     long cpMin, cpMac;
     long cpMinChp, cpMacChp;
     CHP chp;
-    PTXTG ptxtg;
+    PTextDocumentGraphicsObject ptxtg;
 
-    ptxtg = (PTXTG)PddgActive();
+    ptxtg = (PTextDocumentGraphicsObject)PddgActive();
     if (ptxtg == pvNil)
         goto LFail;
-    if (!ptxtg->FIs(kclsTXTG))
+    if (!ptxtg->FIs(kclsTextDocumentGraphicsObject))
     {
-        Bug("DDG isn't a TXTG");
+        Bug("DocumentDisplayGraphicsObject isn't a TextDocumentGraphicsObject");
     LFail:
         *pgrfchp = 0;
         return;
@@ -2801,7 +2801,7 @@ void TBOX::SetStartFrame(long nfrm)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TBOX::FAddUndo(PUNDB pundb)
+bool TBOX::FAddUndo(PUndoBase pundb)
 {
     AssertThis(0);
     AssertPo(Pscen(), 0);
@@ -2857,7 +2857,7 @@ void TBOX::ClearUndo()
 
 /****************************************************
  *
- * Ensure that the DDG for this tbox is the proper size,
+ * Ensure that the DocumentDisplayGraphicsObject for this tbox is the proper size,
  * used for cleaning after a playback.
  *
  * Parameters:
@@ -2871,7 +2871,7 @@ void TBOX::CleanDdg(void)
 {
     AssertThis(0);
 
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
     RC rcAbs, rcRel;
 
     pddg = PddgGet(0);
@@ -3001,7 +3001,7 @@ TUNT::~TUNT(void)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNT::FDo(PDOCB pdocb)
+bool TUNT::FDo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3051,7 +3051,7 @@ LFail:
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNT::FUndo(PDOCB pdocb)
+bool TUNT::FUndo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3123,7 +3123,7 @@ TUNS::~TUNS(void)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNS::FDo(PDOCB pdocb)
+bool TUNS::FDo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3178,7 +3178,7 @@ LFail:
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNS::FUndo(PDOCB pdocb)
+bool TUNS::FUndo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3251,7 +3251,7 @@ TUNH::~TUNH(void)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNH::FDo(PDOCB pdocb)
+bool TUNH::FDo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3321,7 +3321,7 @@ LFail:
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNH::FUndo(PDOCB pdocb)
+bool TUNH::FUndo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3367,7 +3367,7 @@ void TUNH::AssertValid(ulong grf)
  *  pvNil if failure, else a pointer to the movie undo.
  *
  ****************************************************/
-PTUND TUND::PtundNew(PUNDB pundb)
+PTUND TUND::PtundNew(PUndoBase pundb)
 {
     AssertPo(pundb, 0);
 
@@ -3421,7 +3421,7 @@ TUND::~TUND(void)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUND::FDo(PDOCB pdocb)
+bool TUND::FDo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3467,7 +3467,7 @@ LFail:
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUND::FUndo(PDOCB pdocb)
+bool TUND::FUndo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
@@ -3570,13 +3570,13 @@ TUNC::~TUNC(void)
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNC::FDo(PDOCB pdocb)
+bool TUNC::FDo(PDocumentBase pdocb)
 {
     AssertThis(0);
     AssertPo(pdocb, 0);
 
     PTBOX ptbox;
-    ACR acr;
+    AbstractColor acr;
 
     if (!_pmvie->FSwitchScen(_iscen))
     {
@@ -3620,7 +3620,7 @@ LFail:
  *  fTrue if successful, else fFalse.
  *
  ****************************************************/
-bool TUNC::FUndo(PDOCB pdocb)
+bool TUNC::FUndo(PDocumentBase pdocb)
 {
     return (FDo(pdocb));
 }
@@ -3711,7 +3711,7 @@ PTCLP TCLP::PtclpNew(PTBOX ptbox)
  *  fTrue if successful, else fFalse.
  *
  **************************************************************************/
-bool TCLP::FPaste(PSCEN pscen)
+bool TCLP::FPaste(PScene pscen)
 {
     AssertThis(0);
     AssertPo(pscen, 0);

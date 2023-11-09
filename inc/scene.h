@@ -6,13 +6,13 @@
     THIS IS A CODE REVIEWED FILE
 
     Basic scene classes:
-        Scene (SCEN)
+        Scene (Scene)
 
-            BASE ---> SCEN
+            BASE ---> Scene
 
-        Scene Actor Undo Object (SUNA)
+        Scene Actor Undo Object (SceneActorUndo)
 
-            BASE ---> UNDB ---> MUNB ---> SUNA
+            BASE ---> UndoBase ---> MovieUndo ---> SceneActorUndo
 
 ***************************************************************************/
 
@@ -22,9 +22,9 @@
 //
 // Undo object for actor operations
 //
-typedef class SUNA *PSUNA;
+typedef class SceneActorUndo *PSceneActorUndo;
 
-#define SUNA_PAR MUNB
+#define SceneActorUndo_PAR MovieUndo
 
 // Undo types
 enum
@@ -34,25 +34,25 @@ enum
     utRep,
 };
 
-#define kclsSUNA 'SUNA'
-class SUNA : public SUNA_PAR
+#define kclsSceneActorUndo 'SUNA'
+class SceneActorUndo : public SceneActorUndo_PAR
 {
     RTCLASS_DEC
     MARKMEM
     ASSERT
 
   protected:
-    PACTR _pactr;
+    PActor _pactr;
     long _ut; // Tells which type of undo this is.
-    SUNA(void)
+    SceneActorUndo(void)
     {
     }
 
   public:
-    static PSUNA PsunaNew(void);
-    ~SUNA(void);
+    static PSceneActorUndo PsunaNew(void);
+    ~SceneActorUndo(void);
 
-    void SetActr(PACTR pactr)
+    void SetActr(PActor pactr)
     {
         _pactr = pactr;
     }
@@ -61,8 +61,8 @@ class SUNA : public SUNA_PAR
         _ut = ut;
     }
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 //
@@ -96,7 +96,7 @@ enum
 typedef struct SSE *PSSE;
 typedef struct TAGC *PTAGC;
 
-typedef class SCEN *PSCEN;
+typedef class Scene *PScene;
 
 //
 // Notes:
@@ -109,13 +109,16 @@ typedef class SCEN *PSCEN;
 //		- Enumerating through text boxes in a scene is not necessary.
 //
 
-#define SCEN_PAR BASE
-#define kclsSCEN 'SCEN'
-class SCEN : public SCEN_PAR
+#define Scene_PAR BASE
+#define kclsScene 'SCEN'
+class Scene : public Scene_PAR
 {
     RTCLASS_DEC
     MARKMEM
     ASSERT
+
+  public:
+    PDynamicArray selected_actors;
 
   protected:
     typedef struct SEV *PSEV;
@@ -129,22 +132,23 @@ class SCEN : public SCEN_PAR
 
     //
     // Frames with events in them.  This stuff works as follows.
-    //   _isevFrmLim is the index into the GG of a sev with nfrm > nCurFrm.
+    //   _isevFrmLim is the index into the GeneralGroup of a sev with nfrm > nCurFrm.
     //
-    PGG _pggsevFrm;   // List of events that occur in frames.
+    PGeneralGroup _pggsevFrm;   // List of events that occur in frames.
     long _isevFrmLim; // Next event to process.
 
     //
     // Global information
     //
     STN _stnName;         // Name of this scene
-    PGL _pglpactr;        // List of actors in the scene.
-    PGL _pglptbox;        // List of text boxes in the scene.
-    PGG _pggsevStart;     // List of frame independent events.
-    PMVIE _pmvie;         // Movie this scene is a part of.
-    PBKGD _pbkgd;         // Background for this scene.
+    PDynamicArray _pglpactr;        // List of actors in the scene.
+    PDynamicArray _pglptbox;        // List of text boxes in the scene.
+    PGeneralGroup _pggsevStart;     // List of frame independent events.
+    PMovie _pmvie;         // Movie this scene is a part of.
+    PBackground _pbkgd;         // Background for this scene.
     ulong _grfscen;       // Disabled functionality.
-    PACTR _pactrSelected; // Currently selected actor, if any
+    PActor _pactrSelected; // Currently selected actor, if any
+    // PActor _pactrSelected2; // Currently selected actor, if any
     PTBOX _ptboxSelected; // Currently selected tbox, if any
     TRANS _trans;         // Transition at the end of the scene.
     PMBMP _pmbmp;         // The thumbnail for this scene.
@@ -152,11 +156,11 @@ class SCEN : public SCEN_PAR
                           // at start time even if snd event is
                           // earlier)
     long _nfrmSseBkgd;    // Frame at which _psseBkgd starts
-    TAG _tagBkgd;         // Tag to current BKGD
+    TAG _tagBkgd;         // Tag to current Background
 
   protected:
-    SCEN(PMVIE pmvie);
-    ~SCEN(void);
+    Scene(PMovie pmvie);
+    ~Scene(void);
 
     //
     // Event stuff
@@ -188,17 +192,17 @@ class SCEN : public SCEN_PAR
     //
     // Create and destroy
     //
-    static SCEN *PscenNew(PMVIE pmvie);                      // Returns pvNil if it fails.
-    static SCEN *PscenRead(PMVIE pmvie, PCRF pcrf, CNO cno); // Returns pvNil if it fails.
-    bool FWrite(PCRF pcrf, CNO *pcno);                       // Returns fFalse if it fails, else the cno written.
-    static void Close(PSCEN *ppscen);                        // Public destructor
+    static Scene *PscenNew(PMovie pmvie);                      // Returns pvNil if it fails.
+    static Scene *PscenRead(PMovie pmvie, PChunkyResourceFile pcrf, ChunkNumber cno); // Returns pvNil if it fails.
+    bool FWrite(PChunkyResourceFile pcrf, ChunkNumber *pcno);                       // Returns fFalse if it fails, else the cno written.
+    static void Close(PScene *ppscen);                        // Public destructor
     void RemActrsFromRollCall(bool fDelIfOnlyRef = fFalse);  // Removes actors from movie roll call.
     bool FAddActrsToRollCall(void);                          // Adds actors from movie roll call.
 
     //
     // Tag collection
     //
-    static bool FAddTagsToTagl(PCFL pcfl, CNO cno, PTAGL ptagl);
+    static bool FAddTagsToTagl(PChunkyFile pcfl, ChunkNumber cno, PTAGL ptagl);
 
     //
     // Frame functions
@@ -231,7 +235,7 @@ class SCEN : public SCEN_PAR
     //
     // Edit functions
     //
-    void SetMvie(PMVIE pmvie); // Sets the associated movie.
+    void SetMvie(PMovie pmvie); // Sets the associated movie.
     void GetName(PSTN pstn)    // Gets name of current scene.
     {
         *pstn = _stnName;
@@ -258,9 +262,9 @@ class SCEN : public SCEN_PAR
     {
         return _trans;
     } // Returns the transition setting.
-    // These two operate a specific SCEN chunk rather than a SCEN in memory
-    static bool FTransOnFile(PCRF pcrf, CNO cno, TRANS *ptrans);
-    static bool FSetTransOnFile(PCRF pcrf, CNO cno, TRANS trans);
+    // These two operate a specific Scene chunk rather than a Scene in memory
+    static bool FTransOnFile(PChunkyResourceFile pcrf, ChunkNumber cno, TRANS *ptrans);
+    static bool FSetTransOnFile(PChunkyResourceFile pcrf, ChunkNumber cno, TRANS trans);
 
     //
     // State functions
@@ -282,23 +286,27 @@ class SCEN : public SCEN_PAR
     //
     // Actor functions
     //
-    bool FAddActrCore(ACTR *pactr); // Adds an actor to the scene at current frame.
-    bool FAddActr(ACTR *pactr);     // Adds an actor to the scene at current frame, and undo
+    bool FAddActrCore(Actor *pactr); // Adds an actor to the scene at current frame.
+    bool FAddActr(Actor *pactr);     // Adds an actor to the scene at current frame, and undo
     void RemActrCore(long arid);    // Removes an actor from the scene.
     bool FRemActr(long arid);       // Removes an actor from the scene, and undo
-    PACTR PactrSelected(void)       // Returns selected actor
+    PActor PactrSelected(void)       // Returns selected actor
     {
         return _pactrSelected;
     }
-    void SelectActr(ACTR *pactr);                      // Sets the selected actor
-    PACTR PactrFromPt(long xp, long yp, long *pibset); // Gets actor pointed at by the mouse.
-    PGL PglRollCall(void)                              // Return a list of all actors in scene.
+    void SelectActr(Actor *pactr);                      // Sets the selected actor
+    bool ActorIsSelected(Actor *pactor);
+    void SelectAllActors();
+    void SelectMultipleActors(Actor *pactr, bool toggle_selection);
+    void DeselectMultipleActors();
+    PActor PactrFromPt(long xp, long yp, long *pibset); // Gets actor pointed at by the mouse.
+    PDynamicArray PglRollCall(void)                              // Return a list of all actors in scene.
     {
         return (_pglpactr);
     } // Only to be used by the movie-class
     void HideActors(void);
     void ShowActors(void);
-    PACTR PactrFromArid(long arid); // Finds a current actor in this scene.
+    PActor PactrFromArid(long arid); // Finds a current actor in this scene.
     long Cactr(void)
     {
         return (_pglpactr == pvNil ? 0 : _pglpactr->IvMac());
@@ -315,10 +323,10 @@ class SCEN : public SCEN_PAR
     bool FRemSnd(long sty);                             // Removes the sound from current frame, and undo
     bool FGetSnd(long sty, bool *pfFound, PSSE *ppsse); // Allows for retrieval of sounds.
     void PlayBkgdSnd(void);
-    bool FQuerySnd(long sty, PGL *pgltagSnd, long *pvlm, bool *pfLoop);
+    bool FQuerySnd(long sty, PDynamicArray *pgltagSnd, long *pvlm, bool *pfLoop);
     void SetSndVlmCore(long sty, long vlmNew);
     void UpdateSndFrame(void);
-    bool FResolveAllSndTags(CNO cnoScen);
+    bool FResolveAllSndTags(ChunkNumber cnoScen);
 
     //
     // Text box functions
@@ -350,7 +358,7 @@ class SCEN : public SCEN_PAR
     //
     bool FSetBkgdCore(PTAG ptag, PTAG ptagOld); // Sets the background for this scene.
     bool FSetBkgd(PTAG ptag);                   // Sets the background for this scene, and undo
-    BKGD *Pbkgd(void)
+    Background *Pbkgd(void)
     {
         return _pbkgd;
     }                                               // Gets the background for this scene.
@@ -362,7 +370,7 @@ class SCEN : public SCEN_PAR
     //
     // Movie functions
     //
-    PMVIE Pmvie()
+    PMovie Pmvie()
     {
         return (_pmvie);
     } // Get the parent movie
@@ -375,8 +383,8 @@ class SCEN : public SCEN_PAR
     //
     // Clipboard type functions
     //
-    bool FPasteActrCore(PACTR pactr); // Pastes actor into current frame
-    bool FPasteActr(PACTR pactr);     // Pastes actor into current frame and undo
+    bool FPasteActrCore(PActor pactr); // Pastes actor into current frame
+    bool FPasteActr(PActor pactr);     // Pastes actor into current frame and undo
 
     //
     // Playing functions

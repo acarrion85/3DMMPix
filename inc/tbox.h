@@ -9,23 +9,23 @@
 
         Textbox (TBOX)
 
-            TXRD ---> TBOX
+            RichTextDocument ---> TBOX
 
     Drawing stuff
 
         Textbox border (TBXB)
 
-            GOB  ---> TBXB
+            GraphicsObject  ---> TBXB
 
         Textbox Ddg (TBXG)
 
-            TXRG ---> TBXG  (created as a child Gob of a TBXB)
+            RichTextDocumentGraphicsObject ---> TBXG  (created as a child Gob of a TBXB)
 
     Cut/Copy/Paste Stuff
 
         Clipboard object (TCLP)
 
-            DOCB ---> TCLP
+            DocumentBase ---> TCLP
 
 ***************************************************************************/
 
@@ -65,7 +65,7 @@ enum TBXT
     tbxtMove
 };
 
-#define TBXB_PAR GOB
+#define TBXB_PAR GraphicsObject
 
 typedef class TBXB *PTBXB;
 #define kclsTBXB 'TBXB'
@@ -83,7 +83,7 @@ class TBXB : public TBXB_PAR
     long _ypPrev;         // Previous y coord of the mouse.
     RC _rcOrig;           // Original size of the border.
 
-    TBXB(PTBOX ptbox, PGCB pgcb) : GOB(pgcb)
+    TBXB(PTBOX ptbox, PGCB pgcb) : GraphicsObject(pgcb)
     {
         _ptbox = ptbox;
     }
@@ -110,11 +110,11 @@ class TBXB : public TBXB_PAR
 
 //
 //
-// The DDG for a single textbox (TBXG).
+// The DocumentDisplayGraphicsObject for a single textbox (TBXG).
 //
 //
 
-#define TBXG_PAR TXRG
+#define TBXG_PAR RichTextDocumentGraphicsObject
 
 typedef class TBXG *PTBXG;
 #define kclsTBXG 'TBXG'
@@ -129,7 +129,7 @@ class TBXG : public TBXG_PAR
     PTBXB _ptbxb; // Enclosing border.
     RC _rcOld;    // Old rectangle for the ddg.
 
-    TBXG(PTXRD ptxrd, PGCB pgcb) : TXRG(ptxrd, pgcb)
+    TBXG(PRichTextDocument ptxrd, PGCB pgcb) : RichTextDocumentGraphicsObject(ptxrd, pgcb)
     {
     }
     ~TBXG(void);
@@ -201,7 +201,7 @@ const ulong kgrfchpAll = (kfchpOnn | kfchpDypFont | kfchpBold | kfchpItalic);
 //
 typedef class TBOX *PTBOX;
 
-#define TBOX_PAR TXRD
+#define TBOX_PAR RichTextDocument
 #define kclsTBOX 'TBOX'
 class TBOX : public TBOX_PAR
 {
@@ -210,7 +210,7 @@ class TBOX : public TBOX_PAR
     MARKMEM
 
   private:
-    PSCEN _pscen;    // The owning scene
+    PScene _pscen;    // The owning scene
     long _nfrmFirst; // Frame the tbox appears in.
     long _nfrmMax;   // Frame the tbox disappears in.
     long _nfrmCur;   // Current frame number.
@@ -218,7 +218,7 @@ class TBOX : public TBOX_PAR
     bool _fStory;    // Is this a story text box.
     RC _rc;          // Size of text box.
 
-    TBOX(void) : TXRD()
+    TBOX(void) : RichTextDocument()
     {
     }
 
@@ -226,19 +226,19 @@ class TBOX : public TBOX_PAR
     //
     // Creation routines
     //
-    static PTBOX PtboxNew(PSCEN pscen = pvNil, RC *prcRel = pvNil, bool fStory = fTrue);
-    PDDG PddgNew(PGCB pgcb)
+    static PTBOX PtboxNew(PScene pscen = pvNil, RC *prcRel = pvNil, bool fStory = fTrue);
+    PDocumentDisplayGraphicsObject PddgNew(PGCB pgcb)
     {
         return TBXG::PtbxgNew(this, pgcb);
     }
-    static PTBOX PtboxRead(PCRF pcrf, CNO cno, PSCEN pscen);
-    bool FWrite(PCFL pcfl, CNO cno);
+    static PTBOX PtboxRead(PChunkyResourceFile pcrf, ChunkNumber cno, PScene pscen);
+    bool FWrite(PChunkyFile pcfl, ChunkNumber cno);
     bool FDup(PTBOX *pptbox);
 
     //
     // Movie specific functions
     //
-    void SetScen(PSCEN pscen);
+    void SetScen(PScene pscen);
     bool FIsVisible(void);
     bool FGotoFrame(long nfrm);
     void Select(bool fSel);
@@ -259,13 +259,13 @@ class TBOX : public TBOX_PAR
     bool FSetType(bool fStory);
     bool FNeedToScroll(void);
     void Scroll(void);
-    PSCEN Pscen(void)
+    PScene Pscen(void)
     {
         return _pscen;
     }
     bool FTextSelected(void);
-    bool FSetAcrBack(ACR acr);
-    bool FSetAcrText(ACR acr);
+    bool FSetAcrBack(AbstractColor acr);
+    bool FSetAcrText(AbstractColor acr);
     bool FSetOnnText(long onn);
     bool FSetDypFontText(long dypFont);
     bool FSetStyleText(ulong grfont);
@@ -285,7 +285,7 @@ class TBOX : public TBOX_PAR
     // Overridden functions
     //
     void SetDirty(bool fDirty = fTrue);
-    virtual bool FAddUndo(PUNDB pundb);
+    virtual bool FAddUndo(PUndoBase pundb);
     virtual void ClearUndo(void);
     void ParClearUndo(void)
     {
@@ -323,7 +323,7 @@ class TBOX : public TBOX_PAR
 //
 typedef class TCLP *PTCLP;
 
-#define TCLP_PAR DOCB
+#define TCLP_PAR DocumentBase
 #define kclsTCLP 'TCLP'
 class TCLP : public TCLP_PAR
 {
@@ -347,7 +347,7 @@ class TCLP : public TCLP_PAR
     //
     // Pasting
     //
-    bool FPaste(PSCEN pscen);
+    bool FPaste(PScene pscen);
 };
 
 #endif

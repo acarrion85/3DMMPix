@@ -9,7 +9,7 @@
 #include "chelp.h"
 ASSERTNAME
 
-BEGIN_CMD_MAP(APP, APPB)
+BEGIN_CMD_MAP(APP, ApplicationBase)
 ON_CID_GEN(cidNew, &APP::FCmdOpen, pvNil)
 ON_CID_GEN(cidOpen, &APP::FCmdOpen, pvNil)
 ON_CID_GEN(cidOpenText, &APP::FCmdOpen, pvNil)
@@ -18,7 +18,7 @@ ON_CID_GEN(cidLoadResFile, &APP::FCmdLoadResFile, pvNil)
 ON_CID_GEN(cidChooseLanguage, &APP::FCmdChooseLanguage, &APP::FEnableChooseLanguage)
 END_CMD_MAP_NIL()
 
-BEGIN_CMD_MAP(LIG, GOB)
+BEGIN_CMD_MAP(LIG, GraphicsObject)
 ON_CID_ME(cidDoScroll, &LIG::FCmdScroll, pvNil)
 ON_CID_ME(cidEndScroll, &LIG::FCmdScroll, pvNil)
 END_CMD_MAP_NIL()
@@ -31,8 +31,8 @@ RTCLASS(LID)
 RTCLASS(CCG)
 RTCLASS(CCGT)
 
-STRG _strg;
-PSTRG vpstrg;
+StringRegistry _strg;
+PStringRegistry vpstrg;
 SC_LID vsclid = ksclidAmerican;
 PSPLC vpsplc;
 
@@ -128,7 +128,7 @@ bool APP::_FInit(ulong grfapp, ulong grfgob, long ginDef)
 
 #ifdef WIN
     // parse the command line and load any resource files and help files
-    FNI fni;
+    Filename fni;
     bool fQuote, fRes, fSkip;
     PSZ psz = vwig.pszCmdLine;
 
@@ -218,13 +218,13 @@ void APP::GetStnAppName(PSTN pstn)
 void APP::UpdateHwnd(HWND hwnd, RC *prc, ulong grfapp)
 {
     AssertThis(0);
-    PGOB pgob;
+    PGraphicsObject pgob;
 
-    if (pvNil == (pgob = GOB::PgobFromHwnd(hwnd)))
+    if (pvNil == (pgob = GraphicsObject::PgobFromHwnd(hwnd)))
         return;
 
     // for text windows, do offscreen updating
-    if (pgob->FIs(kclsDMD) && ((PDMD)pgob)->Pdocb()->FIs(kclsTXRD))
+    if (pgob->FIs(kclsDocumentMDIWindow) && ((PDocumentMDIWindow)pgob)->Pdocb()->FIs(kclsRichTextDocument))
         grfapp |= fappOffscreen;
 
     APP_PAR::UpdateHwnd(hwnd, prc, grfapp);
@@ -233,12 +233,12 @@ void APP::UpdateHwnd(HWND hwnd, RC *prc, ulong grfapp)
 /***************************************************************************
     Do a fast update of the gob and its descendents into the given gpt.
 ***************************************************************************/
-void APP::_FastUpdate(PGOB pgob, PREGN pregnClip, ulong grfapp, PGPT pgpt)
+void APP::_FastUpdate(PGraphicsObject pgob, PREGN pregnClip, ulong grfapp, PGPT pgpt)
 {
     AssertThis(0);
 
     // for text windows, do offscreen updating
-    if (pgob->FIs(kclsDMD) && ((PDMD)pgob)->Pdocb()->FIs(kclsTXRD))
+    if (pgob->FIs(kclsDocumentMDIWindow) && ((PDocumentMDIWindow)pgob)->Pdocb()->FIs(kclsRichTextDocument))
         grfapp |= fappOffscreen;
 
     APP_PAR::_FastUpdate(pgob, pregnClip, grfapp, pgpt);
@@ -252,8 +252,8 @@ bool APP::FCmdOpen(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
-    FNI fni;
-    FNI *pfni;
+    Filename fni;
+    Filename *pfni;
 
     pfni = pvNil;
     switch (pcmd->cid)
@@ -300,16 +300,16 @@ bool APP::FCmdOpen(PCMD pcmd)
 /***************************************************************************
     Load a document file.
 ***************************************************************************/
-bool APP::FOpenDocFile(PFNI pfni, long cid)
+bool APP::FOpenDocFile(PFilename pfni, long cid)
 {
     AssertThis(0);
     AssertNilOrPo(pfni, 0);
     bool fRet;
-    PDOCB pdocb;
+    PDocumentBase pdocb;
     PHEDO phedo;
-    PTXRD ptxrd;
+    PRichTextDocument ptxrd;
 
-    if (pvNil != pfni && pvNil != (pdocb = DOCB::PdocbFromFni(pfni)))
+    if (pvNil != pfni && pvNil != (pdocb = DocumentBase::PdocbFromFni(pfni)))
     {
         pdocb->ActivateDmd();
         return fTrue;
@@ -319,7 +319,7 @@ bool APP::FOpenDocFile(PFNI pfni, long cid)
     switch (cid)
     {
     case cidOpenText:
-        if (pvNil == (ptxrd = TXRD::PtxrdNew(pvNil)))
+        if (pvNil == (ptxrd = RichTextDocument::PtxrdNew(pvNil)))
             return fFalse;
 
         fRet = fFalse;
@@ -345,12 +345,12 @@ bool APP::FOpenDocFile(PFNI pfni, long cid)
         break;
 
     case cidOpenRichText:
-        if (pvNil == (pdocb = TXRD::PtxrdNew(pfni)))
+        if (pvNil == (pdocb = RichTextDocument::PtxrdNew(pfni)))
             return fFalse;
         break;
 
     default:
-        if (pvNil == _pcrm && pvNil == (_pcrm = CRM::PcrmNew(1)))
+        if (pvNil == _pcrm && pvNil == (_pcrm = ChunkyResourceManager::PcrmNew(1)))
             return fFalse;
         if (pvNil == _plidPicture && pvNil == (_plidPicture = LID::PlidNew(_pcrm, kctgMbmp)))
         {
@@ -383,7 +383,7 @@ bool APP::FCmdLoadResFile(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
-    FNI fni;
+    Filename fni;
 
     if (!FGetFniOpenMacro(&fni, pvNil, 0, PszLit("Chunky Resource Files\0*.chk\0All Files\0*.*\0"), vwig.hwndApp))
     {
@@ -397,19 +397,19 @@ bool APP::FCmdLoadResFile(PCMD pcmd)
 /***************************************************************************
     Load a resource file.
 ***************************************************************************/
-bool APP::FLoadResFile(PFNI pfni)
+bool APP::FLoadResFile(PFilename pfni)
 {
     AssertThis(0);
     AssertPo(pfni, ffniFile);
-    PCFL pcfl;
+    PChunkyFile pcfl;
     long ipcrf;
-    PCRF pcrf;
-    BLCK blck;
+    PChunkyResourceFile pcrf;
+    DataBlock blck;
 
-    if (pvNil == _pcrm && pvNil == (_pcrm = CRM::PcrmNew(1)))
+    if (pvNil == _pcrm && pvNil == (_pcrm = ChunkyResourceManager::PcrmNew(1)))
         return fFalse;
 
-    if (pvNil == (pcfl = CFL::PcflOpen(pfni, fcflNil)))
+    if (pvNil == (pcfl = ChunkyFile::PcflOpen(pfni, fcflNil)))
     {
         vpappb->TGiveAlertSz(PszLit("Can't open that file"), bkOk, cokStop);
         return fFalse;
@@ -431,9 +431,9 @@ bool APP::FLoadResFile(PFNI pfni)
 
     if (pcfl->FGetCkiCtg(kctgColorTable, 0, pvNil, pvNil, &blck))
     {
-        PGL pglclr;
+        PDynamicArray pglclr;
 
-        if (pvNil != (pglclr = GL::PglRead(&blck)) && pglclr->CbEntry() == size(CLR))
+        if (pvNil != (pglclr = DynamicArray::PglRead(&blck)) && pglclr->CbEntry() == size(Color))
         {
             GPT::SetActiveColors(pglclr, fpalIdentity);
         }
@@ -487,7 +487,7 @@ bool APP::FCmdChooseLanguage(PCMD pcmd)
         PDLG pdlg;
         bool fRet;
 
-        if (pvNil == (pdlg = DLG::PdlgNew(dlidFontSize)))
+        if (pvNil == (pdlg = Dialog::PdlgNew(dlidFontSize)))
             return fTrue;
 
         pdlg->FPutLwInEdit(kiditCodeLang, vsclid);
@@ -515,7 +515,7 @@ bool APP::FCmdChooseLanguage(PCMD pcmd)
 /***************************************************************************
     Create a new LIG for the given help text document.
 ***************************************************************************/
-PLIG APP::PligNew(bool fButton, PGCB pgcb, PTXHD ptxhd)
+PLIG APP::PligNew(bool fButton, PGCB pgcb, PTextDocument ptxhd)
 {
     PLID plid = fButton ? _plidButton : _plidPicture;
 
@@ -566,7 +566,7 @@ void LID::MarkMem(void)
 /***************************************************************************
     Static method to create a new list document.
 ***************************************************************************/
-PLID LID::PlidNew(PCRM pcrm, CTG ctg, CHID chid)
+PLID LID::PlidNew(PChunkyResourceManager pcrm, ChunkTag ctg, ChildChunkID chid)
 {
     AssertPo(pcrm, 0);
     PLID plid;
@@ -583,12 +583,12 @@ PLID LID::PlidNew(PCRM pcrm, CTG ctg, CHID chid)
 /***************************************************************************
     Initialization for the list document.
 ***************************************************************************/
-bool LID::_FInit(PCRM pcrm, CTG ctg, CHID chid)
+bool LID::_FInit(PChunkyResourceManager pcrm, ChunkTag ctg, ChildChunkID chid)
 {
     AssertPo(pcrm, 0);
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
-    if (pvNil == (_pglcach = GL::PglNew(size(CACH))))
+    if (pvNil == (_pglcach = DynamicArray::PglNew(size(CACH))))
         return fFalse;
     _pglcach->SetMinGrow(100);
 
@@ -608,13 +608,13 @@ bool LID::FRefresh(void)
     AssertThis(0);
     long ipcrf, icki;
     CACH cach, cachT;
-    PCRF pcrf;
-    PCFL pcfl;
-    CKI cki;
+    PChunkyResourceFile pcrf;
+    PChunkyFile pcfl;
+    ChunkIdentification cki;
     long ivMin, ivLim, iv;
-    KID kid;
+    ChildChunkIdentification kid;
     long ipddg;
-    PDDG pddg;
+    PDocumentDisplayGraphicsObject pddg;
     bool fRet = fFalse;
 
     _pglcach->FSetIvMac(0);
@@ -676,9 +676,9 @@ long LID::Ccki(void)
 }
 
 /***************************************************************************
-    Get the CKI for the indicated item.
+    Get the ChunkIdentification for the indicated item.
 ***************************************************************************/
-void LID::GetCki(long icki, CKI *pcki, PCRF *ppcrf)
+void LID::GetCki(long icki, ChunkIdentification *pcki, PChunkyResourceFile *ppcrf)
 {
     AssertThis(0);
     AssertIn(icki, 0, _pglcach->IvMac());
@@ -709,7 +709,7 @@ PMBMP LID::PmbmpGet(long icki)
 /***************************************************************************
     Constructor for the list display gob.
 ***************************************************************************/
-LIG::LIG(PLID plid, GCB *pgcb) : LIG_PAR(plid, pgcb)
+LIG::LIG(PLID plid, GraphicsObjectBlock *pgcb) : LIG_PAR(plid, pgcb)
 {
 }
 
@@ -739,7 +739,7 @@ void LIG::MarkMem(void)
 /***************************************************************************
     Static method to create a new list display gob.
 ***************************************************************************/
-PLIG LIG::PligNew(PLID plid, GCB *pgcb, PTXHD ptxhd, long dypCell)
+PLIG LIG::PligNew(PLID plid, GraphicsObjectBlock *pgcb, PTextDocument ptxhd, long dypCell)
 {
     AssertPo(plid, 0);
     AssertVarMem(pgcb);
@@ -769,11 +769,11 @@ PLID LIG::Plid(void)
 /***************************************************************************
     Initialization for the list display gob.
 ***************************************************************************/
-bool LIG::_FInit(PTXHD ptxhd, long dypCell)
+bool LIG::_FInit(PTextDocument ptxhd, long dypCell)
 {
     AssertPo(ptxhd, 0);
     AssertIn(dypCell, 1, kswMax);
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if (!LIG_PAR::_FInit())
         return fFalse;
@@ -911,16 +911,16 @@ bool LIG::FCmdScroll(PCMD pcmd)
 
 /***************************************************************************
     The mouse was clicked in the LIG.  Insert the object in the active
-    DDG.
+    DocumentDisplayGraphicsObject.
 ***************************************************************************/
 void LIG::MouseDown(long xp, long yp, long cact, ulong grfcust)
 {
     AssertThis(0);
     long icki;
-    CKI cki;
+    ChunkIdentification cki;
     RC rc, rcT;
     PHETG phetg;
-    PCRF pcrf;
+    PChunkyResourceFile pcrf;
     PLID plid;
 
     plid = (PLID)_pdocb;
@@ -957,7 +957,7 @@ void LIG::MouseDown(long xp, long yp, long cact, ulong grfcust)
 /***************************************************************************
     Constructor for the CCG.
 ***************************************************************************/
-CCG::CCG(GCB *pgcb, PTXHD ptxhd, bool fForeColor, long cacrRow) : CCG_PAR(pgcb)
+CCG::CCG(GraphicsObjectBlock *pgcb, PTextDocument ptxhd, bool fForeColor, long cacrRow) : CCG_PAR(pgcb)
 {
     AssertPo(ptxhd, 0);
     AssertIn(cacrRow, 1, 257);
@@ -968,13 +968,13 @@ CCG::CCG(GCB *pgcb, PTXHD ptxhd, bool fForeColor, long cacrRow) : CCG_PAR(pgcb)
 
 /***************************************************************************
     Handle mousedown in a CCG.  Set the foreground or background color of
-    the text in the active of DDG of the ptxhd.
+    the text in the active of DocumentDisplayGraphicsObject of the ptxhd.
 ***************************************************************************/
 void CCG::MouseDown(long xp, long yp, long cact, ulong grfcust)
 {
     AssertThis(0);
     PHETG phetg;
-    ACR acr;
+    AbstractColor acr;
 
     if (!_FGetAcrFromPt(xp, yp, &acr))
         return;
@@ -995,7 +995,7 @@ void CCG::Draw(PGNV pgnv, RC *prcClip)
     long crcHeight, ircHeight, ircWidth;
     long iscr;
     RC rc, rcT;
-    ACR acr;
+    AbstractColor acr;
 
     GetRc(&rc, cooLocal);
     rc.ypTop -= kdxpFrameCcg;
@@ -1035,7 +1035,7 @@ void CCG::Draw(PGNV pgnv, RC *prcClip)
 /***************************************************************************
     Map the given point to a color.
 ***************************************************************************/
-bool CCG::_FGetAcrFromPt(long xp, long yp, ACR *pacr, RC *prc, long *piscr)
+bool CCG::_FGetAcrFromPt(long xp, long yp, AbstractColor *pacr, RC *prc, long *piscr)
 {
     AssertThis(0);
     AssertVarMem(pacr);
@@ -1090,17 +1090,17 @@ bool CCG::_FGetAcrFromPt(long xp, long yp, ACR *pacr, RC *prc, long *piscr)
 /***************************************************************************
     Put up the CCG's tool tip.
 ***************************************************************************/
-bool CCG::FEnsureToolTip(PGOB *ppgobCurTip, long xpMouse, long ypMouse)
+bool CCG::FEnsureToolTip(PGraphicsObject *ppgobCurTip, long xpMouse, long ypMouse)
 {
     AssertThis(0);
     AssertVarMem(ppgobCurTip);
     AssertNilOrPo(*ppgobCurTip, 0);
     RC rc;
-    ACR acr;
+    AbstractColor acr;
 
     ReleasePpo(ppgobCurTip);
 
-    GCB gcb(khidToolTip, this, fgobNil, kginMark);
+    GraphicsObjectBlock gcb(khidToolTip, this, fgobNil, kginMark);
     *ppgobCurTip = NewObj CCGT(&gcb, kacrBlack);
 
     return fTrue;
@@ -1115,7 +1115,7 @@ bool CCG::FCmdMouseMove(PCMD_MOUSE pcmd)
     AssertVarMem(pcmd);
     PCCGT pccgt;
     RC rc, rcOld;
-    ACR acr;
+    AbstractColor acr;
     STN stn;
     long iscr;
 
@@ -1168,7 +1168,7 @@ void CCG::AssertValid(ulong grf)
 /***************************************************************************
     Constructor for color chooser tool tip.
 ***************************************************************************/
-CCGT::CCGT(PGCB pgcb, ACR acr, PSTN pstn) : CCGT_PAR(pgcb)
+CCGT::CCGT(PGCB pgcb, AbstractColor acr, PSTN pstn) : CCGT_PAR(pgcb)
 {
     AssertBaseThis(0);
     _acr = acr;
@@ -1179,7 +1179,7 @@ CCGT::CCGT(PGCB pgcb, ACR acr, PSTN pstn) : CCGT_PAR(pgcb)
 /***************************************************************************
     Set the color for the tool tip.
 ***************************************************************************/
-void CCGT::SetAcr(ACR acr, PSTN pstn)
+void CCGT::SetAcr(AbstractColor acr, PSTN pstn)
 {
     AssertThis(0);
     AssertPo(&acr, 0);
@@ -1205,7 +1205,7 @@ void CCGT::Draw(PGNV pgnv, RC *prcClip)
     AssertPo(pgnv, 0);
     AssertVarMem(prcClip);
     RC rc;
-    ACR acr;
+    AbstractColor acr;
 
     GetRc(&rc, cooLocal);
     pgnv->SetPenSize(1, 1);

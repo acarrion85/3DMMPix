@@ -19,7 +19,7 @@ ASSERTNAME
  FPortDisplayWithIds: Display the portfolio to open or save a file. Portfolio
                     title and filters generated using supplied string ids.
 
- Arguments: fni 			- Output FNI for file selected
+ Arguments: fni 			- Output Filename for file selected
             fOpen			- fTrue if open portfolio, else save portfolio.
             lFilterLabel	- id of portfolio filter label
             lFilterExt		- id of portfolio filter extension
@@ -34,8 +34,8 @@ ASSERTNAME
             FALSE	- User canceled portfolio.
 
 ***************************************************************************/
-bool FPortDisplayWithIds(FNI *pfni, bool fOpen, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
-                         PSTN pstnDefFileName, FNI *pfniInitialDir, ulong grfPrevType, CNO cnoWave)
+bool FPortDisplayWithIds(Filename *pfni, bool fOpen, long lFilterLabel, long lFilterExt, long lTitle, LPTSTR lpstrDefExt,
+                         PSTN pstnDefFileName, Filename *pfniInitialDir, ulong grfPrevType, ChunkNumber cnoWave)
 {
     STN stnTitle;
     STN stnFilterLabel;
@@ -102,7 +102,7 @@ bool FPortDisplayWithIds(FNI *pfni, bool fOpen, long lFilterLabel, long lFilterE
 
  FPortGetFniOpen: Display the portfolio to open a file.
 
- Arguments: pfni 		- Output FNI for file selected
+ Arguments: pfni 		- Output Filename for file selected
             lpstrFilter	- String containing files types to filter on
             lpstrTitle	- String containing title of portfolio
             pfniInitialDir	- Ptr to initial directory fni if required.
@@ -113,8 +113,8 @@ bool FPortDisplayWithIds(FNI *pfni, bool fOpen, long lFilterLabel, long lFilterE
             FALSE	- User canceled portfolio.
 
 ***************************************************************************/
-bool FPortGetFniOpen(FNI *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, FNI *pfniInitialDir, ulong grfPrevType,
-                     CNO cnoWave)
+bool FPortGetFniOpen(Filename *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, Filename *pfniInitialDir, ulong grfPrevType,
+                     ChunkNumber cnoWave)
 {
     SZ szFile;
     DLGINFO diPortfolio;
@@ -218,7 +218,7 @@ bool FPortGetFniOpen(FNI *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, FNI *pfni
 
  pfGetFniSave: Display the save portfolio.
 
- Arguments: pfni		- Output FNI for file selected
+ Arguments: pfni		- Output Filename for file selected
             lpstrFilter	- String containing files types to filter on
             lpstrTitle	- String containing title of portfolio
             lpstrDefExt	- String containing default extension for filenames
@@ -231,8 +231,8 @@ bool FPortGetFniOpen(FNI *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, FNI *pfni
             FALSE	- User canceled portfolio, (or other error).
 
 ***************************************************************************/
-bool FPortGetFniSave(FNI *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, LPTSTR lpstrDefExt, PSTN pstnDefFileName,
-                     ulong grfPrevType, CNO cnoWave)
+bool FPortGetFniSave(Filename *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, LPTSTR lpstrDefExt, PSTN pstnDefFileName,
+                     ulong grfPrevType, ChunkNumber cnoWave)
 {
     DLGINFO diPortfolio;
     OPENFILENAME ofn;
@@ -241,7 +241,7 @@ bool FPortGetFniSave(FNI *pfni, LPTSTR lpstrFilter, LPTSTR lpstrTitle, LPTSTR lp
     bool fRedisplayPortfolio = fFalse;
     bool fExplorer = fTrue;
     STN stnFile, stnErr;
-    FNI fniUserDir;
+    Filename fniUserDir;
     STN stnUserDir;
     SZ szUserDir;
     SZ szDefFileName;
@@ -615,7 +615,7 @@ UINT CALLBACK OpenHookProc(HWND hwndCustom, UINT msg, UINT wParam, LONG lParam)
                 return (1);
 
             case IDC_BUTTON3: {
-                FNI fniUserDir;
+                Filename fniUserDir;
                 STN stnUserDir;
                 SZ szUserDir;
                 SZ szCurFile;
@@ -666,7 +666,7 @@ UINT CALLBACK OpenHookProc(HWND hwndCustom, UINT msg, UINT wParam, LONG lParam)
     case WM_DRAWITEM: {
         int iDlgId = (int)wParam;
         DRAWITEMSTRUCT *pDrawItem = (DRAWITEMSTRUCT *)lParam;
-        CNO cnoDisplay = cnoNil;
+        ChunkNumber cnoDisplay = cnoNil;
         PMBMP pmbmp;
 
         // Custom draw the our push btns here.
@@ -806,7 +806,7 @@ UINT CALLBACK OpenHookProc(HWND hwndCustom, UINT msg, UINT wParam, LONG lParam)
             int xOff = 0;
             int yOff = 0;
             LONG lStyle;
-            PCRF pcrf;
+            PChunkyResourceFile pcrf;
             HWND hwndDlg = GetParent(hwndCustom);
             HWND hwndApp = GetParent(hwndDlg);
             HWND hwndPreview = GetDlgItem(hwndCustom, IDC_PREVIEW);
@@ -937,7 +937,7 @@ UINT CALLBACK OpenHookProc(HWND hwndCustom, UINT msg, UINT wParam, LONG lParam)
 
                 if (CchSz(lpofNotify->lpOFN->lpstrFile) != 0)
                 {
-                    FNI fni;
+                    Filename fni;
                     STN stnFile, stnErr;
                     bool fHelp, tRet;
                     long lSelect;
@@ -1018,7 +1018,7 @@ void RepaintPortfolio(HWND hwndCustom)
     PDLGINFO pdiPortfolio = (PDLGINFO)GetWindowLong(hwndCustom, GWL_USERDATA);
     PMBMP pmbmp, pmbmpBtn;
     int iBtn;
-    CNO cnoBack;
+    ChunkNumber cnoBack;
 
     // Draw the custom background for the common dlg.
     BeginPaint(hwndCustom, &ps);
@@ -1066,7 +1066,7 @@ void RepaintPortfolio(HWND hwndCustom)
             PGNV pgnvOff;
             PGPT pgptOff;
             HWND hwndPreview;
-            CNO cnoBtn;
+            ChunkNumber cnoBtn;
             int iBtnId;
 
             // Get the current size of the Portfolio window.
@@ -1211,9 +1211,9 @@ void RepaintPortfolio(HWND hwndCustom)
 void OpenPreview(HWND hwndCustom, PGNV pgnvOff, RCS *prcsPreview)
 {
     STN stn;
-    PCFL pcfl;
+    PChunkyFile pcfl;
     PMBMP pmbmp;
-    FNI fni;
+    Filename fni;
     SZ szFile;
     ERS ersT;
     ERS *pers;
@@ -1255,11 +1255,11 @@ void OpenPreview(HWND hwndCustom, PGNV pgnvOff, RCS *prcsPreview)
             if (pdiPortfolio->grfPrevType & fpfPortPrevMovie)
             {
                 // Preview it as a movie if we can.
-                if ((pcfl = CFL::PcflOpen(&fni, fcflNil)) != pvNil)
+                if ((pcfl = ChunkyFile::PcflOpen(&fni, fcflNil)) != pvNil)
                 {
-                    CKI ckiMovie;
-                    KID kidScene, kidThumb;
-                    BLCK blck;
+                    ChunkIdentification ckiMovie;
+                    ChildChunkIdentification kidScene, kidThumb;
+                    DataBlock blck;
 
                     // Get the movie chunk from the open file.
                     if (pcfl->FGetCkiCtg(kctgMvie, 0, &ckiMovie))

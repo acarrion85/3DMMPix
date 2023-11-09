@@ -280,7 +280,7 @@ bool CEX::_FInit(long ccmdInit, long ccmhInit)
     AssertIn(ccmdInit, 0, kcbMax);
     AssertIn(ccmhInit, 0, kcbMax);
 
-    if (pvNil == (_pglcmd = GL::PglNew(size(CMD), ccmdInit)) || pvNil == (_pglcmhe = GL::PglNew(size(CMHE), ccmhInit)))
+    if (pvNil == (_pglcmd = DynamicArray::PglNew(size(CMD), ccmdInit)) || pvNil == (_pglcmhe = DynamicArray::PglNew(size(CMHE), ccmhInit)))
     {
         return fFalse;
     }
@@ -292,7 +292,7 @@ bool CEX::_FInit(long ccmdInit, long ccmhInit)
 /***************************************************************************
     Start recording a macro to the given chunky file.
 ***************************************************************************/
-void CEX::Record(PCFL pcfl)
+void CEX::Record(PChunkyFile pcfl)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
@@ -313,7 +313,7 @@ void CEX::Record(PCFL pcfl)
     _cact = 0;
     Assert(_pglcmdf == pvNil, "why isn't _pglcmdf nil?");
 
-    if ((_pglcmdf = GL::PglNew(size(CMDF), 100)) == pvNil)
+    if ((_pglcmdf = DynamicArray::PglNew(size(CommandFile), 100)) == pvNil)
         _rec = recMemError;
     else if (!_pcfl->FAdd(0, kctgMacro, &_cno))
     {
@@ -333,7 +333,7 @@ void CEX::Record(PCFL pcfl)
 void CEX::StopRecording(void)
 {
     AssertThis(0);
-    BLCK blck;
+    DataBlock blck;
 
     if (_rs != rsRecording)
         return;
@@ -345,7 +345,7 @@ void CEX::StopRecording(void)
         if (_cact > 1)
         {
             // rewrite the last one's _cact
-            CMDF cmdf;
+            CommandFile cmdf;
 
             _pglcmdf->Get(_icmdf, &cmdf);
             cmdf.cact = _cact;
@@ -389,7 +389,7 @@ void CEX::RecordCmd(PCMD pcmd)
     AssertThis(0);
     AssertPo(pcmd, 0);
     Assert(_rs == rsRecording, "not recording");
-    CMDF cmdf;
+    CommandFile cmdf;
 
     if (_rec != recNil)
         return;
@@ -435,9 +435,9 @@ void CEX::RecordCmd(PCMD pcmd)
     // write the group and make it a child of the macro
     if (pvNil != pcmd->pgg)
     {
-        BLCK blck;
+        DataBlock blck;
         long cb;
-        CNO cno;
+        ChunkNumber cno;
 
         cb = pcmd->pgg->CbOnFile();
         if (!_pcfl->FAddChild(kctgMacro, _cno, cmdf.chidGg, cb, kctgGg, &cno, &blck))
@@ -461,11 +461,11 @@ void CEX::RecordCmd(PCMD pcmd)
     Play back the command stream starting in the given pcfl with the given
     cno.
 ***************************************************************************/
-void CEX::Play(PCFL pcfl, CNO cno)
+void CEX::Play(PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
-    BLCK blck;
+    DataBlock blck;
     short bo, osk;
 
     if (_rs != rsNormal)
@@ -483,7 +483,7 @@ void CEX::Play(PCFL pcfl, CNO cno)
     _cact = 0;
     Assert(_pglcmdf == pvNil, "why isn't _pglcmdf nil?");
 
-    if (!_pcfl->FFind(kctgMacro, _cno, &blck) || (_pglcmdf = GL::PglRead(&blck, &bo, &osk)) == pvNil)
+    if (!_pcfl->FFind(kctgMacro, _cno, &blck) || (_pglcmdf = DynamicArray::PglRead(&blck, &bo, &osk)) == pvNil)
     {
         _rec = recFileError;
         StopPlaying();
@@ -526,7 +526,7 @@ bool CEX::_FReadCmd(PCMD pcmd)
     AssertVarMem(pcmd);
     Assert(_rs == rsPlaying, "not playing a command stream");
     AssertPo(_pglcmdf, 0);
-    CMDF cmdf;
+    CommandFile cmdf;
 
     if (_cact > 0)
     {
@@ -548,15 +548,15 @@ bool CEX::_FReadCmd(PCMD pcmd)
 
     if (cmdf.chidGg != 0)
     {
-        BLCK blck;
-        KID kid;
+        DataBlock blck;
+        ChildChunkIdentification kid;
         short bo, osk;
 
         Assert(cmdf.cact <= 1, 0);
 
         // read the gg
         if (!_pcfl->FGetKidChidCtg(kctgMacro, _cno, cmdf.chidGg, kctgGg, &kid) ||
-            !_pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (pcmd->pgg = GG::PggRead(&blck, &bo, &osk)))
+            !_pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (pcmd->pgg = GeneralGroup::PggRead(&blck, &bo, &osk)))
         {
             _rec = recFileError;
             goto LStop;
@@ -590,12 +590,12 @@ LStop:
 bool CEX::_FCmhOk(PCMH pcmh)
 {
     AssertNilOrPo(pcmh, 0);
-    PGOB pgob;
+    PGraphicsObject pgob;
 
-    if (pvNil == _pgobModal || pvNil == pcmh || !pcmh->FIs(kclsGOB))
+    if (pvNil == _pgobModal || pvNil == pcmh || !pcmh->FIs(kclsGraphicsObject))
         return fTrue;
 
-    for (pgob = (PGOB)pcmh; pgob != _pgobModal; pgob = pgob->PgobPar())
+    for (pgob = (PGraphicsObject)pcmh; pgob != _pgobModal; pgob = pgob->PgobPar())
     {
         if (pvNil == pgob)
             return fFalse;
@@ -751,7 +751,7 @@ bool CEX::_FFindCmhl(long cmhl, long *picmhe)
 /***************************************************************************
     Adds a command to the tail of the queue.
 ***************************************************************************/
-void CEX::EnqueueCid(long cid, PCMH pcmh, PGG pgg, long lw0, long lw1, long lw2, long lw3)
+void CEX::EnqueueCid(long cid, PCMH pcmh, PGeneralGroup pgg, long lw0, long lw1, long lw2, long lw3)
 {
     Assert(cid != cidNil, 0);
     AssertNilOrPo(pcmh, 0);
@@ -771,7 +771,7 @@ void CEX::EnqueueCid(long cid, PCMH pcmh, PGG pgg, long lw0, long lw1, long lw2,
 /***************************************************************************
     Pushes a command onto the head of the queue.
 ***************************************************************************/
-void CEX::PushCid(long cid, PCMH pcmh, PGG pgg, long lw0, long lw1, long lw2, long lw3)
+void CEX::PushCid(long cid, PCMH pcmh, PGeneralGroup pgg, long lw0, long lw1, long lw2, long lw3)
 {
     Assert(cid != cidNil, 0);
     AssertNilOrPo(pcmh, 0);
@@ -1121,7 +1121,7 @@ LDone:
     Determines whether the given command is currently enabled. This is
     normally used for menu graying/checking etc and toolbar enabling/status.
 ***************************************************************************/
-ulong CEX::GrfedsForCid(long cid, PCMH pcmh, PGG pgg, long lw0, long lw1, long lw2, long lw3)
+ulong CEX::GrfedsForCid(long cid, PCMH pcmh, PGeneralGroup pgg, long lw0, long lw1, long lw2, long lw3)
 {
     AssertThis(0);
     Assert(cid != cidNil, 0);
@@ -1169,9 +1169,9 @@ bool CEX::FGetNextKey(PCMD pcmd)
 }
 
 /***************************************************************************
-    The given GOB wants to track the mouse.
+    The given GraphicsObject wants to track the mouse.
 ***************************************************************************/
-void CEX::TrackMouse(PGOB pgob)
+void CEX::TrackMouse(PGraphicsObject pgob)
 {
     AssertThis(0);
     AssertPo(pgob, 0);
@@ -1205,7 +1205,7 @@ void CEX::EndMouseTracking(void)
 /***************************************************************************
     Return the gob that is tracking the mouse.
 ***************************************************************************/
-PGOB CEX::PgobTracking(void)
+PGraphicsObject CEX::PgobTracking(void)
 {
     AssertThis(0);
     return _pgobTrack;
@@ -1232,9 +1232,9 @@ void CEX::Suspend(bool fSuspend)
 }
 
 /***************************************************************************
-    Set the modal GOB.
+    Set the modal GraphicsObject.
 ***************************************************************************/
-void CEX::SetModalGob(PGOB pgob)
+void CEX::SetModalGob(PGraphicsObject pgob)
 {
     AssertThis(0);
     AssertNilOrPo(pgob, 0);

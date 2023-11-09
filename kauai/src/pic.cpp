@@ -48,13 +48,13 @@ void PIC::GetRc(RC *prc)
     Add the picture to the chunky file. The OS specific representation
     will be a child of the chunk and have the given chid value.
 ***************************************************************************/
-bool PIC::FAddToCfl(PCFL pcfl, CTG ctg, CNO *pcno, CHID chid)
+bool PIC::FAddToCfl(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno, ChildChunkID chid)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     AssertVarMem(pcno);
-    BLCK blck;
-    CNO cnoKid;
+    DataBlock blck;
+    ChunkNumber cnoKid;
     long cb;
 
     if (!pcfl->FAdd(0, ctg, pcno))
@@ -74,15 +74,15 @@ bool PIC::FAddToCfl(PCFL pcfl, CTG ctg, CNO *pcno, CHID chid)
     OS specific representation will be a child of the chunk and have the
     given chid value.
 ***************************************************************************/
-bool PIC::FPutInCfl(PCFL pcfl, CTG ctg, CNO cno, CHID chid)
+bool PIC::FPutInCfl(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, ChildChunkID chid)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     bool fDelOnFail;
     long ikid;
-    KID kid;
-    BLCK blck;
-    CNO cnoKid;
+    ChildChunkIdentification kid;
+    DataBlock blck;
+    ChunkNumber cnoKid;
     long cb;
 
     fDelOnFail = !pcfl->FFind(ctg, cno);
@@ -125,7 +125,7 @@ void PIC::AssertValid(ulong grf)
 /***************************************************************************
     A PFNRPO to read PIC 0 from a GRAF chunk.
 ***************************************************************************/
-bool FReadMainPic(PCFL pcfl, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool FReadMainPic(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     PPIC ppic;
 

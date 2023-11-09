@@ -16,7 +16,7 @@
 
     All the DAT files for a given font should be in a directory.  The
     directory name becomes the name of the TDF chunk.  The DAT file names
-    should contain a number, which becomes the CHID of the model chunk
+    should contain a number, which becomes the ChildChunkID of the model chunk
     under the TDF.
 
 ***************************************************************************/
@@ -24,9 +24,9 @@
 #include "tdfmake.h"
 ASSERTNAME
 
-const CTG kctgTdfMake = 'TDFM';
+const ChunkTag kctgTdfMake = 'TDFM';
 
-bool FMakeTdf(PFNI pfniSrc, PCFL pcflDst);
+bool FMakeTdf(PFilename pfniSrc, PChunkyFile pcflDst);
 
 /***************************************************************************
     Main routine.  Returns non-zero	if there's an error.
@@ -35,9 +35,9 @@ int __cdecl main(int cpsz, achar *prgpsz[])
 {
     STN stnDst;
     STN stnSrc;
-    FNI fniSrcDir;
-    FNI fniDst;
-    PCFL pcflDst;
+    Filename fniSrcDir;
+    Filename fniDst;
+    PChunkyFile pcflDst;
     long ifniSrc;
 
     fprintf(stderr, "\nMicrosoft (R) TDF Maker\n");
@@ -59,7 +59,7 @@ int __cdecl main(int cpsz, achar *prgpsz[])
         goto LFail;
     }
     fniDst.GetStnPath(&stnDst);
-    pcflDst = CFL::PcflCreate(&fniDst, fcflWriteEnable);
+    pcflDst = ChunkyFile::PcflCreate(&fniDst, fcflWriteEnable);
     if (pvNil == pcflDst)
     {
         fprintf(stderr, "Couldn't create destination chunky file %s\n\n", stnDst.Psz());
@@ -101,34 +101,34 @@ LFail:
     Writes a TDF chunk and child BMDL chunks based on all DAT files in
     pfniSrcDir to the destination file pcflDst.
 ***************************************************************************/
-bool FMakeTdf(PFNI pfniSrcDir, PCFL pcflDst)
+bool FMakeTdf(PFilename pfniSrcDir, PChunkyFile pcflDst)
 {
     AssertPo(pfniSrcDir, ffniDir);
     AssertPo(pcflDst, 0);
 
-    FTG ftgDat = MacWin('bdat', 'DAT');
+    FileType ftgDat = MacWin('bdat', 'DAT');
     FNE fne;
-    FNI fni;
+    Filename fni;
     STN stn;
     STN stn2;
-    CHID chid;
-    CHID chidMax = 0;
+    ChildChunkID chid;
+    ChildChunkID chidMax = 0;
     PMODL pmodl;
-    CNO cnoModl;
-    PCRF pcrf;
+    ChunkNumber cnoModl;
+    PChunkyResourceFile pcrf;
     PSZ psz;
     long cch;
     long lw;
-    PGL pglkid;
-    KID kid;
+    PDynamicArray pglkid;
+    ChildChunkIdentification kid;
     bool fFoundSpace = fFalse;  // 0x20
     bool fFoundSpace2 = fFalse; // 0xa0
     long cmodl = 0;
 
-    pglkid = GL::PglNew(size(KID));
+    pglkid = DynamicArray::PglNew(size(ChildChunkIdentification));
     if (pglkid == pvNil)
         goto LFail;
-    pcrf = CRF::PcrfNew(pcflDst, 0);
+    pcrf = ChunkyResourceFile::PcrfNew(pcflDst, 0);
     if (pvNil == pcrf)
         goto LFail;
     // get directory name (don't actually move up a dir)
@@ -159,7 +159,7 @@ bool FMakeTdf(PFNI pfniSrcDir, PCFL pcflDst)
         chid = lw;
         if (chid > chidMax)
             chidMax = chid;
-        if (chid == (CHID)ChLit(' '))
+        if (chid == (ChildChunkID)ChLit(' '))
             fFoundSpace = fTrue;
         if (chid == 0xa0) // nonbreaking space
             fFoundSpace2 = fTrue;
@@ -192,7 +192,7 @@ bool FMakeTdf(PFNI pfniSrcDir, PCFL pcflDst)
             goto LFail;
         if (!pmodl->FWrite(pcflDst, kctgBmdl, cnoModl))
             goto LFail;
-        kid.chid = (CHID)ChLit(' ');
+        kid.chid = (ChildChunkID)ChLit(' ');
         kid.cki.ctg = kctgBmdl;
         kid.cki.cno = cnoModl;
         if (!pglkid->FAdd(&kid))

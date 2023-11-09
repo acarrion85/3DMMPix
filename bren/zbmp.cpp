@@ -9,6 +9,8 @@
 #include "bren.h"
 ASSERTNAME
 
+namespace BRender {
+
 RTCLASS(ZBMP)
 
 /***************************************************************************
@@ -56,7 +58,7 @@ PZBMP ZBMP::PzbmpNewFromBpmp(BPMP *pbpmp)
 /***************************************************************************
     Chunky resource reader for ZBMP
 ***************************************************************************/
-bool ZBMP::FReadZbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool ZBMP::FReadZbmp(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -88,9 +90,9 @@ bool ZBMP::FReadZbmp(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 }
 
 /***************************************************************************
-    Read a ZBMP from a BLCK.
+    Read a ZBMP from a DataBlock.
 ***************************************************************************/
-PZBMP ZBMP::PzbmpRead(PBLCK pblck)
+PZBMP ZBMP::PzbmpRead(PDataBlock pblck)
 {
     AssertPo(pblck, 0);
 
@@ -196,7 +198,7 @@ void ZBMP::Draw(byte *prgbPixels, long cbRow, long dyp, long xpRef, long ypRef, 
 
 /***************************************************************************
     Draw the ZBMP into prgbPixels, squashing the clip region vertically by
-    two (for BWLD's "half mode")
+    two (for World's "half mode")
 ***************************************************************************/
 void ZBMP::DrawHalf(byte *prgbPixels, long cbRow, long dyp, long xpRef, long ypRef, RC *prcClip, PREGN pregnClip)
 {
@@ -260,14 +262,14 @@ void ZBMP::DrawHalf(byte *prgbPixels, long cbRow, long dyp, long xpRef, long ypR
 /***************************************************************************
     Write the ZBMP
 ***************************************************************************/
-bool ZBMP::FWrite(PCFL pcfl, CTG ctg, CNO *pcno)
+bool ZBMP::FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
     AssertVarMem(pcno);
 
     ZBMPF zbmpf;
-    BLCK blck;
+    DataBlock blck;
 
     zbmpf.bo = kboCur;
     zbmpf.osk = koskCur;
@@ -307,3 +309,5 @@ void ZBMP::MarkMem(void)
     MarkPv(_prgb);
 }
 #endif // DEBUG
+
+} // end of namespace BRender

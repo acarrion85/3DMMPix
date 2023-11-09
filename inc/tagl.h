@@ -27,7 +27,7 @@ class TAGL : public TAGL_PAR
     MARKMEM
 
   protected:
-    PGG _pggtagf; // TAGF for fixed part, array of cc's for variable part
+    PGeneralGroup _pggtagf; // TAGF for fixed part, array of cc's for variable part
 
   protected:
     bool _FInit(void);
@@ -41,7 +41,7 @@ class TAGL : public TAGL_PAR
     void GetTag(long itag, PTAG ptag);
 
     bool FInsertTag(PTAG ptag, bool fCacheChildren = fTrue);
-    bool FInsertChild(PTAG ptag, CHID chid, CTG ctg);
+    bool FInsertChild(PTAG ptag, ChildChunkID chid, ChunkTag ctg);
 
     bool FCacheTags(void);
 };

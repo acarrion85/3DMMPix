@@ -23,25 +23,25 @@
 class GPT;  // graphics port
 class GNV;  // graphics environment
 class CMH;  // command handler
-class GOB;  // graphic object
-class MUB;  // menu bar
-class DOCB; // base document
-class DMD;  // document mdi window
+class GraphicsObject;  // graphic object
+class MenuBar;  // menu bar
+class DocumentBase; // base document
+class DocumentMDIWindow;  // document mdi window
 class DMW;  // main document window
 class DSG;  // document scroll gob
-class DDG;  // document display gob
+class DocumentDisplayGraphicsObject;  // document display gob
 class SNDM; // sound manager
 
 typedef class GPT *PGPT;
 typedef class GNV *PGNV;
 typedef class CMH *PCMH;
-typedef class GOB *PGOB;
-typedef class MUB *PMUB;
-typedef class DOCB *PDOCB;
-typedef class DMD *PDMD;
+typedef class GraphicsObject *PGraphicsObject;
+typedef class MenuBar *PMenuBar;
+typedef class DocumentBase *PDocumentBase;
+typedef class DocumentMDIWindow *PDocumentMDIWindow;
 typedef class DMW *PDMW;
 typedef class DSG *PDSG;
-typedef class DDG *PDDG;
+typedef class DocumentDisplayGraphicsObject *PDocumentDisplayGraphicsObject;
 typedef class SNDM *PSNDM;
 
 #include "region.h"

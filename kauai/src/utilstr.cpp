@@ -253,7 +253,7 @@ void STN::GetData(void *pv)
 /***************************************************************************
     Writes the string data to the given block starting at position ib.
 ***************************************************************************/
-bool STN::FWrite(PBLCK pblck, long ib)
+bool STN::FWrite(PDataBlock pblck, long ib)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -263,7 +263,7 @@ bool STN::FWrite(PBLCK pblck, long ib)
 
     if (!FIn(ib, 0, cbTot - cbWrite + 1))
     {
-        Bug("BLCK is not big enough");
+        Bug("DataBlock is not big enough");
         return fFalse;
     }
 
@@ -385,7 +385,7 @@ bool STN::FSetData(void *pv, long cbMax, long *pcbRead)
 /***************************************************************************
     Read a string from a block.
 ***************************************************************************/
-bool STN::FRead(PBLCK pblck, long ib, long *pcbRead)
+bool STN::FRead(PDataBlock pblck, long ib, long *pcbRead)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -530,7 +530,7 @@ void STN::GetSzs(PSZS pszs)
     %d signed decimal (long)
     %u unsigned decimal (long)
     %x hex
-    %f long as a 4 character value: 'xxxx' (ala FTG and CTG values)
+    %f long as a 4 character value: 'xxxx' (ala FileType and ChunkTag values)
     %% a percent sign
 
     Supports the following options, in this order:

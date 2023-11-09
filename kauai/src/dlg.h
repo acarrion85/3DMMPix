@@ -16,6 +16,8 @@
 #ifndef DLG_H
 #define DLG_H
 
+using Group::GeneralGroup;
+
 #ifdef MAC
 typedef DialogPtr HDLG;
 #endif // MAC
@@ -35,27 +37,27 @@ enum
 };
 
 // dialog item
-struct DIT
+struct DialogItem
 {
-    long sitMin; // first system item number (for this DIT)
-    long sitLim; // lim of system item numbers (for this DIT)
+    long sitMin; // first system item number (for this DialogItem)
+    long sitLim; // lim of system item numbers (for this DialogItem)
     long ditk;   // kind of item
 };
 
-typedef class DLG *PDLG;
+typedef class Dialog *PDLG;
 
 // callback to notify of an item change (while the dialog is active)
 typedef bool (*PFNDLG)(PDLG pdlg, long *pidit, void *pv);
 
-// dialog class - a DLG is a GG of DITs
-#define DLG_PAR GG
-#define kclsDLG 'DLG'
-class DLG : public DLG_PAR
+// dialog class - a Dialog is a GeneralGroup of DITs
+#define Dialog_PAR GeneralGroup
+#define kclsDialog 'DLG'
+class Dialog : public Dialog_PAR
 {
     RTCLASS_DEC
 
   private:
-    PGOB _pgob;
+    PGraphicsObject _pgob;
     long _rid;
     PFNDLG _pfn;
     void *_pv;
@@ -64,7 +66,7 @@ class DLG : public DLG_PAR
     friend BOOL CALLBACK _FDlgCore(HWND hdlg, UINT msg, WPARAM w, LPARAM lw);
 #endif // WIN
 
-    DLG(long rid);
+    Dialog(long rid);
     bool _FInit(void);
 
     long _LwGetRadioGroup(long idit);
@@ -90,11 +92,11 @@ class DLG : public DLG_PAR
 
     // argument access
     long IditFromSit(long sit);
-    void GetDit(long idit, DIT *pdit)
+    void GetDit(long idit, DialogItem *pdit)
     {
         GetFixed(idit, pdit);
     }
-    void PutDit(long idit, DIT *pdit)
+    void PutDit(long idit, DialogItem *pdit)
     {
         PutFixed(idit, pdit);
     }

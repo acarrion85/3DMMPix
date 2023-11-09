@@ -51,7 +51,7 @@ typedef HMIDIOUT HMS;
     This is the midi stream cached object.
 ***************************************************************************/
 typedef class MDWS *PMDWS;
-#define MDWS_PAR BACO
+#define MDWS_PAR BaseCacheableObject
 #define kclsMDWS 'MDWS'
 class MDWS : public MDWS_PAR
 {
@@ -60,15 +60,15 @@ class MDWS : public MDWS_PAR
     MARKMEM
 
   protected:
-    PGL _pglmev;
+    PDynamicArray _pglmev;
     ulong _dts;
 
     MDWS(void);
     bool _FInit(PMIDS pmids);
 
   public:
-    static bool FReadMdws(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static PMDWS PmdwsRead(PBLCK pblck);
+    static bool FReadMdws(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static PMDWS PmdwsRead(PDataBlock pblck);
 
     ~MDWS(void);
 
@@ -107,7 +107,7 @@ class MSQUE : public MSQUE_PAR
     virtual void _Leave(void);
 
     virtual bool _FInit(PMSMIX pmsmix);
-    virtual PBACO _PbacoFetch(PRCA prca, CTG ctg, CNO cno);
+    virtual PBaseCacheableObject _PbacoFetch(PRCA prca, ChunkTag ctg, ChunkNumber cno);
     virtual void _Queue(long isndinMin);
     virtual void _PauseQueue(long isndinMin);
     virtual void _ResumeQueue(long isndinMin);
@@ -152,10 +152,10 @@ class MSMIX : public MSMIX_PAR
     HN _hth;  // thread to terminate non-playing sounds
 
     PMISI _pmisi; // the midi stream interface
-    PGL _pglmsos; // the list of current sounds, in priority order
+    PDynamicArray _pglmsos; // the list of current sounds, in priority order
     long _cpvOut; // number of buffers submitted (0, 1, or 2)
 
-    PGL _pglmevKey;     // to accumulate state events for seeking
+    PDynamicArray _pglmevKey;     // to accumulate state events for seeking
     bool _fPlaying : 1; // whether we're currently playing the first stream
     bool _fWaiting : 1; // we're waiting for our buffers to get returned
     bool _fDone : 1;    // tells the aux thread to terminate
@@ -283,7 +283,7 @@ class WMS : public WMS_PAR
 
     MUTX _mutx;
     HINSTANCE _hlib;
-    PGL _pglpmsir;
+    PDynamicArray _pglpmsir;
     long _ipmsirCur;
     long _cmhOut;
 
@@ -367,7 +367,7 @@ class OMS : public OMS_PAR
     bool _fDone : 1;    // tells the aux thread to return
 
     long _imsbCur;
-    PGL _pglmsb;
+    PDynamicArray _pglmsb;
     PMEV _pmev;
     PMEV _pmevLim;
     ulong _tsCur;

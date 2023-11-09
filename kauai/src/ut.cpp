@@ -25,8 +25,8 @@ void __cdecl main(long cpszs, char **prgpszs)
 {
 #ifdef REVIEW // shonk: for counting lines
     FNE fne;
-    FNI fniDir, fni;
-    FTG rgftg[2];
+    Filename fniDir, fni;
+    FileType rgftg[2];
     byte rgb[512];
     FP fpMac, fp;
     long cbTot, clnTot, ib, cbT, cln;

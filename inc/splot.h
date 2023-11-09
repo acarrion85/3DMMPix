@@ -10,7 +10,7 @@
 
 ***************************************************************************/
 
-#define SPLOT_PAR GOK
+#define SPLOT_PAR KidspaceGraphicObject
 typedef class SPLOT *PSPLOT;
 #define kclsSPLOT 'splt'
 class SPLOT : public SPLOT_PAR
@@ -22,7 +22,7 @@ class SPLOT : public SPLOT_PAR
 
   private:
     /* The movie */
-    PMVIE _pmvie;
+    PMovie _pmvie;
 
     /* The lists of content */
     PBCL _pbclBkgd;
@@ -47,7 +47,7 @@ class SPLOT : public SPLOT_PAR
     bool _fDirty;
 
     /* Miscellaneous stuff */
-    PGL _pglclrSav;
+    PDynamicArray _pglclrSav;
 
     SPLOT(PGCB pgcb) : SPLOT_PAR(pgcb)
     {
@@ -64,7 +64,7 @@ class SPLOT : public SPLOT_PAR
     bool FCmdUpdate(PCMD pcmd);
     bool FCmdDismiss(PCMD pcmd);
 
-    PMVIE Pmvie(void)
+    PMovie Pmvie(void)
     {
         return _pmvie;
     }

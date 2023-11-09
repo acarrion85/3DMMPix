@@ -8,12 +8,14 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BACO ---> MTRL
-    BASE ---> BACO ---> CMTL
+    BASE ---> BaseCacheableObject ---> MTRL
+    BASE ---> BaseCacheableObject ---> CMTL
 
 *************************************************************************/
 #ifndef MTRL_H
 #define MTRL_H
+
+using namespace BRender;
 
 // CMTL on File
 struct CMTLF
@@ -22,7 +24,7 @@ struct CMTLF
     short osk;
     long ibset; // which body part set this CMTL attaches to
 };
-const BOM kbomCmtlf = 0x5c000000;
+const ByteOrderMask kbomCmtlf = 0x5c000000;
 
 // material on file (MTRL chunk)
 struct MTRLF
@@ -37,7 +39,7 @@ struct MTRLF
     byte cIndexRange;    // count of entries in palette for this color
     BRS rPower;          // specular exponent
 };
-const BOM kbomMtrlf = 0x5D530000;
+const ByteOrderMask kbomMtrlf = 0x5D530000;
 
 /****************************************
     The MTRL class.  There are two kinds
@@ -47,7 +49,7 @@ const BOM kbomMtrlf = 0x5D530000;
     0.
 ****************************************/
 typedef class MTRL *PMTRL;
-#define MTRL_PAR BACO
+#define MTRL_PAR BaseCacheableObject
 #define kclsMTRL 'MTRL'
 class MTRL : public MTRL_PAR
 {
@@ -56,7 +58,7 @@ class MTRL : public MTRL_PAR
     MARKMEM
 
   protected:
-    static PTMAP _ptmapShadeTable; // shade table for all MTRLs
+    static PTextureMap _ptmapShadeTable; // shade table for all MTRLs
     PBMTL _pbmtl;
 
   protected:
@@ -64,22 +66,22 @@ class MTRL : public MTRL_PAR
     {
         _pbmtl = pvNil;
     } // can't instantiate directly; must use FReadMtrl
-    bool _FInit(PCRF pcrf, CTG ctg, CNO cno);
+    bool _FInit(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
 
   public:
-    static bool FSetShadeTable(PCFL pcfl, CTG ctg, CNO cno);
+    static bool FSetShadeTable(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
     static PMTRL PmtrlNew(long iclrBase = ivNil, long cclr = ivNil);
-    static bool FReadMtrl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static PMTRL PmtrlNewFromPix(PFNI pfni);
-    static PMTRL PmtrlNewFromBmp(PFNI pfni, PGL pglclr = pvNil);
+    static bool FReadMtrl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static PMTRL PmtrlNewFromPix(PFilename pfni);
+    static PMTRL PmtrlNewFromBmp(PFilename pfni, PDynamicArray pglclr = pvNil);
     static PMTRL PmtrlFromBmtl(PBMTL pbmtl);
     ~MTRL(void);
-    PTMAP Ptmap(void);
+    PTextureMap Ptmap(void);
     PBMTL Pbmtl(void)
     {
         return _pbmtl;
     }
-    bool FWrite(PCFL pcfl, CTG ctg, CNO *pcno);
+    bool FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber *pcno);
 #ifdef DEBUG
     static void MarkShadeTable(void);
 #endif // DEBUG
@@ -91,7 +93,7 @@ class MTRL : public MTRL_PAR
     apply to a body part set
 ****************************************/
 typedef class CMTL *PCMTL;
-#define CMTL_PAR BACO
+#define CMTL_PAR BaseCacheableObject
 #define kclsCMTL 'CMTL'
 class CMTL : public CMTL_PAR
 {
@@ -106,16 +108,16 @@ class CMTL : public CMTL_PAR
     long _ibset;      // body part set that this CMTL should be applied to
 
   protected:
-    bool _FInit(PCRF pcrf, CTG ctg, CNO cno);
+    bool _FInit(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno);
     CMTL(void)
     {
     } // can't instantiate directly; must use PcmtlRead
 
   public:
     static PCMTL PcmtlNew(long ibset, long cbprt, PMTRL *prgpmtrl);
-    static bool FReadCmtl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static bool FHasModels(PCFL pcfl, CTG ctg, CNO cno);
-    static bool FEqualModels(PCFL pcfl, CNO cno1, CNO cno2);
+    static bool FReadCmtl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static bool FHasModels(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
+    static bool FEqualModels(PChunkyFile pcfl, ChunkNumber cno1, ChunkNumber cno2);
     ~CMTL(void);
     PBMTL Pbmtl(long ibmtl);
     PMODL Pmodl(long imodl);

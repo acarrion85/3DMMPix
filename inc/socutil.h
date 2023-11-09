@@ -18,46 +18,45 @@ extern "C"
 #include "brender.h"
 };
 
-typedef class ACTR *PACTR;
-typedef class SCEN *PSCEN;
-typedef class MVIE *PMVIE;
-typedef class BKGD *PBKGD;
+typedef class Actor *PActor;
+typedef class Scene *PScene;
+typedef class Movie *PMovie;
+typedef class Background *PBackground;
 typedef class TBOX *PTBOX;
-typedef class MVIEW *PMVIEW;
-typedef class STDIO *PSTDIO;
+typedef class Studio *PStudio;
 
 //
 //
 // Class for undo items in a movie
 //
 // NOTE: All the "Set" functions are done automagically
-// in MVIE::FAddUndo().
+// in Movie::FAddUndo().
 //
 //
-typedef class MUNB *PMUNB;
+typedef class MovieUndo *PMovieUndo;
 
-#define MUNB_PAR UNDB
-#define kclsMUNB 'MUNB'
-class MUNB : public MUNB_PAR
+#define MovieUndo_PAR UndoBase
+#define kclsMovieUndo 'MUNB'
+class MovieUndo : public MovieUndo_PAR
 {
     RTCLASS_DEC
     ASSERT
 
   protected:
-    PMVIE _pmvie;
+    PMovie _pmvie;
     long _iscen;
     long _nfrm;
 
-    MUNB(void)
+    MovieUndo(void)
     {
     }
 
   public:
-    void SetPmvie(PMVIE pmvie)
+    void SetPmvie(PMovie pmvie)
     {
         _pmvie = pmvie;
     }
-    PMVIE Pmvie(void)
+    PMovie Pmvie(void)
     {
         return _pmvie;
     }
@@ -86,7 +85,7 @@ class MUNB : public MUNB_PAR
 //
 typedef class AUND *PAUND;
 
-#define AUND_PAR MUNB
+#define AUND_PAR MovieUndo
 #define kclsAUND 'AUND'
 class AUND : public AUND_PAR
 {
@@ -95,7 +94,7 @@ class AUND : public AUND_PAR
     ASSERT
 
   protected:
-    PACTR _pactr;
+    PActor _pactr;
     long _arid;
     bool _fSoonerLater;
     bool _fSndUndo;
@@ -109,7 +108,7 @@ class AUND : public AUND_PAR
     static PAUND PaundNew(void);
     ~AUND(void);
 
-    void SetPactr(PACTR pactr);
+    void SetPactr(PActor pactr);
     void SetArid(long arid)
     {
         _arid = arid;
@@ -140,8 +139,8 @@ class AUND : public AUND_PAR
         return _fSndUndo;
     };
 
-    virtual bool FDo(PDOCB pdocb);
-    virtual bool FUndo(PDOCB pdocb);
+    virtual bool FDo(PDocumentBase pdocb);
+    virtual bool FUndo(PDocumentBase pdocb);
 };
 
 //

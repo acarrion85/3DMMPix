@@ -8,11 +8,13 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BACO ---> MODL
+    BASE ---> BaseCacheableObject ---> MODL
 
 *************************************************************************/
 #ifndef MODL_H
 #define MODL_H
+
+using namespace BRender;
 
 // Model on file:
 struct MODLF
@@ -28,13 +30,13 @@ struct MODLF
     //	br_face rgbrf[]; // faces
 };
 typedef MODLF *PMODLF;
-const BOM kbomModlf = 0x55fffff0;
+const ByteOrderMask kbomModlf = 0x55fffff0;
 
 /****************************************
     MODL: a wrapper for BRender models
 ****************************************/
 typedef class MODL *PMODL;
-#define MODL_PAR BACO
+#define MODL_PAR BaseCacheableObject
 #define kclsMODL 'MODL'
 class MODL : public MODL_PAR
 {
@@ -48,13 +50,13 @@ class MODL : public MODL_PAR
     MODL(void)
     {
     }
-    bool _FInit(PBLCK pblck);
+    bool _FInit(PDataBlock pblck);
     bool _FPrelight(long cblit, BVEC3 *prgbvec3Light);
 
   public:
     static PMODL PmodlNew(long cbrv, BRV *prgbrv, long cbrf, BRF *prgbrf);
-    static bool FReadModl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static PMODL PmodlReadFromDat(FNI *pfni);
+    static bool FReadModl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static PMODL PmodlReadFromDat(Filename *pfni);
     static PMODL PmodlFromBmdl(PBMDL pbmdl);
     ~MODL(void);
     PBMDL Pbmdl(void)
@@ -62,7 +64,7 @@ class MODL : public MODL_PAR
         return _pbmdl;
     }
     void AdjustTdfCharacter(void);
-    bool FWrite(PCFL pcfl, CTG ctg, CNO cno);
+    bool FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
 
     BRS Dxr(void)
     {

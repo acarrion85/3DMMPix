@@ -10,9 +10,9 @@
     Chunky file classes.
 
     Chunky files store distinct "chunks" of data. Each chunk is identified
-    by a chunk tag (CTG) and chunk number (CNO) pair. By convention, CTGs
+    by a chunk tag (ChunkTag) and chunk number (ChunkNumber) pair. By convention, CTGs
     consist of 4 ASCII characters. CTGs that are shorter than 4 characters
-    should be padded with spaces (eg, 'GST '). The CFL class does not
+    should be padded with spaces (eg, 'StringTable '). The ChunkyFile class does not
     enforce these conventions, but many Kauai tools assume that CTGs
     consist of 4 printable characters.
 
@@ -23,8 +23,8 @@
     Mathematically speaking, the chunks form an acyclic directed graph.
 
     A parent-child relationship has a client specified number associated
-    with it. This is called the child id (CHID). Child id's don't have to
-    be unique. CFL places no significance on child id's. The only
+    with it. This is called the child id (ChildChunkID). Child id's don't have to
+    be unique. ChunkyFile places no significance on child id's. The only
     restriction concerning CHIDs is that if chunk B is to be a child of
     chunk A twice, then those two parent-child relationships must have
     different child id's. In a nutshell, a parent-child relationship
@@ -33,7 +33,7 @@
 
     On disk, chunky files are organized as follows:
 
-        * A header (CFP struct defined below).
+        * A header (ChunkyFilePrefix struct defined below).
         * The raw chunk data arranged in arbitrary order (a heap).
         * The index for the chunky file.
         * An optional free map indicating which portions of the heap
@@ -43,9 +43,9 @@
     index and free map. The heap contains only the raw chunk data.
     The index is not updated on disk until FSave is called.
 
-    The index is implemented as a general group (GG). The fixed portion
+    The index is implemented as a general group (GeneralGroup). The fixed portion
     of each entry is a CRP (defined below). The variable portion contains
-    the list of children of the chunk (including CHID values) and the
+    the list of children of the chunk (including ChildChunkID values) and the
     chunk name (if it has one).
 
     The CRP indicates where in the heap the chunk data is, whether
@@ -59,12 +59,12 @@
     parent count becomes zero and are not loner chunks are then deleted,
     and the process continues down through the chunk graph.
 
-    The CFL class implements intelligent chunk copying within a run-time
-    session. Suppose a source CFL contains two chunks A and B, with B a
+    The ChunkyFile class implements intelligent chunk copying within a run-time
+    session. Suppose a source ChunkyFile contains two chunks A and B, with B a
     child of A. If chunk A is copied to another chunky file, its entire
     subgraph is copied, so B is copied with it. Suppose however that chunk
     B was previously copied to the destination, then A is copied. We see
-    that chunk B is already in the destination CFL, so don't actually copy
+    that chunk B is already in the destination ChunkyFile, so don't actually copy
     the chunk - we just copy A and make the previously coped B a child of
     the newly copied A. If this is not what you want, use FClone instead
     of FCopy. FClone copies the entire chunk subgraph, but does not use
@@ -76,7 +76,9 @@
 #include "util.h"
 ASSERTNAME
 
-/* HISTORY of CFL version numbers
+namespace Chunky {
+
+/* HISTORY of ChunkyFile version numbers
 
     1	ShonK: instantiated, 10/28/93
     2	ShonK: added compression support, 2/14/95
@@ -111,10 +113,10 @@ const auto kcvnMinForest = 5;
 const long klwMagicChunky = BigLittle('CHN2', '2NHC'); // chunky file signature
 
 // chunky file prefix
-struct CFP
+struct ChunkyFilePrefix
 {
     long lwMagic;   // identifies this as a chunky file
-    CTG ctgCreator; // program that created this file
+    ChunkTag ctgCreator; // program that created this file
     DVER dver;      // chunky file version
     short bo;       // byte order
     short osk;      // which system wrote this
@@ -127,7 +129,7 @@ struct CFP
 
     long rglwReserved[23]; // reserved for future use - should be zero
 };
-const BOM kbomCfp = 0xB55FFC00L;
+const ByteOrderMask kbomCfp = 0xB55FFC00L;
 
 // free space map entry
 struct FSM
@@ -135,7 +137,7 @@ struct FSM
     FP fp;
     long cb;
 };
-const BOM kbomFsm = 0xF0000000L;
+const ByteOrderMask kbomFsm = 0xF0000000L;
 
 enum
 {
@@ -152,7 +154,7 @@ enum
 const long kcbMaxCrpbg = klwMax;
 struct CRPBG
 {
-    CKI cki;      // chunk id
+    ChunkIdentification cki;      // chunk id
     FP fp;        // location on file
     long cb;      // size of data on file
     long ckid;    // number of owned chunks
@@ -174,7 +176,7 @@ struct CRPBG
 
     long BvRgch(void)
     {
-        return LwMul(ckid, size(KID));
+        return LwMul(ckid, size(ChildChunkIdentification));
     }
     long CbRgch(long cbVar)
     {
@@ -206,8 +208,8 @@ struct CRPBG
         cb = cbT;
     }
 };
-const BOM kbomCrpbgGrfcrp = 0xFFFF0000L;
-const BOM kbomCrpbgBytes = 0xFFFE0000L;
+const ByteOrderMask kbomCrpbgGrfcrp = 0xFFFF0000L;
+const ByteOrderMask kbomCrpbgBytes = 0xFFFE0000L;
 
 // Chunk Representation (small version) - fixed element in pggcrp
 // variable part of group element is an rgkid and stn data (the name)
@@ -216,7 +218,7 @@ const long kcbitGrfcrp = 8;
 const ulong kgrfcrpAll = (1 << kcbitGrfcrp) - 1;
 struct CRPSM
 {
-    CKI cki;          // chunk id
+    ChunkIdentification cki;          // chunk id
     FP fp;            // location on file
     ulong luGrfcrpCb; // low byte is the grfcrp, high 3 bytes is cb
     ushort ckid;      // number of owned chunks
@@ -224,7 +226,7 @@ struct CRPSM
 
     long BvRgch(void)
     {
-        return LwMul(ckid, size(KID));
+        return LwMul(ckid, size(ChildChunkIdentification));
     }
     long CbRgch(long cbVar)
     {
@@ -256,7 +258,7 @@ struct CRPSM
         luGrfcrpCb = (cbT << kcbitGrfcrp) | luGrfcrpCb & kgrfcrpAll;
     }
 };
-const BOM kbomCrpsm = 0xFF500000L;
+const ByteOrderMask kbomCrpsm = 0xFF500000L;
 
 #ifdef CHUNK_BIG_INDEX
 
@@ -265,7 +267,7 @@ typedef CRPSM CRPOTH;
 const long kcbMaxCrp = kcbMaxCrpbg;
 typedef long CKID;
 const long kckidMax = kcbMax;
-const BOM kbomCrpsm = kbomCrpbgGrfcrp;
+const ByteOrderMask kbomCrpsm = kbomCrpbgGrfcrp;
 
 #else //! CHUNK_BIG_INDEX
 
@@ -274,15 +276,15 @@ typedef CRPBG CRPOTH;
 const long kcbMaxCrp = kcbMaxCrpsm;
 typedef ushort CKID;
 const long kckidMax = ksuMax;
-const BOM kbomCrp = kbomCrpsm;
+const ByteOrderMask kbomCrp = kbomCrpsm;
 
 #endif //! CHUNK_BIG_INDEX
 
-#define _BvKid(ikid) LwMul(ikid, size(KID))
+#define _BvKid(ikid) LwMul(ikid, size(ChildChunkIdentification))
 
 const long rtiNil = 0; // no rti assigned
-long CFL::_rtiLast = rtiNil;
-PCFL CFL::_pcflFirst;
+long ChunkyFile::_rtiLast = rtiNil;
+PChunkyFile ChunkyFile::_pcflFirst;
 
 #ifdef CHUNK_STATS
 bool vfDumpChunkRequests = fTrue;
@@ -292,9 +294,9 @@ FP _fpStats;
 /***************************************************************************
     Static method to dump a string to the chunk stats file
 ***************************************************************************/
-void CFL::DumpStn(PSTN pstn, PFIL pfil)
+void ChunkyFile::DumpStn(PSTN pstn, PFIL pfil)
 {
-    FNI fni;
+    Filename fni;
     STN stn;
 
     if (pvNil == _pfilStats)
@@ -319,13 +321,13 @@ void CFL::DumpStn(PSTN pstn, PFIL pfil)
 }
 #endif // CHUNK_STATS
 
-RTCLASS(CFL)
+RTCLASS(ChunkyFile)
 RTCLASS(CGE)
 
 /***************************************************************************
-    Constructor for CFL - private.
+    Constructor for ChunkyFile - private.
 ***************************************************************************/
-CFL::CFL(void)
+ChunkyFile::ChunkyFile(void)
 {
     // add it to the linked list
     _Attach(&_pcflFirst);
@@ -335,7 +337,7 @@ CFL::CFL(void)
 /***************************************************************************
     Close the associated files.  Private.
 ***************************************************************************/
-CFL::~CFL(void)
+ChunkyFile::~ChunkyFile(void)
 {
     AssertBaseThis(0);
     ReleasePpo(&_csto.pfil);
@@ -352,10 +354,10 @@ CFL::~CFL(void)
     Static method: open an existing file as a chunky file.  Increments the
     open count.
 ***************************************************************************/
-PCFL CFL::PcflOpen(FNI *pfni, ulong grfcfl)
+PChunkyFile ChunkyFile::PcflOpen(Filename *pfni, ulong grfcfl)
 {
     AssertPo(pfni, ffniFile);
-    PCFL pcfl;
+    PChunkyFile pcfl;
     ulong grffil;
 
     Assert(!(grfcfl & fcflTemp), "can't open a file as temp");
@@ -368,7 +370,7 @@ PCFL CFL::PcflOpen(FNI *pfni, ulong grfcfl)
     }
 
     grffil = _GrffilFromGrfcfl(grfcfl);
-    if ((pcfl = NewObj CFL()) == pvNil)
+    if ((pcfl = NewObj ChunkyFile()) == pvNil)
         goto LFail;
 
     if ((pcfl->_csto.pfil = FIL::PfilOpen(pfni, grffil)) == pvNil || !pcfl->_FReadIndex())
@@ -394,13 +396,13 @@ PCFL CFL::PcflOpen(FNI *pfni, ulong grfcfl)
     If the file is read-only, toss the index and extra file and re-read
     the index.
 ***************************************************************************/
-bool CFL::FReopen(void)
+bool ChunkyFile::FReopen(void)
 {
     AssertThis(0);
     CSTO csto, cstoExtra;
-    PGG pggcrp;
+    PGeneralGroup pggcrp;
 #ifndef CHUNK_BIG_INDEX
-    PGL pglrtie;
+    PDynamicArray pglrtie;
 #endif // CHUNK_BIG_INDEX
     bool fFreeMapNotRead;
     bool fRet;
@@ -455,7 +457,7 @@ bool CFL::FReopen(void)
     Static method to get file options corresponding to the given chunky
     file options.
 ***************************************************************************/
-ulong CFL::_GrffilFromGrfcfl(ulong grfcfl)
+ulong ChunkyFile::_GrffilFromGrfcfl(ulong grfcfl)
 {
     ulong grffil = ffilDenyWrite;
 
@@ -471,33 +473,33 @@ ulong CFL::_GrffilFromGrfcfl(ulong grfcfl)
 /***************************************************************************
     Static method: create a new file.  Increments the open count.
 ***************************************************************************/
-PCFL CFL::PcflCreate(FNI *pfni, ulong grfcfl)
+PChunkyFile ChunkyFile::PcflCreate(Filename *pfni, ulong grfcfl)
 {
     AssertPo(pfni, ffniFile);
-    PCFL pcfl;
+    PChunkyFile pcfl;
     ulong grffil;
 
     grfcfl |= fcflWriteEnable;
     grffil = _GrffilFromGrfcfl(grfcfl);
 
-    if (pvNil != (pcfl = CFL::PcflFromFni(pfni)))
+    if (pvNil != (pcfl = ChunkyFile::PcflFromFni(pfni)))
     {
         Bug("trying to create an open file");
         goto LFail;
     }
 
-    if ((pcfl = NewObj CFL()) == pvNil)
+    if ((pcfl = NewObj ChunkyFile()) == pvNil)
         goto LFail;
 
-    if ((pcfl->_pggcrp = GG::PggNew(size(CRP))) == pvNil ||
-        (pcfl->_csto.pfil = FIL::PfilCreate(pfni, grffil)) == pvNil || !pcfl->_csto.pfil->FSetFpMac(size(CFP)))
+    if ((pcfl->_pggcrp = GeneralGroup::PggNew(size(CRP))) == pvNil ||
+        (pcfl->_csto.pfil = FIL::PfilCreate(pfni, grffil)) == pvNil || !pcfl->_csto.pfil->FSetFpMac(size(ChunkyFilePrefix)))
     {
         ReleasePpo(&pcfl);
     LFail:
         PushErc(ercCflCreate);
         return pvNil;
     }
-    pcfl->_csto.fpMac = size(CFP);
+    pcfl->_csto.fpMac = size(ChunkyFilePrefix);
     AssertDo(pcfl->FSetGrfcfl(grfcfl), 0);
 
     AssertPo(pcfl, fcflFull | fcflGraph);
@@ -509,10 +511,10 @@ PCFL CFL::PcflCreate(FNI *pfni, ulong grfcfl)
     *pfni and with the same ftg.  If pfni is nil, the file is created in
     the standard place with a temp ftg.
 ***************************************************************************/
-PCFL CFL::PcflCreateTemp(FNI *pfni)
+PChunkyFile ChunkyFile::PcflCreateTemp(Filename *pfni)
 {
     AssertNilOrPo(pfni, ffniFile);
-    FNI fni;
+    Filename fni;
 
     if (pvNil != pfni)
     {
@@ -534,17 +536,17 @@ PCFL CFL::PcflCreateTemp(FNI *pfni)
     Static method: if we have the chunky file indicated by fni open, returns
     the pcfl, otherwise returns pvNil.  Doesn't affect the open count.
 ***************************************************************************/
-PCFL CFL::PcflFromFni(FNI *pfni)
+PChunkyFile ChunkyFile::PcflFromFni(Filename *pfni)
 {
     AssertPo(pfni, ffniFile);
     PFIL pfil;
-    PCFL pcfl;
+    PChunkyFile pcfl;
 
     if ((pfil = FIL::PfilFromFni(pfni)) == pvNil)
         return pvNil;
     for (pcfl = _pcflFirst; pcfl != pvNil; pcfl = pcfl->PcflNext())
     {
-        Assert(pfil != pcfl->_cstoExtra.pfil, "who is using this FNI?");
+        Assert(pfil != pcfl->_cstoExtra.pfil, "who is using this Filename?");
         if (pcfl->_csto.pfil == pfil && !pcfl->_fInvalidMainFile)
             break;
     }
@@ -564,28 +566,28 @@ PCFL CFL::PcflFromFni(FNI *pfni)
         CT -> ECDF(n, 0) data(n)
         CT -> EDCF(n, m) data(n) CT CT ... CT (m times)
 
-    CFL::FWriteChunkTree writes a CT from a chunk and its children.
+    ChunkyFile::FWriteChunkTree writes a CT from a chunk and its children.
 
-    CFL::PcflReadForestFromFlo reads a CF from a flo and creates a CFL
+    ChunkyFile::PcflReadForestFromFlo reads a CF from a flo and creates a ChunkyFile
     around the data.
 ***************************************************************************/
 struct ECDF
 {
     short bo;
     short osk;
-    CTG ctg;
-    CHID chid;
+    ChunkTag ctg;
+    ChildChunkID chid;
     long cb;
     long ckid;
     ulong grfcrp;
 };
-const BOM kbomEcdf = 0x5FFC0000L;
+const ByteOrderMask kbomEcdf = 0x5FFC0000L;
 
 /***************************************************************************
     Combine the indicated chunk and its children into an embedded chunk.
     If pfil is pvNil, just computes the size.
 ***************************************************************************/
-bool CFL::FWriteChunkTree(CTG ctg, CNO cno, PFIL pfilDst, FP fpDst, long *pcb)
+bool ChunkyFile::FWriteChunkTree(ChunkTag ctg, ChunkNumber cno, PFIL pfilDst, FP fpDst, long *pcb)
 {
     AssertThis(0);
     AssertNilOrPo(pfilDst, 0);
@@ -593,8 +595,8 @@ bool CFL::FWriteChunkTree(CTG ctg, CNO cno, PFIL pfilDst, FP fpDst, long *pcb)
     CGE cge;
     ECDF ecdf;
     FLO floSrc, floDst;
-    KID kid;
-    CKI ckiPar;
+    ChildChunkIdentification kid;
+    ChunkIdentification ckiPar;
     ulong grfcge;
 
     if (pvNil != pcb)
@@ -649,11 +651,11 @@ bool CFL::FWriteChunkTree(CTG ctg, CNO cno, PFIL pfilDst, FP fpDst, long *pcb)
 
 /***************************************************************************
     Static method to read a serialized chunk stream (as written by a series
-    of calls to FWriteChunkTree) and create a CFL around it. If fCopyData
-    is false, we construct the CFL to use pointers to the data in the FLO.
+    of calls to FWriteChunkTree) and create a ChunkyFile around it. If fCopyData
+    is false, we construct the ChunkyFile to use pointers to the data in the FLO.
     Otherwise, we copy the data to a new file.
 ***************************************************************************/
-PCFL CFL::PcflReadForestFromFlo(PFLO pflo, bool fCopyData)
+PChunkyFile ChunkyFile::PcflReadForestFromFlo(PFLO pflo, bool fCopyData)
 {
     AssertVarMem(pflo);
     AssertPo(pflo->pfil, 0);
@@ -661,33 +663,33 @@ PCFL CFL::PcflReadForestFromFlo(PFLO pflo, bool fCopyData)
     // embedded chunk stack descriptor
     struct ECSD
     {
-        CTG ctg;
-        CNO cno;
+        ChunkTag ctg;
+        ChunkNumber cno;
         long ckid;
     };
 
-    PCFL pcfl;
+    PChunkyFile pcfl;
     ECDF ecdf;
     ECSD ecsdT, ecsdCur;
     FP fpSrc, fpLimSrc;
-    PGL pglecsd = pvNil;
+    PDynamicArray pglecsd = pvNil;
 
-    if (pvNil == (pglecsd = GL::PglNew(size(ECSD))))
+    if (pvNil == (pglecsd = DynamicArray::PglNew(size(ECSD))))
         goto LFail;
 
-    if ((pcfl = NewObj CFL()) == pvNil)
+    if ((pcfl = NewObj ChunkyFile()) == pvNil)
         goto LFail;
 
-    if (pvNil == (pcfl->_pggcrp = GG::PggNew(size(CRP))))
+    if (pvNil == (pcfl->_pggcrp = GeneralGroup::PggNew(size(CRP))))
         goto LFail;
 
     if (fCopyData)
     {
-        if (pvNil == (pcfl->_csto.pfil = FIL::PfilCreateTemp()) || !pcfl->_csto.pfil->FSetFpMac(size(CFP)))
+        if (pvNil == (pcfl->_csto.pfil = FIL::PfilCreateTemp()) || !pcfl->_csto.pfil->FSetFpMac(size(ChunkyFilePrefix)))
         {
             goto LFail;
         }
-        pcfl->_csto.fpMac = size(CFP);
+        pcfl->_csto.fpMac = size(ChunkyFilePrefix);
     }
     else
     {
@@ -724,7 +726,7 @@ PCFL CFL::PcflReadForestFromFlo(PFLO pflo, bool fCopyData)
 
         if (fCopyData)
         {
-            BLCK blck(pflo->pfil, fpSrc, ecdf.cb, ecdf.grfcrp & fcrpPacked);
+            DataBlock blck(pflo->pfil, fpSrc, ecdf.cb, ecdf.grfcrp & fcrpPacked);
 
             if (!pcfl->FAddBlck(&blck, ecdf.ctg, &ecsdT.cno))
                 goto LFail;
@@ -794,7 +796,7 @@ PCFL CFL::PcflReadForestFromFlo(PFLO pflo, bool fCopyData)
 /***************************************************************************
     Return whether the chunk contains a forest of subchunks.
 ***************************************************************************/
-bool CFL::FForest(CTG ctg, CNO cno)
+bool ChunkyFile::FForest(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -813,7 +815,7 @@ bool CFL::FForest(CTG ctg, CNO cno)
 /***************************************************************************
     Set or clear the "forest" flag.
 ***************************************************************************/
-void CFL::SetForest(CTG ctg, CNO cno, bool fForest)
+void ChunkyFile::SetForest(ChunkTag ctg, ChunkNumber cno, bool fForest)
 {
     AssertThis(0);
     long icrp;
@@ -837,10 +839,10 @@ void CFL::SetForest(CTG ctg, CNO cno, bool fForest)
 }
 
 /***************************************************************************
-    Read the chunk's data as an embedded forest and construct a CFL around
+    Read the chunk's data as an embedded forest and construct a ChunkyFile around
     the data.
 ***************************************************************************/
-PCFL CFL::PcflReadForest(CTG ctg, CNO cno, bool fCopyData)
+PChunkyFile ChunkyFile::PcflReadForest(ChunkTag ctg, ChunkNumber cno, bool fCopyData)
 {
     AssertThis(0);
     FLO flo;
@@ -850,7 +852,7 @@ PCFL CFL::PcflReadForest(CTG ctg, CNO cno, bool fCopyData)
 
     if (FPacked(ctg, cno))
     {
-        BLCK blck(&flo, fTrue);
+        DataBlock blck(&flo, fTrue);
 
         if (!blck.FUnpackData() || !blck.FGetFlo(&flo))
             return pvNil;
@@ -863,9 +865,9 @@ PCFL CFL::PcflReadForest(CTG ctg, CNO cno, bool fCopyData)
 /***************************************************************************
     Static method: clear the marks for chunky files.
 ***************************************************************************/
-void CFL::ClearMarks(void)
+void ChunkyFile::ClearMarks(void)
 {
-    PCFL pcfl;
+    PChunkyFile pcfl;
 
     for (pcfl = _pcflFirst; pcfl != pvNil; pcfl = pcfl->PcflNext())
     {
@@ -878,9 +880,9 @@ void CFL::ClearMarks(void)
     Static method: close any chunky files that are unmarked and have 0
     open count.
 ***************************************************************************/
-void CFL::CloseUnmarked(void)
+void ChunkyFile::CloseUnmarked(void)
 {
-    PCFL pcfl, pcflNext;
+    PChunkyFile pcfl, pcflNext;
 
     for (pcfl = _pcflFirst; pcfl != pvNil; pcfl = pcflNext)
     {
@@ -897,7 +899,7 @@ void CFL::CloseUnmarked(void)
     can only fail if fcflWriteEnable is specified and we can't make
     the base file write enabled.
 ***************************************************************************/
-bool CFL::FSetGrfcfl(ulong grfcfl, ulong grfcflMask)
+bool ChunkyFile::FSetGrfcfl(ulong grfcfl, ulong grfcflMask)
 {
     AssertThis(0);
     ulong grffil, grffilMask;
@@ -935,7 +937,7 @@ bool CFL::FSetGrfcfl(ulong grfcfl, ulong grfcflMask)
 /***************************************************************************
     Return the level of error that we've encountered for this chunky file.
 ***************************************************************************/
-long CFL::ElError(void)
+long ChunkyFile::ElError(void)
 {
     AssertThis(0);
     long elT;
@@ -949,7 +951,7 @@ long CFL::ElError(void)
 /***************************************************************************
     Make sure the el level on both files is at or below el.
 ***************************************************************************/
-void CFL::ResetEl(long el)
+void ChunkyFile::ResetEl(long el)
 {
     AssertThis(0);
     AssertIn(el, elNil, kcbMax);
@@ -965,7 +967,7 @@ void CFL::ResetEl(long el)
     Decrement the open count.  If it is zero and the chunky file isn't
     marked, the file is closed.
 ***************************************************************************/
-void CFL::Release(void)
+void ChunkyFile::Release(void)
 {
     AssertBaseThis(0);
     if (_cactRef <= 0)
@@ -983,15 +985,15 @@ void CFL::Release(void)
     of the index.  If fcflGraph, does fcflFull and checks the graph structure
     for cycles.
 ***************************************************************************/
-void CFL::AssertValid(ulong grfcfl)
+void ChunkyFile::AssertValid(ulong grfcfl)
 {
-    CFL_PAR::AssertValid(fobjAllocated);
+    ChunkyFile_PAR::AssertValid(fobjAllocated);
     bool fFirstCrp;
     long cbTot = 0;
     long cbTotExtra = 0;
-    CKI ckiOld;
-    CKI ckiNew;
-    KID kid, kidOld;
+    ChunkIdentification ckiOld;
+    ChunkIdentification ckiNew;
+    ChildChunkIdentification kid, kidOld;
     bool fFirstKid;
     long icrp, icrpT;
     long ccrpRefTot = 0;
@@ -999,7 +1001,7 @@ void CFL::AssertValid(ulong grfcfl)
     long cbVar, cbRgch;
     CRP crp;
     long ikid;
-    FP fpBase = _fInvalidMainFile ? 0 : size(CFP);
+    FP fpBase = _fInvalidMainFile ? 0 : size(ChunkyFilePrefix);
 
     Assert(!_fInvalidMainFile || _fAddToExtra, 0);
 
@@ -1081,7 +1083,7 @@ void CFL::AssertValid(ulong grfcfl)
         fFirstKid = fTrue;
         for (ikid = 0; ikid < crp.ckid; ikid++)
         {
-            _pggcrp->GetRgb(icrp, _BvKid(ikid), size(KID), &kid);
+            _pggcrp->GetRgb(icrp, _BvKid(ikid), size(ChildChunkIdentification), &kid);
             AssertVar(_FFindCtgCno(kid.cki.ctg, kid.cki.cno, &icrpT), "child doesn't exist", &kid.cki);
             Assert(kid.cki.ctg != ckiOld.ctg || kid.cki.cno != ckiOld.cno, "chunk is child of itself!");
 
@@ -1160,12 +1162,12 @@ void CFL::AssertValid(ulong grfcfl)
 }
 
 /***************************************************************************
-    Mark memory used by the CFL
+    Mark memory used by the ChunkyFile
 ***************************************************************************/
-void CFL::MarkMem(void)
+void ChunkyFile::MarkMem(void)
 {
     AssertThis(0);
-    CFL_PAR::MarkMem();
+    ChunkyFile_PAR::MarkMem();
     MarkMemObj(_pggcrp);
     MarkMemObj(_csto.pglfsm);
     MarkMemObj(_cstoExtra.pglfsm);
@@ -1180,14 +1182,14 @@ void CFL::MarkMem(void)
     we find something wrong, return tNo.  If a memory error occurs,
     return tMaybe.  If it's AOK, return tYes.
 ***************************************************************************/
-tribool CFL::_TValidIndex(void)
+tribool ChunkyFile::_TValidIndex(void)
 {
-    // WARNING: this is called by a full CFL::AssertValid().
+    // WARNING: this is called by a full ChunkyFile::AssertValid().
     long icrp, icrpT;
     CRP *qcrp;
     CGE cge;
     ulong grfcge, grfcgeIn;
-    KID kid;
+    ChildChunkIdentification kid;
     long cbVar;
     long ccrpRefTot;
     long ckidTot;
@@ -1197,7 +1199,7 @@ tribool CFL::_TValidIndex(void)
     for (icrp = _pggcrp->IvMac(); icrp-- != 0;)
     {
         qcrp = (CRP *)_pggcrp->QvFixedGet(icrp, &cbVar);
-        if (!FIn(qcrp->ckid, 0, cbVar / size(KID) + 1))
+        if (!FIn(qcrp->ckid, 0, cbVar / size(ChildChunkIdentification) + 1))
             return tNo;
         if (!FIn(qcrp->ccrpRef, 0, kckidMax + 1))
             return tNo;
@@ -1318,13 +1320,13 @@ tribool CFL::_TValidIndex(void)
     flag. The free map is read separately by _ReadFreeMap. This is to avoid
     hogging memory for the free map when we may never need it.
 ***************************************************************************/
-bool CFL::_FReadIndex(void)
+bool ChunkyFile::_FReadIndex(void)
 {
     AssertBaseThis(0);
     AssertPo(_csto.pfil, 0);
     Assert(!_fInvalidMainFile, 0);
 
-    CFP cfp;
+    ChunkyFilePrefix cfp;
     FP fpMac;
     short bo;
     short osk;
@@ -1332,7 +1334,7 @@ bool CFL::_FReadIndex(void)
     long cbRgch;
     long icrp, ccrp;
     long cbFixed;
-    BOM bom;
+    ByteOrderMask bom;
 
     // used for old name stuff
     SZS szsName;
@@ -1346,7 +1348,7 @@ bool CFL::_FReadIndex(void)
            "cfl has wrong non-nil entries");
 
     // verify that this is a chunky file
-    if ((fpMac = _csto.pfil->FpMac()) < size(CFP))
+    if ((fpMac = _csto.pfil->FpMac()) < size(ChunkyFilePrefix))
         return fFalse;
 
     if (!_csto.pfil->FReadRgb(&cfp, size(cfp), 0))
@@ -1381,7 +1383,7 @@ bool CFL::_FReadIndex(void)
     }
 
     // read and validate the index
-    if ((_pggcrp = GG::PggRead(_csto.pfil, cfp.fpIndex, cfp.cbIndex, &bo, &osk)) == pvNil)
+    if ((_pggcrp = GeneralGroup::PggRead(_csto.pfil, cfp.fpIndex, cfp.cbIndex, &bo, &osk)) == pvNil)
     {
         return fFalse;
     }
@@ -1391,7 +1393,7 @@ bool CFL::_FReadIndex(void)
         return fFalse;
 
     // Clean the index
-    AssertBomRglw(kbomKid, size(KID));
+    AssertBomRglw(kbomKid, size(ChildChunkIdentification));
     _pggcrp->Lock();
 
     if (cbFixed == size(CRPBG))
@@ -1415,13 +1417,13 @@ bool CFL::_FReadIndex(void)
                 goto LBadFile;
             if (bomNil != bom)
                 SwapBytesBom(pcrpbg, bom);
-            if (!FIn(pcrpbg->ckid, 0, cbVar / size(KID) + 1) || (cbRgch = pcrpbg->CbRgch(cbVar)) > kcbMaxDataStn)
+            if (!FIn(pcrpbg->ckid, 0, cbVar / size(ChildChunkIdentification) + 1) || (cbRgch = pcrpbg->CbRgch(cbVar)) > kcbMaxDataStn)
             {
                 goto LBadFile;
             }
             if (bomNil != bom && pcrpbg->ckid > 0)
             {
-                SwapBytesRglw(_pggcrp->QvGet(icrp), pcrpbg->ckid * (size(KID) / size(long)));
+                SwapBytesRglw(_pggcrp->QvGet(icrp), pcrpbg->ckid * (size(ChildChunkIdentification) / size(long)));
             }
             pcrpbg->rti = rtiNil;
 
@@ -1497,13 +1499,13 @@ bool CFL::_FReadIndex(void)
                 goto LBadFile;
             if (bomNil != bom)
                 SwapBytesBom(pcrpsm, bom);
-            if (!FIn(pcrpsm->ckid, 0, cbVar / size(KID) + 1) || (cbRgch = pcrpsm->CbRgch(cbVar)) > kcbMaxDataStn)
+            if (!FIn(pcrpsm->ckid, 0, cbVar / size(ChildChunkIdentification) + 1) || (cbRgch = pcrpsm->CbRgch(cbVar)) > kcbMaxDataStn)
             {
                 goto LBadFile;
             }
             if (pcrpsm->ckid > 0 && bomNil != bom)
             {
-                SwapBytesRglw(_pggcrp->QvGet(icrp), pcrpsm->ckid * (size(KID) / size(long)));
+                SwapBytesRglw(_pggcrp->QvGet(icrp), pcrpsm->ckid * (size(ChildChunkIdentification) / size(long)));
             }
 
             pcrpsm->ClearGrfcrp(fcrpOnExtra);
@@ -1521,11 +1523,11 @@ bool CFL::_FReadIndex(void)
     if (size(CRP) != cbFixed)
     {
         // need to convert the index (from big to small or small to big)
-        PGG pggcrp;
+        PGeneralGroup pggcrp;
         CRPOTH *pcrpOld;
         CRP crp;
 
-        if (pvNil == (pggcrp = GG::PggNew(size(CRP), _pggcrp->IvMac())))
+        if (pvNil == (pggcrp = GeneralGroup::PggNew(size(CRP), _pggcrp->IvMac())))
             goto LFail;
 
         for (ccrp = _pggcrp->IvMac(), icrp = 0; icrp < ccrp; icrp++)
@@ -1571,7 +1573,7 @@ bool CFL::_FReadIndex(void)
     data has been added to the main file (as opposed to the extra file).
     This _cannot_ be called before _FReadIndex has been called.
 ***************************************************************************/
-void CFL::_ReadFreeMap(void)
+void ChunkyFile::_ReadFreeMap(void)
 {
     AssertBaseThis(0);
     Assert(_fFreeMapNotRead, "free map already read");
@@ -1593,7 +1595,7 @@ void CFL::_ReadFreeMap(void)
 
     if (_cbFreeMap > 0)
     {
-        if ((_csto.pglfsm = GL::PglRead(_csto.pfil, _fpFreeMap, _cbFreeMap, &bo, &osk)) == pvNil ||
+        if ((_csto.pglfsm = DynamicArray::PglRead(_csto.pfil, _fpFreeMap, _cbFreeMap, &bo, &osk)) == pvNil ||
             _csto.pglfsm->CbEntry() != size(FSM))
         {
             // it failed, but so what
@@ -1614,12 +1616,12 @@ void CFL::_ReadFreeMap(void)
     write out a new file and do the rename stuff.  If not, just write
     the index and free map.
 ***************************************************************************/
-bool CFL::FSave(CTG ctgCreator, FNI *pfni)
+bool ChunkyFile::FSave(ChunkTag ctgCreator, Filename *pfni)
 {
     AssertThis(fcflFull | fcflGraph);
     AssertNilOrPo(pfni, ffniFile);
 
-    FNI fni;
+    Filename fni;
     FLO floSrc, floDst;
     long ccrp, icrp;
     CRP *qcrp;
@@ -1629,7 +1631,7 @@ bool CFL::FSave(CTG ctgCreator, FNI *pfni)
     {
         if (pvNil == pfni)
         {
-            Bug("can't save a CFL that has no file attached!");
+            Bug("can't save a ChunkyFile that has no file attached!");
             return fFalse;
         }
         fni = *pfni;
@@ -1658,10 +1660,10 @@ bool CFL::FSave(CTG ctgCreator, FNI *pfni)
     // get a temp name in the same directory as the target
     if ((floDst.pfil = FIL::PfilCreateTemp(&fni)) == pvNil)
         goto LError;
-    if (!floDst.pfil->FSetFpMac(size(CFP)))
+    if (!floDst.pfil->FSetFpMac(size(ChunkyFilePrefix)))
         goto LFail;
 
-    floDst.fp = size(CFP);
+    floDst.fp = size(ChunkyFilePrefix);
     ccrp = _pggcrp->IvMac();
     for (icrp = 0; icrp < ccrp; icrp++)
     {
@@ -1681,7 +1683,7 @@ bool CFL::FSave(CTG ctgCreator, FNI *pfni)
     }
 
     // All the data has been copied.  Update the index to point to the new file.
-    floSrc.fp = size(CFP);
+    floSrc.fp = size(ChunkyFilePrefix);
     for (icrp = 0; icrp < ccrp; icrp++)
     {
         qcrp = (CRP *)_pggcrp->QvFixedGet(icrp);
@@ -1732,7 +1734,7 @@ bool CFL::FSave(CTG ctgCreator, FNI *pfni)
         {
             // restore the original csto and make floDst.pfil the extra file
             _csto.pfil = pfilOld;
-            _csto.fpMac = size(CFP);
+            _csto.fpMac = size(ChunkyFilePrefix);
             for (icrp = 0; icrp < ccrp; icrp++)
             {
                 qcrp = (CRP *)_pggcrp->QvFixedGet(icrp);
@@ -1761,14 +1763,14 @@ bool CFL::FSave(CTG ctgCreator, FNI *pfni)
 /***************************************************************************
     Write the chunky index and free map to the end of the file.
 ***************************************************************************/
-bool CFL::_FWriteIndex(CTG ctgCreator)
+bool ChunkyFile::_FWriteIndex(ChunkTag ctgCreator)
 {
     AssertBaseThis(0);
     AssertPo(_pggcrp, 0);
     AssertPo(_csto.pfil, 0);
 
-    CFP cfp;
-    BLCK blck;
+    ChunkyFilePrefix cfp;
+    DataBlock blck;
 
     ClearPb(&cfp, size(cfp));
     cfp.lwMagic = klwMagicChunky;
@@ -1796,25 +1798,25 @@ bool CFL::_FWriteIndex(CTG ctgCreator)
 }
 
 /***************************************************************************
-    Save a copy of the chunky file out to *pfni.  The CFL and its FIL
+    Save a copy of the chunky file out to *pfni.  The ChunkyFile and its FIL
     are untouched.
 ***************************************************************************/
-bool CFL::FSaveACopy(CTG ctgCreator, FNI *pfni)
+bool ChunkyFile::FSaveACopy(ChunkTag ctgCreator, Filename *pfni)
 {
     AssertThis(fcflFull | fcflGraph);
     AssertPo(pfni, ffniFile);
-    PCFL pcflDst;
+    PChunkyFile pcflDst;
     long icrp, ccrp;
     CRP *pcrp;
     CRP crp;
     FLO floSrc, floDst;
 
-    if (pvNil == (pcflDst = CFL::PcflCreate(pfni, fcflWriteEnable)))
+    if (pvNil == (pcflDst = ChunkyFile::PcflCreate(pfni, fcflWriteEnable)))
         goto LError;
 
     // initialize the destination FLO.
     floDst.pfil = pcflDst->_csto.pfil;
-    floDst.fp = size(CFP);
+    floDst.fp = size(ChunkyFilePrefix);
 
     // need to lock the _pggcrp for the FInsert operations below
     ccrp = _pggcrp->IvMac();
@@ -1850,7 +1852,7 @@ bool CFL::FSaveACopy(CTG ctgCreator, FNI *pfni)
     }
     _pggcrp->Unlock();
 
-    // set the fpMac of the destination CFL
+    // set the fpMac of the destination ChunkyFile
     pcflDst->_csto.fpMac = floDst.fp;
 
     if (!pcflDst->FSave(ctgCreator))
@@ -1870,7 +1872,7 @@ bool CFL::FSaveACopy(CTG ctgCreator, FNI *pfni)
 /***************************************************************************
     Return whether the chunk's data is on the extra file.
 ***************************************************************************/
-bool CFL::FOnExtra(CTG ctg, CNO cno)
+bool ChunkyFile::FOnExtra(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -1887,7 +1889,7 @@ bool CFL::FOnExtra(CTG ctg, CNO cno)
     Make sure the given chunk's data is on the extra file. Fails iff the
     chunk doesn't exist or copying the data failed.
 ***************************************************************************/
-bool CFL::FEnsureOnExtra(CTG ctg, CNO cno)
+bool ChunkyFile::FEnsureOnExtra(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -1902,7 +1904,7 @@ bool CFL::FEnsureOnExtra(CTG ctg, CNO cno)
     Make sure the given chunk's data is on the extra file. Optionally get
     the flo for the data.
 ***************************************************************************/
-bool CFL::_FEnsureOnExtra(long icrp, FLO *pflo)
+bool ChunkyFile::_FEnsureOnExtra(long icrp, FLO *pflo)
 {
     AssertThis(0);
     AssertNilOrVarMem(pflo);
@@ -1972,7 +1974,7 @@ bool CFL::_FEnsureOnExtra(long icrp, FLO *pflo)
 /***************************************************************************
     Get the FLO from the chunk.
 ***************************************************************************/
-void CFL::_GetFlo(long icrp, PFLO pflo)
+void ChunkyFile::_GetFlo(long icrp, PFLO pflo)
 {
     AssertThis(0);
     AssertVarMem(pflo);
@@ -2003,9 +2005,9 @@ void CFL::_GetFlo(long icrp, PFLO pflo)
 }
 
 /***************************************************************************
-    Get the BLCK from the chunk.
+    Get the DataBlock from the chunk.
 ***************************************************************************/
-void CFL::_GetBlck(long icrp, PBLCK pblck)
+void ChunkyFile::_GetBlck(long icrp, PDataBlock pblck)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -2019,9 +2021,9 @@ void CFL::_GetBlck(long icrp, PBLCK pblck)
 }
 
 /***************************************************************************
-    Map the (ctg, cno) to a BLCK.
+    Map the (ctg, cno) to a DataBlock.
 ***************************************************************************/
-bool CFL::FFind(CTG ctg, CNO cno, BLCK *pblck)
+bool ChunkyFile::FFind(ChunkTag ctg, ChunkNumber cno, DataBlock *pblck)
 {
     AssertThis(0);
     AssertNilOrPo(pblck, 0);
@@ -2044,7 +2046,7 @@ bool CFL::FFind(CTG ctg, CNO cno, BLCK *pblck)
 /***************************************************************************
     Map the (ctg, cno) to a pflo.
 ***************************************************************************/
-bool CFL::FFindFlo(CTG ctg, CNO cno, PFLO pflo)
+bool ChunkyFile::FFindFlo(ChunkTag ctg, ChunkNumber cno, PFLO pflo)
 {
     AssertThis(0);
     AssertVarMem(pflo);
@@ -2066,11 +2068,11 @@ bool CFL::FFindFlo(CTG ctg, CNO cno, PFLO pflo)
     chunk doesn't exist or something failed, in which case *phq is set
     to hqNil.  Doesn't unpack the data if it's packed.
 ***************************************************************************/
-bool CFL::FReadHq(CTG ctg, CNO cno, HQ *phq)
+bool ChunkyFile::FReadHq(ChunkTag ctg, ChunkNumber cno, HQ *phq)
 {
     AssertThis(0);
     AssertVarMem(phq);
-    BLCK blck;
+    DataBlock blck;
 
     *phq = hqNil; // in case FFind fails
     return FFind(ctg, cno, &blck) && blck.FReadHq(phq, fTrue);
@@ -2080,7 +2082,7 @@ bool CFL::FReadHq(CTG ctg, CNO cno, HQ *phq)
     Make sure the packed flag is set or clear according to fPacked.
     This doesn't affect the data at all.
 ***************************************************************************/
-void CFL::SetPacked(CTG ctg, CNO cno, bool fPacked)
+void ChunkyFile::SetPacked(ChunkTag ctg, ChunkNumber cno, bool fPacked)
 {
     AssertThis(0);
     long icrp;
@@ -2106,7 +2108,7 @@ void CFL::SetPacked(CTG ctg, CNO cno, bool fPacked)
 /***************************************************************************
     Return the value of the packed flag.
 ***************************************************************************/
-bool CFL::FPacked(CTG ctg, CNO cno)
+bool ChunkyFile::FPacked(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -2125,10 +2127,10 @@ bool CFL::FPacked(CTG ctg, CNO cno)
 /***************************************************************************
     If the data for the chunk is packed, unpack it.
 ***************************************************************************/
-bool CFL::FUnpackData(CTG ctg, CNO cno)
+bool ChunkyFile::FUnpackData(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
-    BLCK blck;
+    DataBlock blck;
 
     if (!FPacked(ctg, cno))
         return fTrue;
@@ -2142,10 +2144,10 @@ bool CFL::FUnpackData(CTG ctg, CNO cno)
 /***************************************************************************
     If the data isn't already packed, pack it.
 ***************************************************************************/
-bool CFL::FPackData(CTG ctg, CNO cno)
+bool ChunkyFile::FPackData(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
-    BLCK blck;
+    DataBlock blck;
 
     if (FPacked(ctg, cno))
         return fTrue;
@@ -2157,10 +2159,10 @@ bool CFL::FPackData(CTG ctg, CNO cno)
 }
 
 /***************************************************************************
-    Create the extra file.  Note: the extra file doesn't have a CFP -
+    Create the extra file.  Note: the extra file doesn't have a ChunkyFilePrefix -
     just raw data.
 ***************************************************************************/
-bool CFL::_FCreateExtra(void)
+bool ChunkyFile::_FCreateExtra(void)
 {
     AssertBaseThis(0);
     Assert(_cstoExtra.pfil == pvNil, 0);
@@ -2176,7 +2178,7 @@ bool CFL::_FCreateExtra(void)
 /***************************************************************************
     Find a place to put a block the given size.
 ***************************************************************************/
-bool CFL::_FAllocFlo(long cb, PFLO pflo, bool fForceOnExtra)
+bool ChunkyFile::_FAllocFlo(long cb, PFLO pflo, bool fForceOnExtra)
 {
     AssertBaseThis(0);
     AssertIn(cb, 0, kcbMax);
@@ -2258,16 +2260,16 @@ bool CFL::_FAllocFlo(long cb, PFLO pflo, bool fForceOnExtra)
     Returns whether or not it was found.  Assumes the _pggcrp is sorted
     by (ctg, cno).  Does a binary search.
 ***************************************************************************/
-bool CFL::_FFindCtgCno(CTG ctg, CNO cno, long *picrp)
+bool ChunkyFile::_FFindCtgCno(ChunkTag ctg, ChunkNumber cno, long *picrp)
 {
-    // WARNING:  this is called by CFL::AssertValid, so be careful about
+    // WARNING:  this is called by ChunkyFile::AssertValid, so be careful about
     // asserting stuff in here
     AssertBaseThis(0);
     AssertVarMem(picrp);
     AssertPo(_pggcrp, 0);
 
     long ccrp, icrpMin, icrpLim, icrp;
-    CKI cki;
+    ChunkIdentification cki;
 
     if ((ccrp = _pggcrp->IvMac()) == 0)
     {
@@ -2302,14 +2304,14 @@ bool CFL::_FFindCtgCno(CTG ctg, CNO cno, long *picrp)
 /***************************************************************************
     Find an unused cno for the given ctg.  Fill in *picrp and *pcno.
 ***************************************************************************/
-void CFL::_GetUniqueCno(CTG ctg, long *picrp, CNO *pcno)
+void ChunkyFile::_GetUniqueCno(ChunkTag ctg, long *picrp, ChunkNumber *pcno)
 {
     AssertBaseThis(0);
     AssertVarMem(picrp);
     AssertVarMem(pcno);
 
     long icrp, ccrp;
-    CNO cno;
+    ChunkNumber cno;
     CRP *qcrp;
 
     if (!_FFindCtgCno(ctg, 0, picrp))
@@ -2333,7 +2335,7 @@ void CFL::_GetUniqueCno(CTG ctg, long *picrp, CNO *pcno)
 /***************************************************************************
     Add a new chunk.
 ***************************************************************************/
-bool CFL::FAdd(long cb, CTG ctg, CNO *pcno, PBLCK pblck)
+bool ChunkyFile::FAdd(long cb, ChunkTag ctg, ChunkNumber *pcno, PDataBlock pblck)
 {
     AssertThis(0);
     AssertIn(cb, 0, kcbMax);
@@ -2355,13 +2357,13 @@ bool CFL::FAdd(long cb, CTG ctg, CNO *pcno, PBLCK pblck)
 /***************************************************************************
     Add a new chunk and write the pv to it.
 ***************************************************************************/
-bool CFL::FAddPv(void *pv, long cb, CTG ctg, CNO *pcno)
+bool ChunkyFile::FAddPv(void *pv, long cb, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertVarMem(pcno);
     AssertIn(cb, 0, kcbMax);
     AssertPvCb(pv, cb);
-    BLCK blck;
+    DataBlock blck;
 
     if (!FAdd(cb, ctg, pcno, &blck))
         return fFalse;
@@ -2377,13 +2379,13 @@ bool CFL::FAddPv(void *pv, long cb, CTG ctg, CNO *pcno)
 /***************************************************************************
     Add a new chunk and write the hq to it.
 ***************************************************************************/
-bool CFL::FAddHq(HQ hq, CTG ctg, CNO *pcno)
+bool ChunkyFile::FAddHq(HQ hq, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertVarMem(pcno);
     AssertHq(hq);
 
-    BLCK blck;
+    DataBlock blck;
     long cb = CbOfHq(hq);
 
     if (!FAdd(cb, ctg, pcno, &blck))
@@ -2400,13 +2402,13 @@ bool CFL::FAddHq(HQ hq, CTG ctg, CNO *pcno)
 /***************************************************************************
     Add a new chunk and write the block to it.
 ***************************************************************************/
-bool CFL::FAddBlck(PBLCK pblckSrc, CTG ctg, CNO *pcno)
+bool ChunkyFile::FAddBlck(PDataBlock pblckSrc, ChunkTag ctg, ChunkNumber *pcno)
 {
     AssertThis(0);
     AssertPo(pblckSrc, 0);
     AssertVarMem(pcno);
 
-    BLCK blck;
+    DataBlock blck;
     long cb = pblckSrc->Cb(fTrue);
 
     if (!FAdd(cb, ctg, pcno, &blck))
@@ -2427,7 +2429,7 @@ bool CFL::FAddBlck(PBLCK pblckSrc, CTG ctg, CNO *pcno)
     Adds the chunk and makes it a child of (ctgPar, cnoPar). The loner flag
     of the new chunk will be clear.
 ***************************************************************************/
-bool CFL::FAddChild(CTG ctgPar, CNO cnoPar, CHID chid, long cb, CTG ctg, CNO *pcno, PBLCK pblck)
+bool ChunkyFile::FAddChild(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, long cb, ChunkTag ctg, ChunkNumber *pcno, PDataBlock pblck)
 {
     AssertThis(0);
     AssertVarMem(pcno);
@@ -2450,7 +2452,7 @@ bool CFL::FAddChild(CTG ctgPar, CNO cnoPar, CHID chid, long cb, CTG ctg, CNO *pc
     Adds the chunk and makes it a child of (ctgPar, cnoPar).  The child's
     loner flag will be clear.
 ***************************************************************************/
-bool CFL::FAddChildPv(CTG ctgPar, CNO cnoPar, CHID chid, void *pv, long cb, CTG ctg, CNO *pcno)
+bool ChunkyFile::FAddChildPv(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, void *pv, long cb, ChunkTag ctg, ChunkNumber *pcno)
 {
     if (!FAddPv(pv, cb, ctg, pcno))
         return fFalse;
@@ -2467,7 +2469,7 @@ bool CFL::FAddChildPv(CTG ctgPar, CNO cnoPar, CHID chid, void *pv, long cb, CTG 
     Adds the chunk and makes it a child of (ctgPar, cnoPar).  The child's
     loner flag will be clear.
 ***************************************************************************/
-bool CFL::FAddChildHq(CTG ctgPar, CNO cnoPar, CHID chid, HQ hq, CTG ctg, CNO *pcno)
+bool ChunkyFile::FAddChildHq(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, HQ hq, ChunkTag ctg, ChunkNumber *pcno)
 {
     if (!FAddHq(hq, ctg, pcno))
         return fFalse;
@@ -2483,7 +2485,7 @@ bool CFL::FAddChildHq(CTG ctgPar, CNO cnoPar, CHID chid, HQ hq, CTG ctg, CNO *pc
 /***************************************************************************
     Low level add.  Sets the loner flag.
 ***************************************************************************/
-bool CFL::_FAdd(long cb, CTG ctg, CNO cno, long icrp, PBLCK pblck)
+bool ChunkyFile::_FAdd(long cb, ChunkTag ctg, ChunkNumber cno, long icrp, PDataBlock pblck)
 {
     AssertBaseThis(0);
     AssertIn(cb, 0, kcbMax);
@@ -2528,7 +2530,7 @@ bool CFL::_FAdd(long cb, CTG ctg, CNO cno, long icrp, PBLCK pblck)
 /***************************************************************************
     Replace or create a chunk of a particular cno.
 ***************************************************************************/
-bool CFL::FPut(long cb, CTG ctg, CNO cno, PBLCK pblck)
+bool ChunkyFile::FPut(long cb, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck)
 {
     AssertThis(0);
     AssertNilOrPo(pblck, 0);
@@ -2539,7 +2541,7 @@ bool CFL::FPut(long cb, CTG ctg, CNO cno, PBLCK pblck)
 /***************************************************************************
     Replace or create a chunk with the given cno and put the data in it.
 ***************************************************************************/
-bool CFL::FPutPv(void *pv, long cb, CTG ctg, CNO cno)
+bool ChunkyFile::FPutPv(void *pv, long cb, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertIn(cb, 0, kcbMax);
@@ -2552,13 +2554,13 @@ bool CFL::FPutPv(void *pv, long cb, CTG ctg, CNO cno)
     Replace or create a chunk with the given cno and put the hq's
     data in it.
 ***************************************************************************/
-bool CFL::FPutHq(HQ hq, CTG ctg, CNO cno)
+bool ChunkyFile::FPutHq(HQ hq, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertHq(hq);
     bool fRet;
     HQ hqT = hq;
-    BLCK blckSrc(&hq);
+    DataBlock blckSrc(&hq);
 
     fRet = _FPut(blckSrc.Cb(), ctg, cno, pvNil, &blckSrc, pvNil);
     AssertDo(hqT == blckSrc.HqFree(), "blckSrc.HqFree() returned a differnt hq!");
@@ -2570,7 +2572,7 @@ bool CFL::FPutHq(HQ hq, CTG ctg, CNO cno)
     Replace or create a chunk with the given cno and put the block's
     data in it.  Set the packed flag as in the block.
 ***************************************************************************/
-bool CFL::FPutBlck(PBLCK pblckSrc, CTG ctg, CNO cno)
+bool ChunkyFile::FPutBlck(PDataBlock pblckSrc, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pblckSrc, 0);
@@ -2588,7 +2590,7 @@ bool CFL::FPutBlck(PBLCK pblckSrc, CTG ctg, CNO cno)
     else except the data.  If pblck isn't nil, this sets it to the location
     of the new data.  Doesn't change the packed flag.
 ***************************************************************************/
-bool CFL::_FPut(long cb, CTG ctg, CNO cno, PBLCK pblck, PBLCK pblckSrc, void *pv)
+bool ChunkyFile::_FPut(long cb, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PDataBlock pblckSrc, void *pv)
 {
     AssertBaseThis(0);
     AssertIn(cb, 0, kcbMax);
@@ -2601,7 +2603,7 @@ bool CFL::_FPut(long cb, CTG ctg, CNO cno, PBLCK pblck, PBLCK pblckSrc, void *pv
 
     if (!_FFindCtgCno(ctg, cno, &icrp))
     {
-        BLCK blck;
+        DataBlock blck;
 
         if (pvNil == pblck)
             pblck = &blck;
@@ -2677,7 +2679,7 @@ bool CFL::_FPut(long cb, CTG ctg, CNO cno, PBLCK pblck, PBLCK pblckSrc, void *pv
     delete the temp chunk).  Doesn't affect child/parent relationships
     or the loner flag.
 ***************************************************************************/
-void CFL::SwapData(CTG ctg1, CNO cno1, CTG ctg2, CNO cno2)
+void ChunkyFile::SwapData(ChunkTag ctg1, ChunkNumber cno1, ChunkTag ctg2, ChunkNumber cno2)
 {
     AssertThis(0);
     long icrp1, icrp2;
@@ -2719,7 +2721,7 @@ void CFL::SwapData(CTG ctg1, CNO cno1, CTG ctg2, CNO cno2)
     swap the children, delete the temp chunk).  Doesn't affect the data
     or the loner flag.
 ***************************************************************************/
-void CFL::SwapChildren(CTG ctg1, CNO cno1, CTG ctg2, CNO cno2)
+void ChunkyFile::SwapChildren(ChunkTag ctg1, ChunkNumber cno1, ChunkTag ctg2, ChunkNumber cno2)
 {
     AssertThis(0);
     long icrp1, icrp2;
@@ -2735,8 +2737,8 @@ void CFL::SwapChildren(CTG ctg1, CNO cno1, CTG ctg2, CNO cno2)
     // Swap the child lists.
     qcrp1 = (CRP *)_pggcrp->QvFixedGet(icrp1);
     qcrp2 = (CRP *)_pggcrp->QvFixedGet(icrp2);
-    cb1 = LwMul(qcrp1->ckid, size(KID));
-    cb2 = LwMul(qcrp2->ckid, size(KID));
+    cb1 = LwMul(qcrp1->ckid, size(ChildChunkIdentification));
+    cb2 = LwMul(qcrp2->ckid, size(ChildChunkIdentification));
     SwapVars(&qcrp1->ckid, &qcrp2->ckid);
 
     // These FMoveRgb calls won't fail, because no padding is necessary for
@@ -2756,7 +2758,7 @@ void CFL::SwapChildren(CTG ctg1, CNO cno1, CTG ctg2, CNO cno2)
     parents, updates the parent links to point to (ctgNew, cnoNew).
     Adjusting the links is slow.
 ***************************************************************************/
-void CFL::Move(CTG ctg, CNO cno, CTG ctgNew, CNO cnoNew)
+void ChunkyFile::Move(ChunkTag ctg, ChunkNumber cno, ChunkTag ctgNew, ChunkNumber cnoNew)
 {
     AssertThis(0);
     long icrpCur, icrpTarget;
@@ -2788,14 +2790,14 @@ void CFL::Move(CTG ctg, CNO cno, CTG ctgNew, CNO cnoNew)
         // chunk has some parents
         CRP crp;
         long icrp, ikid, ikidNew;
-        KID *qkid, *qrgkid;
+        ChildChunkIdentification *qkid, *qrgkid;
 
         // In debug, increment ccrpRef so we'll traverse the entire
         // index.  In ship, we'll stop once we changed ccrpRef KIDs.
         Debug(ccrpRef++;) for (icrp = _pggcrp->IvMac(); icrp-- > 0 && ccrpRef > 0;)
         {
             _pggcrp->GetFixed(icrp, &crp);
-            qkid = (KID *)_pggcrp->QvGet(icrp);
+            qkid = (ChildChunkIdentification *)_pggcrp->QvGet(icrp);
             for (ikid = 0; ikid < crp.ckid;)
             {
                 if (qkid->cki.ctg != ctg || qkid->cki.cno != cno)
@@ -2809,11 +2811,11 @@ void CFL::Move(CTG ctg, CNO cno, CTG ctgNew, CNO cnoNew)
                 AssertDo(!_FFindChild(icrp, ctgNew, cnoNew, qkid->chid, &ikidNew), "already a child");
 
                 // refresh the qkid and qrgkid pointers
-                qkid = (qrgkid = (KID *)_pggcrp->QvGet(icrp)) + ikid;
+                qkid = (qrgkid = (ChildChunkIdentification *)_pggcrp->QvGet(icrp)) + ikid;
                 qkid->cki.ctg = ctgNew;
                 qkid->cki.cno = cnoNew;
 
-                MoveElement(qrgkid, size(KID), ikid, ikidNew);
+                MoveElement(qrgkid, size(ChildChunkIdentification), ikid, ikidNew);
                 ccrpRef--;
             }
         }
@@ -2831,15 +2833,15 @@ void CFL::Move(CTG ctg, CNO cno, CTG ctgNew, CNO cnoNew)
     Delete the given chunk.  Handles deleting child chunks that are
     no longer referenced.  If the chunk has the loner flag set, this clears
     it.  If the chunk has no parents, the chunk is also physically deleted
-    from the CFL.
+    from the ChunkyFile.
 ***************************************************************************/
-void CFL::Delete(CTG ctg, CNO cno)
+void ChunkyFile::Delete(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
     CGE cge;
     ulong grfcgeIn, grfcge;
-    KID kid;
+    ChildChunkIdentification kid;
     CRP *qcrp;
 
     if (!_FFindCtgCno(ctg, cno, &icrp))
@@ -2873,11 +2875,11 @@ void CFL::Delete(CTG ctg, CNO cno)
             // actually delete the node
             if (grfcge & fcgeError)
             {
-                Warn("memory failure in CFL::Delete - adjusting ref counts");
+                Warn("memory failure in ChunkyFile::Delete - adjusting ref counts");
                 // memory failure - adjust the ref counts of this chunk's
                 // children, but don't try to delete them
                 long ikid, icrpChild;
-                KID kid;
+                ChildChunkIdentification kid;
 
                 qcrp = (CRP *)_pggcrp->QvFixedGet(icrp);
                 for (ikid = qcrp->ckid; ikid-- != 0;)
@@ -2902,7 +2904,7 @@ void CFL::Delete(CTG ctg, CNO cno)
     fLoner is false and (ctg, cno) is not currently the child of anything,
     it will be deleted.
 ***************************************************************************/
-void CFL::SetLoner(CTG ctg, CNO cno, bool fLoner)
+void ChunkyFile::SetLoner(ChunkTag ctg, ChunkNumber cno, bool fLoner)
 {
     AssertThis(0);
     long icrp;
@@ -2924,7 +2926,7 @@ void CFL::SetLoner(CTG ctg, CNO cno, bool fLoner)
 /***************************************************************************
     Return the value of the loner flag.
 ***************************************************************************/
-bool CFL::FLoner(CTG ctg, CNO cno)
+bool ChunkyFile::FLoner(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -2942,7 +2944,7 @@ bool CFL::FLoner(CTG ctg, CNO cno)
 /***************************************************************************
     Returns the number of parents of this chunk
 ***************************************************************************/
-long CFL::CckiRef(CTG ctg, CNO cno)
+long ChunkyFile::CckiRef(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     long icrp;
@@ -2961,11 +2963,11 @@ long CFL::CckiRef(CTG ctg, CNO cno)
     Determines if (ctgSub, cnoSub) is in the chunk subgraph of (ctg, cno).
     Returns tMaybe on error.
 ***************************************************************************/
-tribool CFL::TIsDescendent(CTG ctg, CNO cno, CTG ctgSub, CNO cnoSub)
+tribool ChunkyFile::TIsDescendent(ChunkTag ctg, ChunkNumber cno, ChunkTag ctgSub, ChunkNumber cnoSub)
 {
     AssertThis(0);
     CGE cge;
-    KID kid;
+    ChildChunkIdentification kid;
     ulong grfcge;
 
     if (CckiRef(ctgSub, cnoSub) == 0)
@@ -2986,7 +2988,7 @@ tribool CFL::TIsDescendent(CTG ctg, CNO cno, CTG ctgSub, CNO cnoSub)
     Delete the given child chunk.  Handles deleting child chunks that are
     no longer referenced and don't have the fcrpLoner flag set.
 ***************************************************************************/
-void CFL::DeleteChild(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID chid)
+void ChunkyFile::DeleteChild(ChunkTag ctgPar, ChunkNumber cnoPar, ChunkTag ctgChild, ChunkNumber cnoChild, ChildChunkID chid)
 {
     AssertThis(0);
     long icrpPar, icrpChild, ikid;
@@ -3006,7 +3008,7 @@ void CFL::DeleteChild(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID c
     // remove the reference
     qcrp = (CRP *)_pggcrp->QvFixedGet(icrpPar);
     qcrp->ckid--;
-    _pggcrp->DeleteRgb(icrpPar, _BvKid(ikid), size(KID));
+    _pggcrp->DeleteRgb(icrpPar, _BvKid(ikid), size(ChildChunkIdentification));
 
     // now decrement the ref count and nuke it if the ref count is zero
     if (_FDecRefCount(icrpChild))
@@ -3021,7 +3023,7 @@ void CFL::DeleteChild(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID c
     Decrements the reference count on the chunk.  Return true if the ref
     count becomes zero (after decrementing) and fcrpLoner is not set.
 ***************************************************************************/
-bool CFL::_FDecRefCount(long icrp)
+bool ChunkyFile::_FDecRefCount(long icrp)
 {
     AssertBaseThis(0);
     CRP *qcrp;
@@ -3038,11 +3040,11 @@ bool CFL::_FDecRefCount(long icrp)
 /***************************************************************************
     Remove entry icrp from _pggcrp and add the file space to the free map.
 ***************************************************************************/
-void CFL::_DeleteCore(long icrp)
+void ChunkyFile::_DeleteCore(long icrp)
 {
     AssertBaseThis(0);
     CRP *qcrp;
-    CKI cki;
+    ChunkIdentification cki;
 
     qcrp = (CRP *)_pggcrp->QvFixedGet(icrp);
     cki = qcrp->cki;
@@ -3054,13 +3056,13 @@ void CFL::_DeleteCore(long icrp)
 /***************************************************************************
     Add the (fp, cb) to the free map.
 ***************************************************************************/
-void CFL::_FreeFpCb(bool fOnExtra, FP fp, long cb)
+void ChunkyFile::_FreeFpCb(bool fOnExtra, FP fp, long cb)
 {
     AssertBaseThis(0);
     Assert(cb > 0 || cb == 0 && fp == 0, "bad cb");
-    Assert(fp >= 0 && (fOnExtra || fp >= size(CFP) || cb == 0 || _fInvalidMainFile), "bad fp");
+    Assert(fp >= 0 && (fOnExtra || fp >= size(ChunkyFilePrefix) || cb == 0 || _fInvalidMainFile), "bad fp");
 
-    PGL pglfsm;
+    PDynamicArray pglfsm;
     long ifsm, ifsmMin, ifsmLim;
     FSM fsm, fsmT;
     CSTO *pcsto;
@@ -3100,7 +3102,7 @@ void CFL::_FreeFpCb(bool fOnExtra, FP fp, long cb)
 
     // Chunk is not at the end of the file.  We need to add it
     // to the free map.
-    if (pglfsm == pvNil && (pglfsm = pcsto->pglfsm = GL::PglNew(size(FSM), 1)) == pvNil)
+    if (pglfsm == pvNil && (pglfsm = pcsto->pglfsm = DynamicArray::PglNew(size(FSM), 1)) == pvNil)
     {
         // can't create the free map, just drop the space
         return;
@@ -3169,7 +3171,7 @@ void CFL::_FreeFpCb(bool fOnExtra, FP fp, long cb)
 /***************************************************************************
     Set the name of the chunk.
 ***************************************************************************/
-bool CFL::FSetName(CTG ctg, CNO cno, PSTN pstn)
+bool ChunkyFile::FSetName(ChunkTag ctg, ChunkNumber cno, PSTN pstn)
 {
     AssertThis(0);
     AssertNilOrPo(pstn, 0);
@@ -3193,7 +3195,7 @@ bool CFL::FSetName(CTG ctg, CNO cno, PSTN pstn)
 /***************************************************************************
     Set the name of the chunk at the given index.
 ***************************************************************************/
-bool CFL::_FSetName(long icrp, PSTN pstn)
+bool ChunkyFile::_FSetName(long icrp, PSTN pstn)
 {
     AssertBaseThis(0);
     AssertIn(icrp, 0, _pggcrp->IvMac());
@@ -3232,7 +3234,7 @@ bool CFL::_FSetName(long icrp, PSTN pstn)
     Retrieve the name of the chunk.  Returns whether the string is
     non-empty.
 ***************************************************************************/
-bool CFL::FGetName(CTG ctg, CNO cno, PSTN pstn)
+bool ChunkyFile::FGetName(ChunkTag ctg, ChunkNumber cno, PSTN pstn)
 {
     AssertThis(0);
     AssertPo(pstn, 0);
@@ -3253,7 +3255,7 @@ bool CFL::FGetName(CTG ctg, CNO cno, PSTN pstn)
     Retrieve the name of the chunk at the given index.  Returns whether
     the string is non-empty.
 ***************************************************************************/
-bool CFL::_FGetName(long icrp, PSTN pstn)
+bool ChunkyFile::_FGetName(long icrp, PSTN pstn)
 {
     AssertBaseThis(0);
     AssertIn(icrp, 0, _pggcrp->IvMac());
@@ -3284,7 +3286,7 @@ bool CFL::_FGetName(long icrp, PSTN pstn)
     Make a node a child of another node.  If fClearLoner is set, the loner
     flag of the child is cleared.
 ***************************************************************************/
-bool CFL::FAdoptChild(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID chid, bool fClearLoner)
+bool ChunkyFile::FAdoptChild(ChunkTag ctgPar, ChunkNumber cnoPar, ChunkTag ctgChild, ChunkNumber cnoChild, ChildChunkID chid, bool fClearLoner)
 {
     AssertThis(0);
     long icrpPar;
@@ -3311,13 +3313,13 @@ bool CFL::FAdoptChild(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID c
 /***************************************************************************
     Make (ctgChild, cnoChild) a child of icrpPar.
 ***************************************************************************/
-bool CFL::_FAdoptChild(long icrpPar, long ikid, CTG ctgChild, CNO cnoChild, CHID chid, bool fClearLoner)
+bool ChunkyFile::_FAdoptChild(long icrpPar, long ikid, ChunkTag ctgChild, ChunkNumber cnoChild, ChildChunkID chid, bool fClearLoner)
 {
     AssertBaseThis(0);
     AssertIn(icrpPar, 0, _pggcrp->IvMac());
     long icrp;
     CRP *qcrp;
-    KID kid;
+    ChildChunkIdentification kid;
 
     if (!_FFindCtgCno(ctgChild, cnoChild, &icrp))
     {
@@ -3335,7 +3337,7 @@ bool CFL::_FAdoptChild(long icrpPar, long ikid, CTG ctgChild, CNO cnoChild, CHID
     kid.cki.ctg = ctgChild;
     kid.cki.cno = cnoChild;
     kid.chid = chid;
-    if (!_pggcrp->FInsertRgb(icrpPar, _BvKid(ikid), size(KID), &kid))
+    if (!_pggcrp->FInsertRgb(icrpPar, _BvKid(ikid), size(ChildChunkIdentification), &kid))
     {
         AssertThis(0);
         return fFalse;
@@ -3351,7 +3353,7 @@ bool CFL::_FAdoptChild(long icrpPar, long ikid, CTG ctgChild, CNO cnoChild, CHID
         qcrp = (CRP *)_pggcrp->QvFixedGet(icrpPar);
         qcrp->ckid--;
     LOverFlow:
-        _pggcrp->DeleteRgb(icrpPar, _BvKid(ikid), size(KID));
+        _pggcrp->DeleteRgb(icrpPar, _BvKid(ikid), size(ChildChunkIdentification));
         AssertThis(0);
         return fFalse;
     }
@@ -3368,11 +3370,11 @@ bool CFL::_FAdoptChild(long icrpPar, long ikid, CTG ctgChild, CNO cnoChild, CHID
     (ctgChild, cnoChild, chidOld) is a child of (ctgPar, cnoPar) and that
     (ctgChild, cnoChild, chidNew) is not currently a child.
 ***************************************************************************/
-void CFL::ChangeChid(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID chidOld, CHID chidNew)
+void ChunkyFile::ChangeChid(ChunkTag ctgPar, ChunkNumber cnoPar, ChunkTag ctgChild, ChunkNumber cnoChild, ChildChunkID chidOld, ChildChunkID chidNew)
 {
     AssertThis(0);
     long icrp, ikidOld, ikidNew;
-    KID *qkid, *qrgkid;
+    ChildChunkIdentification *qkid, *qrgkid;
 
     if (chidOld == chidNew)
         return;
@@ -3389,10 +3391,10 @@ void CFL::ChangeChid(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID ch
         return;
     }
 
-    qkid = (qrgkid = (KID *)_pggcrp->QvGet(icrp)) + ikidOld;
+    qkid = (qrgkid = (ChildChunkIdentification *)_pggcrp->QvGet(icrp)) + ikidOld;
     qkid->chid = chidNew;
 
-    MoveElement(qrgkid, size(KID), ikidOld, ikidNew);
+    MoveElement(qrgkid, size(ChildChunkIdentification), ikidOld, ikidNew);
 
     AssertThis(0);
 }
@@ -3400,7 +3402,7 @@ void CFL::ChangeChid(CTG ctgPar, CNO cnoPar, CTG ctgChild, CNO cnoChild, CHID ch
 /***************************************************************************
     Return the total number of chunks.
 ***************************************************************************/
-long CFL::Ccki(void)
+long ChunkyFile::Ccki(void)
 {
     AssertThis(0);
     return _pggcrp->IvMac();
@@ -3410,7 +3412,7 @@ long CFL::Ccki(void)
     Finds the icki'th chunk.  If there is such a chunk (icki isn't too big),
     fills in *pcki and *pckid and returns true.  Otherwise, returns fFalse.
 ***************************************************************************/
-bool CFL::FGetCki(long icki, CKI *pcki, long *pckid, PBLCK pblck)
+bool ChunkyFile::FGetCki(long icki, ChunkIdentification *pcki, long *pckid, PDataBlock pblck)
 {
     AssertThis(0);
     AssertNilOrVarMem(pcki);
@@ -3440,9 +3442,9 @@ bool CFL::FGetCki(long icki, CKI *pcki, long *pckid, PBLCK pblck)
 
 /***************************************************************************
     Finds the icki corresponding to the given (ctg, cno).  If the (ctg, cno)
-    is not in the CFL, fills *picki with where it would be.
+    is not in the ChunkyFile, fills *picki with where it would be.
 ***************************************************************************/
-bool CFL::FGetIcki(CTG ctg, CNO cno, long *picki)
+bool ChunkyFile::FGetIcki(ChunkTag ctg, ChunkNumber cno, long *picki)
 {
     AssertThis(0);
     AssertVarMem(picki);
@@ -3452,7 +3454,7 @@ bool CFL::FGetIcki(CTG ctg, CNO cno, long *picki)
 /***************************************************************************
     Return the total number of chunks of the given type in the file.
 ***************************************************************************/
-long CFL::CckiCtg(CTG ctg)
+long ChunkyFile::CckiCtg(ChunkTag ctg)
 {
     AssertThis(0);
     long icrpMac;
@@ -3477,7 +3479,7 @@ long CFL::CckiCtg(CTG ctg)
     Finds the icki'th chunk of type ctg.  If there is such a chunk,
     fills in *pcki and returns true.  Otherwise, returns fFalse.
 ***************************************************************************/
-bool CFL::FGetCkiCtg(CTG ctg, long icki, CKI *pcki, long *pckid, PBLCK pblck)
+bool ChunkyFile::FGetCkiCtg(ChunkTag ctg, long icki, ChunkIdentification *pcki, long *pckid, PDataBlock pblck)
 {
     AssertThis(0);
     AssertIn(icki, 0, kcbMax);
@@ -3519,7 +3521,7 @@ bool CFL::FGetCkiCtg(CTG ctg, long icki, CKI *pcki, long *pckid, PBLCK pblck)
 /***************************************************************************
     Return the number of children of the given chunk.
 ***************************************************************************/
-long CFL::Ckid(CTG ctg, CNO cno)
+long ChunkyFile::Ckid(ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     CRP *qcrp;
@@ -3539,7 +3541,7 @@ long CFL::Ckid(CTG ctg, CNO cno)
     If ikid is less than number of children of the given chunk,
     fill *pkid and return true.  Otherwise, return false.
 ***************************************************************************/
-bool CFL::FGetKid(CTG ctg, CNO cno, long ikid, KID *pkid)
+bool ChunkyFile::FGetKid(ChunkTag ctg, ChunkNumber cno, long ikid, ChildChunkIdentification *pkid)
 {
     AssertThis(0);
     AssertVarMem(pkid);
@@ -3560,7 +3562,7 @@ bool CFL::FGetKid(CTG ctg, CNO cno, long ikid, KID *pkid)
         TrashVar(pkid);
         return fFalse;
     }
-    _pggcrp->GetRgb(icrp, _BvKid(ikid), size(KID), pkid);
+    _pggcrp->GetRgb(icrp, _BvKid(ikid), size(ChildChunkIdentification), pkid);
     Assert(_FFindCtgCno(pkid->cki.ctg, pkid->cki.cno, &icrp), "child not there");
     Assert(pkid->cki.ctg != ctg || pkid->cki.cno != cno, "chunk is child of itself!");
     return fTrue;
@@ -3571,11 +3573,11 @@ bool CFL::FGetKid(CTG ctg, CNO cno, long ikid, KID *pkid)
     is found, fill in *pkid and return true; else return false.  Kid's are
     sorted by (chid, ctg, cno).
 ***************************************************************************/
-bool CFL::FGetKidChid(CTG ctgPar, CNO cnoPar, CHID chid, KID *pkid)
+bool ChunkyFile::FGetKidChid(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, ChildChunkIdentification *pkid)
 {
     AssertThis(0);
     AssertVarMem(pkid);
-    return _FFindChidCtg(ctgPar, cnoPar, chid, (CTG)0, pkid);
+    return _FFindChidCtg(ctgPar, cnoPar, chid, (ChunkTag)0, pkid);
 }
 
 /***************************************************************************
@@ -3583,7 +3585,7 @@ bool CFL::FGetKidChid(CTG ctgPar, CNO cnoPar, CHID chid, KID *pkid)
     If one is found, fill in *pkid and return true; else return false.
     Kid's are sorted by (chid, ctg, cno).
 ***************************************************************************/
-bool CFL::FGetKidChidCtg(CTG ctgPar, CNO cnoPar, CHID chid, CTG ctg, KID *pkid)
+bool ChunkyFile::FGetKidChidCtg(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, ChunkTag ctg, ChildChunkIdentification *pkid)
 {
     AssertThis(0);
     AssertVarMem(pkid);
@@ -3602,13 +3604,13 @@ bool CFL::FGetKidChidCtg(CTG ctgPar, CNO cnoPar, CHID chid, CTG ctg, KID *pkid)
     Find the first child with the given chid and with ctg >= the given ctg.
     Returns true iff there is such a child and fills in the *pkid.
 ***************************************************************************/
-bool CFL::_FFindChidCtg(CTG ctgPar, CNO cnoPar, CHID chid, CTG ctg, KID *pkid)
+bool ChunkyFile::_FFindChidCtg(ChunkTag ctgPar, ChunkNumber cnoPar, ChildChunkID chid, ChunkTag ctg, ChildChunkIdentification *pkid)
 {
     AssertThis(0);
     AssertVarMem(pkid);
     long ikidMin, ikidLim, ikid;
     CRP *qcrp;
-    KID *qrgkid, *qkid;
+    ChildChunkIdentification *qrgkid, *qkid;
     long ckid, icrp;
 
     if (!_FFindCtgCno(ctgPar, cnoPar, &icrp))
@@ -3624,7 +3626,7 @@ bool CFL::_FFindChidCtg(CTG ctgPar, CNO cnoPar, CHID chid, CTG ctg, KID *pkid)
         goto LFail;
     }
 
-    qrgkid = (KID *)_pggcrp->QvGet(icrp);
+    qrgkid = (ChildChunkIdentification *)_pggcrp->QvGet(icrp);
     for (ikidMin = 0, ikidLim = ckid; ikidMin < ikidLim;)
     {
         ikid = (ikidMin + ikidLim) / 2;
@@ -3659,7 +3661,7 @@ LFail:
     the given chunk.  If the (ctg, cno, chid) is not a child of
     (ctgPar, cnoPar), fills *pikid with where it would be if it were.
 ***************************************************************************/
-bool CFL::FGetIkid(CTG ctgPar, CNO cnoPar, CTG ctg, CNO cno, CHID chid, long *pikid)
+bool ChunkyFile::FGetIkid(ChunkTag ctgPar, ChunkNumber cnoPar, ChunkTag ctg, ChunkNumber cno, ChildChunkID chid, long *pikid)
 {
     AssertThis(0);
     AssertVarMem(pikid);
@@ -3680,7 +3682,7 @@ bool CFL::FGetIkid(CTG ctgPar, CNO cnoPar, CTG ctg, CNO cno, CHID chid, long *pi
     the index in *pikid.  If not set *pikid to where to insert it.  Kids are
     sorted by (chid, ctg, cno).
 ***************************************************************************/
-bool CFL::_FFindChild(long icrpPar, CTG ctgChild, CNO cnoChild, CHID chid, long *pikid)
+bool ChunkyFile::_FFindChild(long icrpPar, ChunkTag ctgChild, ChunkNumber cnoChild, ChildChunkID chid, long *pikid)
 {
     AssertBaseThis(0);
     AssertVarMem(pikid);
@@ -3688,7 +3690,7 @@ bool CFL::_FFindChild(long icrpPar, CTG ctgChild, CNO cnoChild, CHID chid, long 
 
     long ikidMin, ikidLim, ikid, ckid;
     CRP *qcrp;
-    KID *qrgkid, *qkid;
+    ChildChunkIdentification *qrgkid, *qkid;
 
     qcrp = (CRP *)_pggcrp->QvFixedGet(icrpPar);
     if ((ckid = qcrp->ckid) <= 0)
@@ -3698,7 +3700,7 @@ bool CFL::_FFindChild(long icrpPar, CTG ctgChild, CNO cnoChild, CHID chid, long 
         return fFalse;
     }
 
-    qrgkid = (KID *)_pggcrp->QvGet(icrpPar);
+    qrgkid = (ChildChunkIdentification *)_pggcrp->QvGet(icrpPar);
     for (ikidMin = 0, ikidLim = ckid; ikidMin < ikidLim;)
     {
         ikid = (ikidMin + ikidLim) / 2;
@@ -3730,19 +3732,19 @@ bool CFL::_FFindChild(long icrpPar, CTG ctgChild, CNO cnoChild, CHID chid, long 
 // cno map entry
 struct CNOM
 {
-    CTG ctg;
-    CNO cnoSrc;
-    CNO cnoDst;
+    ChunkTag ctg;
+    ChunkNumber cnoSrc;
+    ChunkNumber cnoDst;
 };
 
-bool _FFindCnom(PGL pglcnom, CTG ctg, CNO cno, CNOM *pcnom = pvNil, long *picnom = pvNil);
-bool _FAddCnom(PGL *ppglcnom, CNOM *pcnom);
+bool _FFindCnom(PDynamicArray pglcnom, ChunkTag ctg, ChunkNumber cno, CNOM *pcnom = pvNil, long *picnom = pvNil);
+bool _FAddCnom(PDynamicArray *ppglcnom, CNOM *pcnom);
 
 /***************************************************************************
     Look for a cnom for the given (ctg, cno). Whether or not it exists,
     fill *picnom with where it would go in the pglcnom.
 ***************************************************************************/
-bool _FFindCnom(PGL pglcnom, CTG ctg, CNO cno, CNOM *pcnom, long *picnom)
+bool _FFindCnom(PDynamicArray pglcnom, ChunkTag ctg, ChunkNumber cno, CNOM *pcnom, long *picnom)
 {
     AssertNilOrPo(pglcnom, 0);
     AssertNilOrVarMem(pcnom);
@@ -3789,14 +3791,14 @@ bool _FFindCnom(PGL pglcnom, CTG ctg, CNO cno, CNOM *pcnom, long *picnom)
 /***************************************************************************
     Add a cnom to the *ppglcnom. Allocated *ppglcnom if it is nil.
 ***************************************************************************/
-bool _FAddCnom(PGL *ppglcnom, CNOM *pcnom)
+bool _FAddCnom(PDynamicArray *ppglcnom, CNOM *pcnom)
 {
     AssertVarMem(ppglcnom);
     AssertNilOrPo(*ppglcnom, 0);
     AssertVarMem(pcnom);
     long icnom;
 
-    if (pvNil == *ppglcnom && pvNil == (*ppglcnom = GL::PglNew(size(CNOM))))
+    if (pvNil == *ppglcnom && pvNil == (*ppglcnom = DynamicArray::PglNew(size(CNOM))))
         return fFalse;
 
     AssertDo(!_FFindCnom(*ppglcnom, pcnom->ctg, pcnom->cnoSrc, pvNil, &icnom), "why is this cnom already in the gl?");
@@ -3810,7 +3812,7 @@ bool _FAddCnom(PGL *ppglcnom, CNOM *pcnom)
     as the cno in the source file. If fClone is set, no chunk sharing will
     occur. Otherwise, this does intelligent chunk sharing.
 ***************************************************************************/
-bool CFL::_FCopy(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst, bool fClone)
+bool ChunkyFile::_FCopy(ChunkTag ctgSrc, ChunkNumber cnoSrc, PChunkyFile pcflDst, ChunkNumber *pcnoDst, bool fClone)
 {
     AssertThis(fcflFull);
     AssertPo(pcflDst, fcflFull);
@@ -3819,16 +3821,16 @@ bool CFL::_FCopy(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst, bool fClone
     long icrpSrc, icrpDst;
     long rtiSrc;
     CGE cge;
-    KID kid;
-    CKI ckiPar;
-    BLCK blckSrc;
+    ChildChunkIdentification kid;
+    ChunkIdentification ckiPar;
+    DataBlock blckSrc;
     ulong grfcge, grfcgeIn;
     CNOM cnom, cnomPar;
     STN stn;
     CRP *qcrp;
 
     bool fFreeDstOnFailure = fFalse;
-    PGL pglcnom = pvNil;
+    PDynamicArray pglcnom = pvNil;
     bool fRet = fFalse;
 
     if (!_FFindCtgCno(ctgSrc, cnoSrc, &icrpSrc))
@@ -3845,7 +3847,7 @@ bool CFL::_FCopy(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst, bool fClone
         return fTrue;
     }
 
-    // copy chunks to the destination CFL
+    // copy chunks to the destination ChunkyFile
     cge.Init(this, ctgSrc, cnoSrc);
     grfcgeIn = fcgeNil;
     while (cge.FNextKid(&kid, &ckiPar, &grfcge, grfcgeIn))
@@ -3973,7 +3975,7 @@ LFail:
     of nodes and arcs of the two subgraphs and the rti's of corresponding
     nodes are equal.
 ***************************************************************************/
-bool CFL::_FFindMatch(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
+bool ChunkyFile::_FFindMatch(ChunkTag ctgSrc, ChunkNumber cnoSrc, PChunkyFile pcflDst, ChunkNumber *pcnoDst)
 {
     AssertBaseThis(0);
     AssertPo(pcflDst, 0);
@@ -3981,10 +3983,10 @@ bool CFL::_FFindMatch(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
 
     long rtiSrc, rtiKid;
     long ckidSrc;
-    CNO cnoMin, cnoDst;
+    ChunkNumber cnoMin, cnoDst;
     CGE cgeSrc, cgeDst;
-    KID kidSrc, kidDst;
-    CKI ckiParSrc, ckiParDst;
+    ChildChunkIdentification kidSrc, kidDst;
+    ChunkIdentification ckiParSrc, ckiParDst;
     ulong grfcgeSrc, grfcgeDst;
     bool fKidSrc, fKidDst;
 
@@ -3995,7 +3997,7 @@ bool CFL::_FFindMatch(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
     for (cnoDst = cnoMin = 0;; cnoMin = cnoDst + 1)
     {
         // get the next chunk with the same rti
-        if (cnoDst == (CNO)(-1) || !pcflDst->_FFindCtgRti(ctgSrc, rtiSrc, cnoMin, &cnoDst))
+        if (cnoDst == (ChunkNumber)(-1) || !pcflDst->_FFindCtgRti(ctgSrc, rtiSrc, cnoMin, &cnoDst))
         {
             return fFalse;
         }
@@ -4051,7 +4053,7 @@ bool CFL::_FFindMatch(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
     Looks for a chunk of the given type with assigned rti and cno at least
     cnoMin.
 ***************************************************************************/
-bool CFL::_FFindCtgRti(CTG ctg, long rti, CNO cnoMin, CNO *pcno)
+bool ChunkyFile::_FFindCtgRti(ChunkTag ctg, long rti, ChunkNumber cnoMin, ChunkNumber *pcno)
 {
     AssertBaseThis(0);
     AssertNilOrVarMem(pcno);
@@ -4112,7 +4114,7 @@ bool CFL::_FFindCtgRti(CTG ctg, long rti, CNO cnoMin, CNO *pcno)
     loner. If possible, the cno in the destination file will be the same
     as the cno in the source file. This does intelligent chunk sharing.
 ***************************************************************************/
-bool CFL::FCopy(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
+bool ChunkyFile::FCopy(ChunkTag ctgSrc, ChunkNumber cnoSrc, PChunkyFile pcflDst, ChunkNumber *pcnoDst)
 {
     return _FCopy(ctgSrc, cnoSrc, pcflDst, pcnoDst, fFalse);
 }
@@ -4125,7 +4127,7 @@ bool CFL::FCopy(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
     cno in the destination file will be the same as the cno in the
     source file.
 ***************************************************************************/
-bool CFL::FClone(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
+bool ChunkyFile::FClone(ChunkTag ctgSrc, ChunkNumber cnoSrc, PChunkyFile pcflDst, ChunkNumber *pcnoDst)
 {
     return _FCopy(ctgSrc, cnoSrc, pcflDst, pcnoDst, fTrue);
 }
@@ -4133,7 +4135,7 @@ bool CFL::FClone(CTG ctgSrc, CNO cnoSrc, PCFL pcflDst, CNO *pcnoDst)
 /***************************************************************************
     Return the run time id of the given chunk.
 ***************************************************************************/
-long CFL::_Rti(CTG ctg, CNO cno)
+long ChunkyFile::_Rti(ChunkTag ctg, ChunkNumber cno)
 {
     AssertBaseThis(0);
 
@@ -4163,7 +4165,7 @@ long CFL::_Rti(CTG ctg, CNO cno)
 /***************************************************************************
     Set the run time id of the given chunk.
 ***************************************************************************/
-bool CFL::_FSetRti(CTG ctg, CNO cno, long rti)
+bool ChunkyFile::_FSetRti(ChunkTag ctg, ChunkNumber cno, long rti)
 {
     AssertBaseThis(0);
 
@@ -4202,7 +4204,7 @@ bool CFL::_FSetRti(CTG ctg, CNO cno, long rti)
     rtie.ctg = ctg;
     rtie.cno = cno;
     rtie.rti = rti;
-    if (pvNil == _pglrtie && pvNil == (_pglrtie = GL::PglNew(size(RTIE), 1)))
+    if (pvNil == _pglrtie && pvNil == (_pglrtie = DynamicArray::PglNew(size(RTIE), 1)))
         return fFalse;
 
     return _pglrtie->FInsert(irtie, &rtie);
@@ -4214,7 +4216,7 @@ bool CFL::_FSetRti(CTG ctg, CNO cno, long rti)
 /***************************************************************************
     Look for an RTIE entry for the given (ctg, cno).
 ***************************************************************************/
-bool CFL::_FFindRtie(CTG ctg, CNO cno, RTIE *prtie, long *pirtie)
+bool ChunkyFile::_FFindRtie(ChunkTag ctg, ChunkNumber cno, RTIE *prtie, long *pirtie)
 {
     AssertBaseThis(0);
     AssertNilOrVarMem(prtie);
@@ -4313,7 +4315,7 @@ void CGE::MarkMem(void)
 /***************************************************************************
     Start a new enumeration.
 ***************************************************************************/
-void CGE::Init(PCFL pcfl, CTG ctg, CNO cno)
+void CGE::Init(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
@@ -4349,7 +4351,7 @@ void CGE::Init(PCFL pcfl, CTG ctg, CNO cno)
         fcgeRoot:  *pkid is valid (except the chid value); *pckiPar is
             invalid; the node is the root of the enumeration
 ***************************************************************************/
-bool CGE::FNextKid(KID *pkid, CKI *pckiPar, ulong *pgrfcgeOut, ulong grfcgeIn)
+bool CGE::FNextKid(ChildChunkIdentification *pkid, ChunkIdentification *pckiPar, ulong *pgrfcgeOut, ulong grfcgeIn)
 {
     AssertThis(0);
     AssertVarMem(pkid);
@@ -4405,7 +4407,7 @@ bool CGE::FNextKid(KID *pkid, CKI *pckiPar, ulong *pgrfcgeOut, ulong grfcgeIn)
         if (_pcfl->Ckid(pkid->cki.ctg, pkid->cki.cno) > 0)
         {
             // child has children, need to push the dps
-            if (_pgldps == pvNil && (_pgldps = GL::PglNew(size(DPS), 10)) == pvNil || !_pgldps->FPush(&_dps))
+            if (_pgldps == pvNil && (_pgldps = DynamicArray::PglNew(size(DPS), 10)) == pvNil || !_pgldps->FPush(&_dps))
             {
                 // mem failure, pretend it has no children
                 *pgrfcgeOut |= fcgeError;
@@ -4439,3 +4441,5 @@ bool CGE::FNextKid(KID *pkid, CKI *pckiPar, ulong *pgrfcgeOut, ulong grfcgeIn)
     TrashVarIf((*pgrfcgeOut & fcgeRoot), &pkid->chid);
     return fTrue;
 }
+
+} // end of namespace Chunky

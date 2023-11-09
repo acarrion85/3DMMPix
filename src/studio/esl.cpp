@@ -35,16 +35,16 @@ RTCLASS(LSND)
 RTCLASS(ESLR)
 
 /***************************************************************************
-    Function to build a GCB for creating a child GOB
+    Function to build a GraphicsObjectBlock for creating a child GraphicsObject
 ***************************************************************************/
 bool FBuildGcb(PGCB pgcb, long kidParent, long kidChild)
 {
     AssertVarMem(pgcb);
 
-    PGOK pgokPar;
+    PKidspaceGraphicObject pgokPar;
     RC rcRel;
 
-    pgokPar = (PGOK)vpapp->Pkwa()->PgobFromHid(kidParent);
+    pgokPar = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidParent);
     if (pvNil == pgokPar)
     {
         TrashVar(pgcb);
@@ -61,10 +61,10 @@ bool FBuildGcb(PGCB pgcb, long kidParent, long kidChild)
 ***************************************************************************/
 void SetGokState(long kid, long st)
 {
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kid);
-    if (pvNil != pgok && pgok->FIs(kclsGOK) && pgok->Sno() != st)
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kid);
+    if (pvNil != pgok && pgok->FIs(kclsKidspaceGraphicObject) && pgok->Sno() != st)
         pgok->FChangeState(st); // ignore failure
 }
 
@@ -76,7 +76,7 @@ void SetGokState(long kid, long st)
 //
 //
 
-BEGIN_CMD_MAP(ESL, GOK)
+BEGIN_CMD_MAP(ESL, KidspaceGraphicObject)
 ON_CID_GEN(cidEaselOk, &ESL::FCmdDismiss, pvNil)
 ON_CID_GEN(cidEaselCancel, &ESL::FCmdDismiss, pvNil)
 END_CMD_MAP_NIL()
@@ -88,7 +88,7 @@ PESL ESL::PeslNew(PRCA prca, long kidParent, long kidEasel)
 {
     AssertPo(prca, 0);
 
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     PESL pesl;
 
     if (!FBuildGcb(&gcb, kidParent, kidEasel))
@@ -121,7 +121,7 @@ bool ESL::_FInit(PRCA prca, long kidEasel)
 
     vpapp->DisableAccel();
 
-    STDIO::PauseActionButton();
+    Studio::PauseActionButton();
 
     return fTrue;
 }
@@ -134,7 +134,7 @@ ESL::~ESL(void)
     AssertBaseThis(0);
 
     vpapp->EnableAccel();
-    STDIO::ResumeActionButton();
+    Studio::ResumeActionButton();
 }
 
 /***************************************************************************
@@ -205,7 +205,7 @@ END_CMD_MAP_NIL()
     Create a new text easel.  If pactr is pvNil, this is for a new TDT
     and pstnNew, tdtsNew, and ptagTdfNew will be used as initial values.
 ***************************************************************************/
-PESLT ESLT::PesltNew(PRCA prca, PMVIE pmvie, PACTR pactr, PSTN pstnNew, long tdtsNew, PTAG ptagTdfNew)
+PESLT ESLT::PesltNew(PRCA prca, PMovie pmvie, PActor pactr, PSTN pstnNew, long tdtsNew, PTAG ptagTdfNew)
 {
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
@@ -216,7 +216,7 @@ PESLT ESLT::PesltNew(PRCA prca, PMVIE pmvie, PACTR pactr, PSTN pstnNew, long tdt
     AssertNilOrVarMem(ptagTdfNew);
 
     PESLT peslt;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if (!FBuildGcb(&gcb, kidBackground, kidSpltGlass))
         return pvNil;
@@ -238,7 +238,7 @@ PESLT ESLT::PesltNew(PRCA prca, PMVIE pmvie, PACTR pactr, PSTN pstnNew, long tdt
 /***************************************************************************
     Set up this easel
 ***************************************************************************/
-bool ESLT::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, PACTR pactr, PSTN pstnNew, long tdtsNew, PTAG ptagTdfNew)
+bool ESLT::_FInit(PRCA prca, long kidEasel, PMovie pmvie, PActor pactr, PSTN pstnNew, long tdtsNew, PTAG ptagTdfNew)
 {
     AssertBaseThis(0);
     AssertPo(prca, 0);
@@ -250,7 +250,7 @@ bool ESLT::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, PACTR pactr, PSTN pstnN
         AssertIn(tdtsNew, 0, tdtsLim);
     AssertNilOrVarMem(ptagTdfNew);
 
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     COST cost;
     STN stn;
     bool fNewTdt = (pactr == pvNil);
@@ -360,7 +360,7 @@ bool ESLT::FCmdTransmogrify(PCMD pcmd)
     AssertVarMem(pcmd);
 
     long tdts;
-    CKI cki;
+    ChunkIdentification cki;
     long ithd;
     THD thd;
     TAG tagTdf;
@@ -422,14 +422,14 @@ bool ESLT::FCmdStartPopup(PCMD pcmd)
     AssertThis(0);
     AssertVarMem(pcmd);
 
-    CKI ckiGPar;
+    ChunkIdentification ckiGPar;
     long kid;
     long ithumSelect = ivNil;
     long sidSelect = vpapp->SidProduct();
     long cidSelect;
     TAG tagTdf;
     long tdts;
-    CNO cnoSelect;
+    ChunkNumber cnoSelect;
 
     ckiGPar.cno = cnoNil;
 
@@ -562,7 +562,7 @@ bool ESLT::_FAcceptChanges(bool *pfDismissEasel)
 
     long ich;
     bool fNonSpaceFound = fFalse;
-    PACTR pactrDup = pvNil;
+    PActor pactrDup = pvNil;
     bool fChangesMade = fFalse;
     PTDT ptdtOld;
     STN stnOld;
@@ -686,7 +686,7 @@ void ESLT::AssertValid(ulong grf)
 
 /***************************************************************************
     Mark memory used by the ESLT.  The _pape and _psne are marked
-    automatically with the GOB tree.
+    automatically with the GraphicsObject tree.
 ***************************************************************************/
 void ESLT::MarkMem(void)
 {
@@ -834,14 +834,14 @@ END_CMD_MAP_NIL()
 /***************************************************************************
     Create a new actor easel
 ***************************************************************************/
-PESLA ESLA::PeslaNew(PRCA prca, PMVIE pmvie, PACTR pactr)
+PESLA ESLA::PeslaNew(PRCA prca, PMovie pmvie, PActor pactr)
 {
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertPo(pactr, 0);
 
     PESLA pesla;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if (!FBuildGcb(&gcb, kidBackground, kidCostGlass))
         return pvNil;
@@ -863,14 +863,14 @@ PESLA ESLA::PeslaNew(PRCA prca, PMVIE pmvie, PACTR pactr)
 /***************************************************************************
     Set up this easel
 ***************************************************************************/
-bool ESLA::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, PACTR pactr)
+bool ESLA::_FInit(PRCA prca, long kidEasel, PMovie pmvie, PActor pactr)
 {
     AssertBaseThis(0);
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertPo(pactr, 0);
 
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     COST cost;
     STN stn;
     EDPAR edpar;
@@ -961,7 +961,7 @@ bool ESLA::_FAcceptChanges(bool *pfDismissEasel)
     AssertThis(0);
     AssertVarMem(pfDismissEasel);
 
-    PACTR pactrDup;
+    PActor pactrDup;
     bool fNonSpaceFound;
     long ich;
     bool fChangesMade = fFalse;
@@ -1038,7 +1038,7 @@ void ESLA::AssertValid(ulong grf)
 
 /***************************************************************************
     Mark memory used by the ESLA.  The _pape and _pedsl are marked
-    automatically with the GOB tree.
+    automatically with the GraphicsObject tree.
 ***************************************************************************/
 void ESLA::MarkMem(void)
 {
@@ -1064,14 +1064,14 @@ END_CMD_MAP_NIL()
 /***************************************************************************
     Create a new listener easel
 ***************************************************************************/
-PESLL ESLL::PesllNew(PRCA prca, PMVIE pmvie, PACTR pactr)
+PESLL ESLL::PesllNew(PRCA prca, PMovie pmvie, PActor pactr)
 {
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertNilOrPo(pactr, 0);
 
     PESLL pesll;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     long kidGlass;
 
     if (pvNil == pactr)
@@ -1099,14 +1099,14 @@ PESLL ESLL::PesllNew(PRCA prca, PMVIE pmvie, PACTR pactr)
 /***************************************************************************
     Set up this easel
 ***************************************************************************/
-bool ESLL::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, PACTR pactr)
+bool ESLL::_FInit(PRCA prca, long kidEasel, PMovie pmvie, PActor pactr)
 {
     AssertBaseThis(0);
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertNilOrPo(pactr, 0);
 
-    PGL pgltag;
+    PDynamicArray pgltag;
     long vlm;
     bool fLoop;
 
@@ -1216,7 +1216,7 @@ bool LSND::FValidSnd(void)
     for (itag = 0; itag < _pgltag->IvMac(); itag++)
     {
         _pgltag->Get(itag, &tag);
-        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MSND::FReadMsnd);
+        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MovieSoundMSND::FReadMsnd);
         if (pvNil == pmsnd)
             continue;
         if (!pmsnd->FValid())
@@ -1454,7 +1454,7 @@ void ESLL::MarkMem(void)
     Initialize a LSND.  Note that the LSND takes over the reference to
     *ppgltag.
 ***************************************************************************/
-bool LSND::FInit(long sty, long kidVol, long kidIcon, long kidEditBox, PGL *ppgltag, long vlm, bool fLoop, long objID,
+bool LSND::FInit(long sty, long kidVol, long kidIcon, long kidEditBox, PDynamicArray *ppgltag, long vlm, bool fLoop, long objID,
                  bool fMatcher)
 {
     AssertBaseThis(0);
@@ -1462,7 +1462,7 @@ bool LSND::FInit(long sty, long kidVol, long kidIcon, long kidEditBox, PGL *ppgl
     AssertNilOrPo(*ppgltag, 0);
 
     long st;
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
     PTGOB ptgob;
     PMSND pmsnd;
     long itag;
@@ -1500,7 +1500,7 @@ bool LSND::FInit(long sty, long kidVol, long kidIcon, long kidEditBox, PGL *ppgl
     for (itag = 0; itag < _pgltag->IvMac(); itag++)
     {
         _pgltag->Get(itag, &tag);
-        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MSND::FReadMsnd);
+        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MovieSoundMSND::FReadMsnd);
         if (pvNil == pmsnd)
             return fFalse;
         if (!pmsnd->FValid())
@@ -1526,8 +1526,8 @@ LFound:
     // Update the slider volume
     vpcex->EnqueueCid(cidListenVolSet, vpapp->Pkwa()->PgobFromHid(kidVol), pvNil, _vlm);
 
-    pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidIcon);
-    if ((pgok != pvNil) && pgok->FIs(kclsGOK))
+    pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidIcon);
+    if ((pgok != pvNil) && pgok->FIs(kclsKidspaceGraphicObject))
         pgok->FChangeState(st);
 
     return fTrue;
@@ -1551,7 +1551,7 @@ void LSND::Play(void)
 
     // Stop sounds that are already playing.  This handles, among other
     // things, a problem that would otherwise occur when changing the
-    // volume of a MIDI sound.  Normally, MSND doesn't restart a MIDI
+    // volume of a MIDI sound.  Normally, MovieSoundMSND doesn't restart a MIDI
     // sound that's currently playing, but we want to force it to
     // restart here.
     StopAllMovieSounds();
@@ -1560,7 +1560,7 @@ void LSND::Play(void)
     {
         _pgltag->Get(itag, &tag);
         // Verify sound before including in the event list
-        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MSND::FReadMsnd);
+        pmsnd = (PMSND)vptagm->PbacoFetch(&tag, MovieSoundMSND::FReadMsnd);
         if (pvNil == pmsnd)
             continue; // ignore failure
         Assert(pmsnd->Sty() == _sty, 0);
@@ -1629,14 +1629,14 @@ END_CMD_MAP_NIL()
 /***************************************************************************
     Create a new sound recording easel
 ***************************************************************************/
-PESLR ESLR::PeslrNew(PRCA prca, PMVIE pmvie, bool fSpeech, PSTN pstnNew)
+PESLR ESLR::PeslrNew(PRCA prca, PMovie pmvie, bool fSpeech, PSTN pstnNew)
 {
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertPo(pstnNew, 0);
 
     PESLR peslr;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
 
     if (!FBuildGcb(&gcb, kidBackground, kidRecordGlass))
         return pvNil;
@@ -1658,14 +1658,14 @@ PESLR ESLR::PeslrNew(PRCA prca, PMVIE pmvie, bool fSpeech, PSTN pstnNew)
 /***************************************************************************
     Set up this easel
 ***************************************************************************/
-bool ESLR::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, bool fSpeech, PSTN pstnNew)
+bool ESLR::_FInit(PRCA prca, long kidEasel, PMovie pmvie, bool fSpeech, PSTN pstnNew)
 {
     AssertBaseThis(0);
     AssertPo(prca, 0);
     AssertPo(pmvie, 0);
     AssertPo(pstnNew, 0);
 
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     EDPAR edpar;
 
     _pmvie = pmvie;
@@ -1712,7 +1712,7 @@ bool ESLR::_FInit(PRCA prca, long kidEasel, PMVIE pmvie, bool fSpeech, PSTN pstn
     _clok.Start(0);
 
     // Set sound meter to 0
-    PGOK pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidRecordSoundLength);
+    PKidspaceGraphicObject pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidRecordSoundLength);
     if (pvNil != pgok)
         vpcex->EnqueueCid(cidRecordSetLength, pgok, 0, 0, 0, 0, 0);
     return fTrue;
@@ -1735,7 +1735,7 @@ void ESLR::_UpdateMeter(void)
 {
     AssertThis(0);
 
-    PGOK pgok;
+    PKidspaceGraphicObject pgok;
     long dtsRec;
     long percentDone; // no good hungarian for a percent
 
@@ -1746,7 +1746,7 @@ void ESLR::_UpdateMeter(void)
         percentDone = LwMulDiv(dtsRec, 100, kdtsMaxRecord);
         percentDone = LwBound(percentDone, 0, 100);
 
-        pgok = (PGOK)vpapp->Pkwa()->PgobFromHid(kidRecordSoundLength);
+        pgok = (PKidspaceGraphicObject)vpapp->Pkwa()->PgobFromHid(kidRecordSoundLength);
         if (pvNil != pgok)
             vpcex->EnqueueCid(cidRecordSetLength, pgok, 0, percentDone, 0, 0, 0);
         else
@@ -1883,10 +1883,10 @@ bool ESLR::_FAcceptChanges(bool *pfDismissEasel)
     AssertThis(0);
     AssertVarMem(pfDismissEasel);
 
-    FNI fni;
+    Filename fni;
     STN stn;
     PFIL pfil = pvNil;
-    CNO cno;
+    ChunkNumber cno;
     long sty = _fSpeech ? stySpeech : stySfx;
     long kid = _fSpeech ? kidSpeechGlass : kidFXGlass;
 

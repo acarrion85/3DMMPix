@@ -15,7 +15,7 @@ RTCLASS(DCPIC)
 /***************************************************************************
     Constructor for picture document.
 ***************************************************************************/
-DOCPIC::DOCPIC(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno) : DOCE(pdocb, pcfl, ctg, cno)
+DOCPIC::DOCPIC(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno) : DOCE(pdocb, pcfl, ctg, cno)
 {
     _ppic = pvNil;
 }
@@ -31,7 +31,7 @@ DOCPIC::~DOCPIC(void)
 /***************************************************************************
     Static method to create a new picture document.
 ***************************************************************************/
-PDOCPIC DOCPIC::PdocpicNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
+PDOCPIC DOCPIC::PdocpicNew(PDocumentBase pdocb, PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     DOCPIC *pdocpic;
 
@@ -49,7 +49,7 @@ PDOCPIC DOCPIC::PdocpicNew(PDOCB pdocb, PCFL pcfl, CTG ctg, CNO cno)
 /***************************************************************************
     Create a new display gob for the document.
 ***************************************************************************/
-PDDG DOCPIC::PddgNew(PGCB pgcb)
+PDocumentDisplayGraphicsObject DOCPIC::PddgNew(PGCB pgcb)
 {
     return DCPIC::PdcpicNew(this, _ppic, pgcb);
 }
@@ -65,7 +65,7 @@ long DOCPIC::_CbOnFile(void)
 /***************************************************************************
     Write the data out.
 ***************************************************************************/
-bool DOCPIC::_FWrite(PBLCK pblck, bool fRedirect)
+bool DOCPIC::_FWrite(PDataBlock pblck, bool fRedirect)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -76,7 +76,7 @@ bool DOCPIC::_FWrite(PBLCK pblck, bool fRedirect)
 /***************************************************************************
     Read the PIC.
 ***************************************************************************/
-bool DOCPIC::_FRead(PBLCK pblck)
+bool DOCPIC::_FRead(PDataBlock pblck)
 {
     Assert(_ppic == pvNil, "losing existing PIC");
     AssertPo(pblck, 0);
@@ -109,7 +109,7 @@ void DOCPIC::MarkMem(void)
 /***************************************************************************
     Constructor for a pic display gob.
 ***************************************************************************/
-DCPIC::DCPIC(PDOCB pdocb, PPIC ppic, PGCB pgcb) : DDG(pdocb, pgcb)
+DCPIC::DCPIC(PDocumentBase pdocb, PPIC ppic, PGCB pgcb) : DocumentDisplayGraphicsObject(pdocb, pgcb)
 {
     _ppic = ppic;
 }
@@ -125,7 +125,7 @@ void DCPIC::GetMinMax(RC *prcMinMax)
 /***************************************************************************
     Static method to create a new DCPIC.
 ***************************************************************************/
-PDCPIC DCPIC::PdcpicNew(PDOCB pdocb, PPIC ppic, PGCB pgcb)
+PDCPIC DCPIC::PdcpicNew(PDocumentBase pdocb, PPIC ppic, PGCB pgcb)
 {
     PDCPIC pdcpic;
 

@@ -17,10 +17,10 @@
 #define MENU_H
 
 // Menu Bar class
-typedef class MUB *PMUB;
-#define MUB_PAR BASE
-#define kclsMUB 'MUB'
-class MUB : public MUB_PAR
+typedef class MenuBar *PMenuBar;
+#define MenuBar_PAR BASE
+#define kclsMenuBar 'MUB'
+class MenuBar : public MenuBar_PAR
 {
     RTCLASS_DEC
     MARKMEM
@@ -49,7 +49,7 @@ class MUB : public MUB_PAR
     {
         long mid;
         SMU **hnsmu;
-        PGL pglmni;
+        PDynamicArray pglmni;
     };
 
     // menu list
@@ -63,8 +63,8 @@ class MUB : public MUB_PAR
     };
 
     HN _hnmbar;
-    PGL _pglmnu;
-    PGL _pglmlst; // menu lists
+    PDynamicArray _pglmnu;
+    PDynamicArray _pglmlst; // menu lists
 
     bool _FInsertMni(long imnu, long imni, long cid, long lw0, PSTN pstn);
     void _DeleteMni(long imnu, long imni);
@@ -83,12 +83,12 @@ class MUB : public MUB_PAR
         long wcidList;
         long cid;
         bool fSeparator;
-        PGL pgllw;
+        PDynamicArray pgllw;
     };
 
     HMENU _hmenu; // the menu bar
     long _cmnu;   // number of menus on the menu bar
-    PGL _pglmlst; // menu lists
+    PDynamicArray _pglmlst; // menu lists
 
     bool _FInitLists(void);
     bool _FFindMlst(long wcid, MLST *pmlst, long *pimlst = pvNil);
@@ -96,14 +96,14 @@ class MUB : public MUB_PAR
 #endif // WIN
 
   protected:
-    MUB(void)
+    MenuBar(void)
     {
     }
 
   public:
-    ~MUB(void);
+    ~MenuBar(void);
 
-    static PMUB PmubNew(ulong ridMenuBar);
+    static PMenuBar PmubNew(ulong ridMenuBar);
 
     virtual void Set(void);
     virtual void Clean(void);
@@ -122,6 +122,6 @@ class MUB : public MUB_PAR
     virtual bool FRemoveAllListCid(long cid);
 };
 
-extern PMUB vpmubCur;
+extern PMenuBar vpmubCur;
 
 #endif //! MENU_H

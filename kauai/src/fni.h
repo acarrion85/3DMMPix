@@ -16,6 +16,8 @@
 #ifndef FNI_H
 #define FNI_H
 
+using Group::PDynamicArray;
+
 #ifdef MAC
 typedef FSSpec FSS;
 #endif // MAC
@@ -26,7 +28,7 @@ enum
     ffniCreateDir = 0x0001,
     ffniMoveToDir = 0x0002,
 
-// for FNI::AssertValid
+// for Filename::AssertValid
 #ifdef DEBUG
     ffniFile = 0x10000,
     ffniDir = 0x20000,
@@ -44,22 +46,22 @@ enum
     fvkRemovable = 0x0008,
 };
 
-typedef long FTG; // file type
+typedef long FileType; // file type
 
-const FTG ftgNil = '...,';
-const FTG kftgDir = '....';
-const FTG kftgTemp = MacWin('temp', 'TMP'); // the standard temp file ftg
-const FTG kftgText = MacWin('TEXT', 'TXT');
+const FileType ftgNil = '...,';
+const FileType kftgDir = '....';
+const FileType kftgTemp = MacWin('temp', 'TMP'); // the standard temp file ftg
+const FileType kftgText = MacWin('TEXT', 'TXT');
 
-extern FTG vftgTemp; // the ftg to use for temp files
+extern FileType vftgTemp; // the ftg to use for temp files
 
 /****************************************
     File name class
 ****************************************/
-typedef class FNI *PFNI;
-#define FNI_PAR BASE
-#define kclsFNI 'FNI'
-class FNI : public FNI_PAR
+typedef class Filename *PFilename;
+#define Filename_PAR BASE
+#define kclsFilename 'FNI'
+class Filename : public Filename_PAR
 {
     RTCLASS_DEC
     ASSERT
@@ -68,7 +70,7 @@ class FNI : public FNI_PAR
     friend class FNE;
 
   private:
-    FTG _ftg;
+    FileType _ftg;
 #ifdef MAC
     long _lwDir; // the directory id
     FSS _fss;
@@ -83,38 +85,38 @@ class FNI : public FNI_PAR
 #endif // WIN
 
   public:
-    FNI(void);
+    Filename(void);
 
 // building FNIs
 #ifdef MAC
-    bool FGetOpen(FTG *prgftg, short cftg);
-    bool FGetSave(FTG ftg, PST pstPrompt, PST pstDefault);
-    bool FBuild(long lwVol, long lwDir, PSTN pstn, FTG ftg);
+    bool FGetOpen(FileType *prgftg, short cftg);
+    bool FGetSave(FileType ftg, PST pstPrompt, PST pstDefault);
+    bool FBuild(long lwVol, long lwDir, PSTN pstn, FileType ftg);
 #elif defined(WIN)
     bool FGetOpen(achar *prgchFilter, HWND hwndOwner);
     bool FGetSave(achar *prgchFilter, HWND hwndOwner);
     bool FSearchInPath(PSTN pstn, PSTN pstnEnv = pvNil);
 #endif                                                   // WIN
-    bool FBuildFromPath(PSTN pstn, FTG ftgDef = ftgNil); // REVIEW shonk: Mac: implement
-    bool FGetUnique(FTG ftg);
+    bool FBuildFromPath(PSTN pstn, FileType ftgDef = ftgNil); // REVIEW shonk: Mac: implement
+    bool FGetUnique(FileType ftg);
     bool FGetTemp(void);
     void SetNil(void);
 
-    FTG Ftg(void);
+    FileType Ftg(void);
     ulong Grfvk(void); // volume kind (floppy/net/CD/etc)
-    bool FChangeFtg(FTG ftg);
+    bool FChangeFtg(FileType ftg);
 
-    bool FSetLeaf(PSTN pstn, FTG ftg = ftgNil);
+    bool FSetLeaf(PSTN pstn, FileType ftg = ftgNil);
     void GetLeaf(PSTN pstn);
     void GetStnPath(PSTN pstn);
 
     tribool TExists(void);
     bool FDelete(void);
-    bool FRename(PFNI pfniNew);
-    bool FEqual(PFNI pfni);
+    bool FRename(PFilename pfniNew);
+    bool FEqual(PFilename pfni);
 
     bool FDir(void);
-    bool FSameDir(PFNI pfni);
+    bool FSameDir(PFilename pfni);
     bool FDownDir(PSTN pstn, ulong grffni);
     bool FUpDir(PSTN pstn, ulong grffni);
 };
@@ -163,7 +165,7 @@ class FNE : public FNE_PAR
         long iv;
 #endif // MAC
 #ifdef WIN
-        FNI fni; // directory fni
+        Filename fni; // directory fni
         HN hn;   // for enumerating files/directories
         WIN32_FIND_DATA wfd;
         ulong grfvol; // which volumes are available (for enumerating volumes)
@@ -171,12 +173,12 @@ class FNE : public FNE_PAR
 #endif                // WIN
     };
 
-    FTG _rgftg[kcftgFneBase];
-    FTG *_prgftg;
+    FileType _rgftg[kcftgFneBase];
+    FileType *_prgftg;
     long _cftg;
     bool _fRecurse : 1;
     bool _fInited : 1;
-    PGL _pglfes;
+    PDynamicArray _pglfes;
     FES _fesCur;
 
     void _Free(void);
@@ -188,8 +190,8 @@ class FNE : public FNE_PAR
     FNE(void);
     ~FNE(void);
 
-    bool FInit(FNI *pfniDir, FTG *prgftg, long cftg, ulong grffne = ffneNil);
-    bool FNextFni(FNI *pfni, ulong *pgrffneOut = pvNil, ulong grffneIn = ffneNil);
+    bool FInit(Filename *pfniDir, FileType *prgftg, long cftg, ulong grffne = ffneNil);
+    bool FNextFni(Filename *pfni, ulong *pgrffneOut = pvNil, ulong grffneIn = ffneNil);
 };
 
 #endif //! FNI_H

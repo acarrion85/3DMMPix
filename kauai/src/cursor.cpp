@@ -27,11 +27,11 @@ CURS::~CURS(void)
 }
 
 /***************************************************************************
-    Read a cursor out of a CRF.
+    Read a cursor out of a ChunkyResourceFile.
 ***************************************************************************/
-bool CURS::FReadCurs(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool CURS::FReadCurs(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
-    PGG pggcurf;
+    PGeneralGroup pggcurf;
     long icurf, icurfBest;
     CURF curf;
     short bo;
@@ -45,7 +45,7 @@ bool CURS::FReadCurs(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
     if (pvNil == ppbaco)
         return fTrue;
 
-    if (pvNil == (pggcurf = GG::PggRead(pblck, &bo)) || pggcurf->IvMac() == 0)
+    if (pvNil == (pggcurf = GeneralGroup::PggRead(pblck, &bo)) || pggcurf->IvMac() == 0)
     {
         ReleasePpo(&pggcurf);
         return fFalse;

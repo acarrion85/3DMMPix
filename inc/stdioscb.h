@@ -8,7 +8,7 @@
  *	Author: ******
  *	Date: March, 1995
  *
- *	This file contains the studio scrollbar class SSCB.
+ *	This file contains the studio scrollbar class StudioScrollbars.
  *
 \*****************************************************************************/
 
@@ -21,10 +21,10 @@
 
 const long kctsFps = 20;
 
-#define SSCB_PAR BASE
-typedef class SSCB *PSSCB;
-#define kclsSSCB 'SSCB'
-class SSCB : public SSCB_PAR
+#define StudioScrollbars_PAR BASE
+typedef class StudioScrollbars *PStudioScrollbars;
+#define kclsStudioScrollbars 'SSCB'
+class StudioScrollbars : public StudioScrollbars_PAR
 {
     RTCLASS_DEC
     ASSERT
@@ -58,21 +58,21 @@ class SSCB : public SSCB_PAR
     long _itsNext;
 #endif // SHOW_FPS
 
-    PMVIE _pmvie;
-    SSCB(PMVIE pmvie);
+    PMovie _pmvie;
+    StudioScrollbars(PMovie pmvie);
 
   public:
     //
     //	Constructors and destructors
     //
-    static PSSCB PsscbNew(PMVIE pmvie);
-    ~SSCB(void);
+    static PStudioScrollbars PsscbNew(PMovie pmvie);
+    ~StudioScrollbars(void);
 
     //
     //	Notification
     //
     virtual void Update(void);
-    void SetMvie(PMVIE pmvie);
+    void SetMvie(PMovie pmvie);
     void StartNoAutoadjust(void);
     void EndNoAutoadjust(void)
     {

@@ -21,7 +21,7 @@ bool _FGetLwFromSzs(PSZS pszs, long *plw);
 ***************************************************************************/
 int __cdecl main(int cpszs, char *prgpszs[])
 {
-    FNI fniSrc, fniDst;
+    Filename fniSrc, fniDst;
     STN stn;
     char chs;
     FLO flo;
@@ -160,7 +160,7 @@ int __cdecl main(int cpszs, char *prgpszs[])
 
     if (cfmtNil != cfmt)
     {
-        BLCK blck;
+        DataBlock blck;
 
         if (!blck.FSetTemp(flo.cb) || !pmbmp->FWrite(&blck))
         {

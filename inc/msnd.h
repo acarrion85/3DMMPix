@@ -8,7 +8,7 @@
     Primary Authors: *****, *****
     Status:  Reviewed
 
-    BASE ---> BACO ---> MSND
+    BASE ---> BaseCacheableObject ---> MovieSoundMSND
     BASE ---> CMH  ---> MSQ
 
     NOTE: when the MSQ stops sounds, it does it based on sound class (scl)
@@ -21,7 +21,7 @@
     based on that information, we'd wind up calling into the SNDM a minimum
     of three times, plus three times for each actor; not only is the
     enumeration on this side inefficient (the MSQ would have to call into the
-    MVIE to enumerate all the known actors), but the number of calls to SNDM
+    Movie to enumerate all the known actors), but the number of calls to SNDM
     gets to be huge!  On top of all that, we'd probably wind up finding some
     bugs where a sound is still playing for an actor that's been deleted, and
     possibly fail to stop the sound properly (Murphy reigning strong in any
@@ -73,7 +73,7 @@ const long kSndChannels = 1;
     Movie Sound on file
 
 ****************************************/
-struct MSNDF
+struct MovieSoundFile
 {
     short bo;
     short osk;
@@ -81,9 +81,9 @@ struct MSNDF
     long vlmDefault; // default volume
     bool fInvalid;   // Invalid flag
 };
-const BOM kbomMsndf = 0x5FC00000;
+const ByteOrderMask kbomMsndf = 0x5FC00000;
 
-const CHID kchidSnd = 0; // Movie Sound sound/music
+const ChildChunkID kchidSnd = 0; // Movie Sound sound/music
 
 // Function to stop all movie sounds.
 inline void StopAllMovieSounds(void)
@@ -98,10 +98,10 @@ inline void StopAllMovieSounds(void)
     The Movie Sound class
 
 ****************************************/
-typedef class MSND *PMSND;
-#define MSND_PAR BACO
-#define kclsMSND 'MSND'
-class MSND : public MSND_PAR
+typedef class MovieSoundMSND *PMSND;
+#define MovieSoundMSND_PAR BaseCacheableObject
+#define kclsMovieSoundMSND 'MSND'
+class MovieSoundMSND : public MovieSoundMSND_PAR
 {
     RTCLASS_DEC
     ASSERT
@@ -109,8 +109,8 @@ class MSND : public MSND_PAR
 
   protected:
     // these are inherent to the msnd
-    CTG _ctgSnd;       // CTG of the WAV or MIDI chunk
-    CNO _cnoSnd;       // CNO of the WAV or MIDI chunk
+    ChunkTag _ctgSnd;       // ChunkTag of the WAV or MIDI chunk
+    ChunkNumber _cnoSnd;       // ChunkNumber of the WAV or MIDI chunk
     PRCA _prca;        // file that the WAV/MIDI lives in
     long _sty;         // MIDI, speech, or sfx
     long _vlm;         // Volume of the sound
@@ -119,17 +119,17 @@ class MSND : public MSND_PAR
     bool _fInvalid;    // Invalid flag
 
   protected:
-    bool _FInit(PCFL pcfl, CTG ctg, CNO cno);
+    bool _FInit(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno);
 
   public:
-    static bool FReadMsnd(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb);
-    static bool FGetMsndInfo(PCFL pcfl, CTG ctg, CNO cno, bool *pfInvalid = pvNil, long *psty = pvNil,
+    static bool FReadMsnd(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb);
+    static bool FGetMsndInfo(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, bool *pfInvalid = pvNil, long *psty = pvNil,
                              long *pvlm = pvNil);
-    static bool FCopyMidi(PFIL pfilSrc, PCFL pcflDest, CNO *pcno, PSTN pstn = pvNil);
-    static bool FWriteMidi(PCFL pcflDest, PMIDS pmids, STN *pstnName, CNO *pcno);
-    static bool FCopyWave(PFIL pfilSrc, PCFL pcflDest, long sty, CNO *pcno, PSTN pstn = pvNil);
-    static bool FWriteWave(PFIL pfilSrc, PCFL pcflDest, long sty, STN *pstnName, CNO *pcno);
-    ~MSND(void);
+    static bool FCopyMidi(PFIL pfilSrc, PChunkyFile pcflDest, ChunkNumber *pcno, PSTN pstn = pvNil);
+    static bool FWriteMidi(PChunkyFile pcflDest, PMIDS pmids, STN *pstnName, ChunkNumber *pcno);
+    static bool FCopyWave(PFIL pfilSrc, PChunkyFile pcflDest, long sty, ChunkNumber *pcno, PSTN pstn = pvNil);
+    static bool FWriteWave(PFIL pfilSrc, PChunkyFile pcflDest, long sty, STN *pstnName, ChunkNumber *pcno);
+    ~MovieSoundMSND(void);
 
     static long SqnActr(long sty, long objID);
     static long SqnBkgd(long sty, long objID);
@@ -214,7 +214,7 @@ class MSQ : public MSQ_PAR
     CMD_MAP_DEC(MSQ)
 
   protected:
-    PGL _pglsqe; // Sound queue entries
+    PDynamicArray _pglsqe; // Sound queue entries
     long _dtim;  // Time sound allowed to play
     PCLOK _pclok;
 

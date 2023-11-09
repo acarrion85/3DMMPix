@@ -9,7 +9,7 @@
              MPFNT: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> CMH ---> GOB ---> GOK ---> BRWD ---> BRWL ---> MP
+    BASE ---> CMH ---> GraphicsObject ---> KidspaceGraphicObject ---> BRWD ---> BRWL ---> MP
                                           |
                                           +------> BRWT ---> MPFNT
 
@@ -44,7 +44,7 @@ class MP : public MP_PAR
 
   public:
     static PMP PmpNew(long kidParent, long kidMenu, PRCA prca, PCMD pcmd, BWS bws, long ithumSelect, long sidSelect,
-                      CKI ckiRoot, CTG ctg, PCMH pcmh, long cid, bool fMoveTop);
+                      ChunkIdentification ckiRoot, ChunkTag ctg, PCMH pcmh, long cid, bool fMoveTop);
 
     virtual bool FCmdSelIdle(PCMD pcmd);
 };
@@ -66,13 +66,13 @@ class MPFNT : public MPFNT_PAR
     void _AdjustRc(long cthum, long cfrm);
 
     virtual void _ApplySelection(long ithumSelect, long sid);
-    virtual bool _FSetThumFrame(long istn, PGOB pgobPar);
+    virtual bool _FSetThumFrame(long istn, PGraphicsObject pgobPar);
     MPFNT(PGCB pgcb) : MPFNT_PAR(pgcb)
     {
     }
 
   public:
-    static PMPFNT PmpfntNew(PRCA prca, long kidParent, long kidMenu, PCMD pcmd, long ithumSelect, PGST pgst);
+    static PMPFNT PmpfntNew(PRCA prca, long kidParent, long kidMenu, PCMD pcmd, long ithumSelect, PStringTable pgst);
 
     virtual bool FCmdSelIdle(PCMD pcmd);
 };

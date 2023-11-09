@@ -5,11 +5,13 @@
     Primary Author: ******
     Review Status: REVIEWED - any changes to this file must be reviewed!
 
-    BASE ---> BWLD
+    BASE ---> World
 
 ***************************************************************************/
 #ifndef BWLD_H
 #define BWLD_H
+
+namespace BRender {
 
 // Callback function per BACT when it's rendered, passing the 2D bounds
 typedef void FNBACTREND(PBACT pbact, RC *prc);
@@ -26,10 +28,10 @@ typedef FNGETRECT *PFNGETRECT;
 /****************************************
     The BRender world class
 ****************************************/
-typedef class BWLD *PBWLD;
-#define BWLD_PAR BASE
-#define kclsBWLD 'BWLD'
-class BWLD : public BWLD_PAR
+typedef class World *PWorld;
+#define World_PAR BASE
+#define kclsWorld 'BWLD'
+class World : public World_PAR
 {
     RTCLASS_DEC
     ASSERT
@@ -60,14 +62,14 @@ class BWLD : public BWLD_PAR
     PBACT _pbactClosestClicked;  // The closest actor that has been clicked
     BRS _dzpClosestClicked;      // Distance of the closest clicked actor
     // Keep reference to last background in case we switch to/from halfmode:
-    PCRF _pcrf;
-    CTG _ctgRGB;
-    CNO _cnoRGB;
-    CTG _ctgZ;
-    CNO _cnoZ;
+    PChunkyResourceFile _pcrf;
+    ChunkTag _ctgRGB;
+    ChunkNumber _cnoRGB;
+    ChunkTag _ctgZ;
+    ChunkNumber _cnoZ;
 
   protected:
-    BWLD(void)
+    World(void)
     {
     }
     bool _FInit(long dxp, long dyp, bool fHalfX, bool fHalfY);
@@ -80,8 +82,8 @@ class BWLD : public BWLD_PAR
 
   public:
     // Constructors and destructors
-    static PBWLD PbwldNew(long dxp, long dyp, bool fHalfX = fFalse, bool fhalfY = fFalse);
-    ~BWLD();
+    static PWorld PbwldNew(long dxp, long dyp, bool fHalfX = fFalse, bool fhalfY = fFalse);
+    ~World();
     static void CloseBRender(void);
 
     // Dirtying the BRender world and bitmap
@@ -89,10 +91,10 @@ class BWLD : public BWLD_PAR
     {
         _fWorldChanged = fTrue;
     }
-    void MarkRenderedRegn(PGOB pgob, long dxp, long dyp);
+    void MarkRenderedRegn(PGraphicsObject pgob, long dxp, long dyp);
 
     // Background stuff
-    bool FSetBackground(PCRF pcrf, CTG ctgRGB, CNO cnoRGB, CTG ctgZ, CNO cnoZ);
+    bool FSetBackground(PChunkyResourceFile pcrf, ChunkTag ctgRGB, ChunkNumber cnoRGB, ChunkTag ctgZ, ChunkNumber cnoZ);
     void SetCamera(BMAT34 *pbmat34, BRS zrHither, BRS zrYon, BRA aFov);
     void GetCamera(BMAT34 *pbmat34, BRS *pzrHither = pvNil, BRS *pzrYon = pvNil, BRA *paFov = pvNil);
 
@@ -129,8 +131,10 @@ class BWLD : public BWLD_PAR
     void Draw(PGNV pgnv, RC *prcClip, long dxp, long dyp);
 
 #ifdef DEBUG
-    bool FWriteBmp(PFNI pfni);
+    bool FWriteBmp(PFilename pfni);
 #endif // DEBUG
 };
+
+} // end of namespace BRender
 
 #endif BWLD_H

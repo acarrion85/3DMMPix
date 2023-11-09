@@ -36,11 +36,11 @@ PIC::~PIC(void)
     Read a picture from a chunky file.  This routine only reads or converts
     OS specific representations with the given chid value.
 ***************************************************************************/
-PPIC PIC::PpicFetch(PCFL pcfl, CTG ctg, CNO cno, CHID chid)
+PPIC PIC::PpicFetch(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno, ChildChunkID chid)
 {
     AssertPo(pcfl, 0);
-    KID kid;
-    BLCK blck;
+    ChildChunkIdentification kid;
+    DataBlock blck;
 
     if (!pcfl->FFind(ctg, cno))
         return pvNil;
@@ -57,7 +57,7 @@ PPIC PIC::PpicFetch(PCFL pcfl, CTG ctg, CNO cno, CHID chid)
     Read a picture from a chunky file.  This routine only reads a system
     specific pict (Mac PICT or Windows MetaFile) and its header.
 ***************************************************************************/
-PPIC PIC::PpicRead(PBLCK pblck)
+PPIC PIC::PpicRead(PDataBlock pblck)
 {
     AssertPo(pblck, fblckReadable);
     HPIC hpic;
@@ -98,9 +98,9 @@ long PIC::CbOnFile(void)
 }
 
 /***************************************************************************
-    Write the meta file (and its header) to the given BLCK.
+    Write the meta file (and its header) to the given DataBlock.
 ***************************************************************************/
-bool PIC::FWrite(PBLCK pblck)
+bool PIC::FWrite(PDataBlock pblck)
 {
     AssertThis(0);
     AssertPo(pblck, 0);
@@ -124,7 +124,7 @@ bool PIC::FWrite(PBLCK pblck)
 /***************************************************************************
     Static method to read the file as a native picture (PICT file on Mac).
 ***************************************************************************/
-PPIC PIC::PpicReadNative(FNI *pfni)
+PPIC PIC::PpicReadNative(Filename *pfni)
 {
     AssertPo(pfni, ffniFile);
     PFIL pfil;

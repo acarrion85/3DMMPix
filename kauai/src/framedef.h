@@ -81,7 +81,7 @@
 #define kgrfcustApp 0xFFFF0000
 
 /***************************************************************************
-    Property id's.  For APPB::FSetProp and APPB::FGetProp.
+    Property id's.  For ApplicationBase::FSetProp and ApplicationBase::FGetProp.
 ***************************************************************************/
 #define kpridMaximized 1
 #define kpridFullScreen 2
@@ -246,6 +246,7 @@
 #define cidPrint 138
 #define cidPrintSetup 139
 #define cidPasteSpecial 140
+#define cidSelectAll 141
 
 #define wcidListBase 50000 // for windows menu list handling
 #define dwcidList 500      // increment between list base values
@@ -288,7 +289,7 @@
 #define cidIdle 400000
 #define cidSelIdle 400001   // idle for settting/clearing selection.
 #define cidMouseMove 400002 // mouse moved
-#define cidRollOff 400003   // mouse rolled off the GOB
+#define cidRollOff 400003   // mouse rolled off the GraphicsObject
 
 #define cidLimNoRecord 600000
 

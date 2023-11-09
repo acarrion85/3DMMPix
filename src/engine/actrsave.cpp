@@ -10,7 +10,7 @@
 
     Here's the chunk hierarchy:
 
-    ACTR // contains an ACTF (origin, arid, nfrmFirst, tagTmpl...)
+    Actor // contains an ACTF (origin, arid, nfrmFirst, tagTmpl...)
      |
      +---PATH (chid 0) // _pglxyz (actor path)
      |
@@ -21,40 +21,42 @@
 #include "soc.h"
 ASSERTNAME
 
-const CHID kchidPath = 0;
-const CHID kchidGgae = 0;
+using namespace ActorEvent;
+
+const ChildChunkID kchidPath = 0;
+const ChildChunkID kchidGgae = 0;
 
 struct ACTF // Actor chunk on file
 {
     short bo;        // Byte order
     short osk;       // OS kind
-    XYZ dxyzFullRte; // Translation of the route
+    RoutePoint dxyzFullRte; // Translation of the route
     long arid;       // Unique id assigned to this actor.
     long nfrmFirst;  // First frame in this actor's stage life
     long nfrmLast;   // Last frame in this actor's stage life
     TAG tagTmpl;     // Tag to actor's template
 };
-const BOM kbomActf = 0x5ffc0000 | kbomTag;
+const ByteOrderMask kbomActf = 0x5ffc0000 | kbomTag;
 
 /***************************************************************************
-    Write the actor out to disk.  Store the root chunk in the given CNO.
+    Write the actor out to disk.  Store the root chunk in the given ChunkNumber.
     If this function returns false, it is the client's responsibility to
     delete the actor chunks.
 ***************************************************************************/
-bool ACTR::FWrite(PCFL pcfl, CNO cnoActr, CNO cnoScene)
+bool Actor::FWrite(PChunkyFile pcfl, ChunkNumber cnoActr, ChunkNumber cnoScene)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);
 
     ACTF actf;
-    CNO cnoPath;
-    CNO cnoGgae;
-    CNO cnoTmpl;
-    BLCK blck;
-    KID kid;
+    ChunkNumber cnoPath;
+    ChunkNumber cnoGgae;
+    ChunkNumber cnoTmpl;
+    DataBlock blck;
+    ChildChunkIdentification kid;
     long iaev;
-    AEV *paev;
-    AEVSND aevsnd;
+    Base *paev;
+    Sound aevsnd;
     long nfrmFirst;
     long nfrmLast;
 
@@ -77,7 +79,7 @@ bool ACTR::FWrite(PCFL pcfl, CNO cnoActr, CNO cnoScene)
         {
             if (!((PTDT)_ptmpl)->FWrite(pcfl, _tagTmpl.ctg, &cnoTmpl))
                 return fFalse;
-            // Keep CNO the same
+            // Keep ChunkNumber the same
             pcfl->Move(_tagTmpl.ctg, cnoTmpl, _tagTmpl.ctg, _tagTmpl.cno);
         }
 
@@ -91,7 +93,7 @@ bool ACTR::FWrite(PCFL pcfl, CNO cnoActr, CNO cnoScene)
         }
     }
 
-    // Write the ACTR chunk:
+    // Write the Actor chunk:
     actf.bo = kboCur;
     actf.osk = koskCur;
     actf.dxyzFullRte = _dxyzFullRte;
@@ -121,7 +123,7 @@ bool ACTR::FWrite(PCFL pcfl, CNO cnoActr, CNO cnoScene)
     // Adopt actor sounds into the scene
     for (iaev = 0; iaev < _pggaev->IvMac(); iaev++)
     {
-        paev = (AEV *)(_pggaev->QvFixedGet(iaev));
+        paev = (Base *)(_pggaev->QvFixedGet(iaev));
         if (aetSnd != paev->aet)
             continue;
         _pggaev->Get(iaev, &aevsnd);
@@ -154,15 +156,15 @@ bool ACTR::FWrite(PCFL pcfl, CNO cnoActr, CNO cnoScene)
     Read the actor data from disk, (re-)construct the actor, and return a
     pointer to it.
 ***************************************************************************/
-PACTR ACTR::PactrRead(PCRF pcrf, CNO cnoActr)
+PActor Actor::PactrRead(PChunkyResourceFile pcrf, ChunkNumber cnoActr)
 {
     AssertPo(pcrf, 0);
 
-    ACTR *pactr;
-    KID kid;
-    PCFL pcfl = pcrf->Pcfl();
+    Actor *pactr;
+    ChildChunkIdentification kid;
+    PChunkyFile pcfl = pcrf->Pcfl();
 
-    pactr = NewObj ACTR;
+    pactr = NewObj Actor;
     if (pvNil == pactr)
         goto LFail;
     if (!pactr->_FReadActor(pcfl, cnoActr))
@@ -177,7 +179,7 @@ PACTR ACTR::PactrRead(PCRF pcrf, CNO cnoActr)
         goto LFail;
     if (!pactr->_FOpenTags(pcrf))
         goto LFail;
-    if (pvNil == (pactr->_pglsmm = GL::PglNew(size(SMM), kcsmmGrow)))
+    if (pvNil == (pactr->_pglsmm = DynamicArray::PglNew(size(SMM), kcsmmGrow)))
         goto LFail;
     pactr->_pglsmm->SetMinGrow(kcsmmGrow);
 
@@ -206,7 +208,7 @@ LFail:
     Read the ACTF. This handles converting an ACTF that doesn't have an
     nfrmLast.
 ***************************************************************************/
-bool _FReadActf(PBLCK pblck, ACTF *pactf)
+bool _FReadActf(PDataBlock pblck, ACTF *pactf)
 {
     AssertPo(pblck, 0);
     AssertVarMem(pactf);
@@ -244,15 +246,15 @@ bool _FReadActf(PBLCK pblck, ACTF *pactf)
 }
 
 /***************************************************************************
-    Read the ACTR chunk
+    Read the Actor chunk
 ***************************************************************************/
-bool ACTR::_FReadActor(PCFL pcfl, CNO cno)
+bool Actor::_FReadActor(PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertBaseThis(0);
     AssertPo(pcfl, 0);
 
     ACTF actf;
-    BLCK blck;
+    DataBlock blck;
 
     if (!pcfl->FFind(kctgActr, cno, &blck) || !_FReadActf(&blck, &actf))
         return fFalse;
@@ -269,7 +271,7 @@ bool ACTR::_FReadActor(PCFL pcfl, CNO cno)
     {
         // Actor is a TDT.  Tag might be wrong if this actor was imported,
         // so look for child TMPL.
-        KID kid;
+        ChildChunkIdentification kid;
 
         if (!pcfl->FGetKidChidCtg(kctgActr, cno, 0, kctgTmpl, &kid))
         {
@@ -284,24 +286,24 @@ bool ACTR::_FReadActor(PCFL pcfl, CNO cno)
 
 /******************************************************************************
     FAdjustAridOnFile
-        Given a chunky file, a CNO and a delta for the arid, updates the
+        Given a chunky file, a ChunkNumber and a delta for the arid, updates the
         arid for the actor on file.
 
     Arguments:
-        PCFL pcfl   -- the file the actor's on
-        CNO cno     -- the CNO of the actor
+        PChunkyFile pcfl   -- the file the actor's on
+        ChunkNumber cno     -- the ChunkNumber of the actor
         long darid  -- the change of the arid
 
     Returns: fTrue if everything went well, fFalse otherwise
 
 ************************************************************ PETED ***********/
-bool ACTR::FAdjustAridOnFile(PCFL pcfl, CNO cno, long darid)
+bool Actor::FAdjustAridOnFile(PChunkyFile pcfl, ChunkNumber cno, long darid)
 {
     AssertPo(pcfl, 0);
     Assert(darid != 0, "Why call this with darid == 0?");
 
     ACTF actf;
-    BLCK blck;
+    DataBlock blck;
 
     if (!pcfl->FFind(kctgActr, cno, &blck) || !_FReadActf(&blck, &actf))
         return fFalse;
@@ -314,23 +316,23 @@ bool ACTR::FAdjustAridOnFile(PCFL pcfl, CNO cno, long darid)
 /***************************************************************************
     Read the PATH (_pglrpt) chunk
 ***************************************************************************/
-bool ACTR::_FReadRoute(PCFL pcfl, CNO cno)
+bool Actor::_FReadRoute(PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertBaseThis(0);
     AssertPo(pcfl, 0);
 
-    BLCK blck;
+    DataBlock blck;
     short bo;
 
     if (!pcfl->FFind(kctgPath, cno, &blck))
         return fFalse;
-    _pglrpt = GL::PglRead(&blck, &bo);
+    _pglrpt = DynamicArray::PglRead(&blck, &bo);
     if (pvNil == _pglrpt)
         return fFalse;
-    AssertBomRglw(kbomRpt, size(RPT));
+    AssertBomRglw(kbomRpt, size(RouteDistancePoint));
     if (kboOther == bo)
     {
-        SwapBytesRglw(_pglrpt->QvGet(0), LwMul(_pglrpt->IvMac(), size(RPT) / size(long)));
+        SwapBytesRglw(_pglrpt->QvGet(0), LwMul(_pglrpt->IvMac(), size(RouteDistancePoint) / size(long)));
     }
     return fTrue;
 }
@@ -338,17 +340,17 @@ bool ACTR::_FReadRoute(PCFL pcfl, CNO cno)
 /***************************************************************************
     Read the GGAE (_pggaev) chunk
 ***************************************************************************/
-bool ACTR::_FReadEvents(PCFL pcfl, CNO cno)
+bool Actor::_FReadEvents(PChunkyFile pcfl, ChunkNumber cno)
 {
     AssertBaseThis(0);
     AssertPo(pcfl, 0);
 
-    BLCK blck;
+    DataBlock blck;
     short bo;
 
     if (!pcfl->FFind(kctgGgae, cno, &blck))
         return fFalse;
-    _pggaev = GG::PggRead(&blck, &bo);
+    _pggaev = GeneralGroup::PggRead(&blck, &bo);
     if (pvNil == _pggaev)
         return fFalse;
     if (kboOther == bo)
@@ -359,7 +361,7 @@ bool ACTR::_FReadEvents(PCFL pcfl, CNO cno)
 /***************************************************************************
     SwapBytes all events in pggaev
 ***************************************************************************/
-void ACTR::_SwapBytesPggaev(PGG pggaev)
+void Actor::_SwapBytesPggaev(PGeneralGroup pggaev)
 {
     AssertPo(pggaev, 0);
 
@@ -368,7 +370,7 @@ void ACTR::_SwapBytesPggaev(PGG pggaev)
     for (iaev = 0; iaev < pggaev->IvMac(); iaev++)
     {
         SwapBytesBom(pggaev->QvFixedGet(iaev), kbomAev);
-        switch (((AEV *)pggaev->QvFixedGet(iaev))->aet)
+        switch (((Base *)pggaev->QvFixedGet(iaev))->aet)
         {
         case aetCost:
             SwapBytesBom(pggaev->QvGet(iaev), kbomAevcost);
@@ -417,7 +419,7 @@ void ACTR::_SwapBytesPggaev(PGG pggaev)
 /***************************************************************************
     Open all tags for this actor
 ***************************************************************************/
-bool ACTR::_FOpenTags(PCRF pcrf)
+bool Actor::_FOpenTags(PChunkyResourceFile pcrf)
 {
     AssertBaseThis(0);
     AssertPo(pcrf, 0);
@@ -453,7 +455,7 @@ LFail:
 /***************************************************************************
     Close all tags in this actor's event stream
 ***************************************************************************/
-void ACTR::_CloseTags(void)
+void Actor::_CloseTags(void)
 {
     AssertBaseThis(0); // because destructor calls this function
 
@@ -478,21 +480,21 @@ void ACTR::_CloseTags(void)
 /***************************************************************************
     Get all the tags that the actor uses
 ***************************************************************************/
-PGL ACTR::PgltagFetch(PCFL pcfl, CNO cno, bool *pfError)
+PDynamicArray Actor::PgltagFetch(PChunkyFile pcfl, ChunkNumber cno, bool *pfError)
 {
     AssertPo(pcfl, 0);
     AssertVarMem(pfError);
 
     ACTF actf;
-    BLCK blck;
+    DataBlock blck;
     short bo;
     PTAG ptag;
-    PGL pgltag;
-    PGG pggaev = pvNil;
+    PDynamicArray pgltag;
+    PGeneralGroup pggaev = pvNil;
     long iaev;
-    KID kid;
+    ChildChunkIdentification kid;
 
-    pgltag = GL::PglNew(size(TAG), 0);
+    pgltag = DynamicArray::PglNew(size(TAG), 0);
     if (pvNil == pgltag)
         goto LFail;
 
@@ -502,7 +504,7 @@ PGL ACTR::PgltagFetch(PCFL pcfl, CNO cno, bool *pfError)
 
     if (actf.tagTmpl.sid == ksidUseCrf)
     {
-        PGL pgltagTmpl;
+        PDynamicArray pgltagTmpl;
 
         // Actor is a TDT.  Tag might be wrong if this actor was imported,
         // so look for child TMPL.
@@ -547,7 +549,7 @@ PGL ACTR::PgltagFetch(PCFL pcfl, CNO cno, bool *pfError)
         goto LFail;
     if (!pcfl->FFind(kctgGgae, kid.cki.cno, &blck))
         goto LFail;
-    pggaev = GG::PggRead(&blck, &bo);
+    pggaev = GeneralGroup::PggRead(&blck, &bo);
     if (pvNil == pggaev)
         goto LFail;
     if (kboOther == bo)
@@ -579,29 +581,29 @@ LFail:
     If the iaev'th event of pggaev has a tag, sets *pptag to point to it.
     WARNING: unless you locked pggaev, *pptag is a qtag!
 ***************************************************************************/
-bool ACTR::_FIsIaevTag(PGG pggaev, long iaev, PTAG *pptag, PAEV *pqaev)
+bool Actor::_FIsIaevTag(PGeneralGroup pggaev, long iaev, PTAG *pptag, PBase *pqaev)
 {
     AssertPo(pggaev, 0);
     AssertIn(iaev, 0, pggaev->IvMac());
     AssertVarMem(pptag);
     AssertNilOrVarMem(pqaev);
 
-    AEV *qaev;
-    qaev = (AEV *)pggaev->QvFixedGet(iaev);
+    Base *qaev;
+    qaev = (Base *)pggaev->QvFixedGet(iaev);
     if (pqaev != pvNil)
         *pqaev = qaev;
 
     switch (qaev->aet)
     {
     case aetCost:
-        if (!((AEVCOST *)pggaev->QvGet(iaev))->fCmtl)
+        if (!((Costume *)pggaev->QvGet(iaev))->fCmtl)
         {
-            *pptag = &((AEVCOST *)pggaev->QvGet(iaev))->tag;
+            *pptag = &((Costume *)pggaev->QvGet(iaev))->tag;
             return fTrue;
         }
         break;
     case aetSnd:
-        *pptag = &((AEVSND *)pggaev->QvGet(iaev))->tag;
+        *pptag = &((Sound *)pggaev->QvGet(iaev))->tag;
         return fTrue;
     case aetSize:
     case aetPull:

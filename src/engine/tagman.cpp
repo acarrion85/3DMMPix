@@ -11,18 +11,18 @@
     It is important to keep in mind that there are two layers of caching
     going on in TAGM: Caching content from the CD (or other slow source)
     to the local hard disk, and caching resources in RAM using chunky
-    resources (the CRF and CRM classes).
+    resources (the ChunkyResourceFile and ChunkyResourceManager classes).
 
-    For each source, TAGM maintains (in an SFS) a CRM (Chunky Resource
-    Manager) of all the content	files on the source and a CRF (Chunky
+    For each source, TAGM maintains (in an SFS) a ChunkyResourceManager (Chunky Resource
+    Manager) of all the content	files on the source and a ChunkyResourceFile (Chunky
     Resource File), which is a single file on the HD which can be used
     for faster access to the source.  Both CRFs and CRMs can cache
     resources in RAM.  Since Socrates copies *all* content from the CD
-    to the cache file, the CRM is told not to cache its resources in
+    to the cache file, the ChunkyResourceManager is told not to cache its resources in
     RAM.  However, if the source is actually on the HD, TAGM notices and
     doesn't copy any content to a cache file, since that would be a waste
-    of time.  Instead, the content is read directly from the CRM.  In this
-    case, TAGM does tell the CRM to cache its resources in RAM.
+    of time.  Instead, the content is read directly from the ChunkyResourceManager.  In this
+    case, TAGM does tell the ChunkyResourceManager to cache its resources in RAM.
 
     Source names: every source has a long and short name.  This is so we
     can use long names for the source directory on the HD (e.g., "3D Movie
@@ -30,7 +30,7 @@
     ("3DMOVIE").  We have to support short names because CD-ROMs currently
     do not allow long filenames.  So everywhere that we look for the
     source directory, we accept either the long or short name.
-    _pgstSource keeps track of these names.  Rather than have one GST for
+    _pgstSource keeps track of these names.  Rather than have one StringTable for
     short names and one for long names, each string in _pgstSource is the
     "merged name", which is the long name followed by a slash character
     (/) followed by the short name, e.g., "3D Movie Maker/3DMOVIE".  The
@@ -43,16 +43,16 @@ ASSERTNAME
 
 RTCLASS(TAGM)
 
-const BOM kbomSid = 0xc0000000;
+const ByteOrderMask kbomSid = 0xc0000000;
 
 // Source File Structure...keeps track of known sources and caches
 struct SFS
 {
   public:
     long sid;             // ID for this source
-    FNI fniHD;            // FNI of the HD directory
-    FNI fniCD;            // FNI of the CD directory
-    PCRM pcrmSource;      // CRM of files on the CD (or possibly HD)
+    Filename fniHD;            // Filename of the HD directory
+    Filename fniCD;            // Filename of the CD directory
+    PChunkyResourceManager pcrmSource;      // ChunkyResourceManager of files on the CD (or possibly HD)
     tribool tContentOnHD; // Is the content on the HD or CD?
 
   public:
@@ -69,7 +69,7 @@ struct SFS
 /***************************************************************************
     Initialize the tag manager
 ***************************************************************************/
-PTAGM TAGM::PtagmNew(PFNI pfniHDRoot, PFNINSCD pfninscd, long cbCache)
+PTAGM TAGM::PtagmNew(PFilename pfniHDRoot, PFNINSCD pfninscd, long cbCache)
 {
     AssertPo(pfniHDRoot, ffniDir);
     Assert(pvNil != pfninscd, "bad pfninscd");
@@ -85,11 +85,11 @@ PTAGM TAGM::PtagmNew(PFNI pfniHDRoot, PFNINSCD pfninscd, long cbCache)
     ptagm->_cbCache = cbCache;
     ptagm->_pfninscd = pfninscd;
 
-    ptagm->_pglsfs = GL::PglNew(size(SFS));
+    ptagm->_pglsfs = DynamicArray::PglNew(size(SFS));
     if (pvNil == ptagm->_pglsfs)
         goto LFail;
 
-    ptagm->_pgstSource = GST::PgstNew(size(long)); // extra data is sid
+    ptagm->_pgstSource = StringTable::PgstNew(size(long)); // extra data is sid
     if (pvNil == ptagm->_pgstSource)
         goto LFail;
 
@@ -151,7 +151,7 @@ void TAGM::SplitString(PSTN pstnMerged, PSTN pstnLong, PSTN pstnShort)
 /***************************************************************************
     Return source title string table so it can be embedded in documents
 ***************************************************************************/
-PGST TAGM::PgstSource(void)
+PStringTable TAGM::PgstSource(void)
 {
     AssertThis(0);
     return _pgstSource;
@@ -188,7 +188,7 @@ bool TAGM::_FFindSid(long sid, long *pistn)
     Add source title string table entries to tag manager, if it doesn't
     already know them.
 ***************************************************************************/
-bool TAGM::FMergeGstSource(PGST pgst, short bo, short osk)
+bool TAGM::FMergeGstSource(PStringTable pgst, short bo, short osk)
 {
     AssertThis(0);
     AssertPo(pgst, 0);
@@ -298,13 +298,13 @@ bool TAGM::_FGetStnSplitOfSid(long sid, PSTN pstnLong, PSTN pstnShort)
 }
 
 /***************************************************************************
-    Builds the FNI to the HD files for a given sid
+    Builds the Filename to the HD files for a given sid
     - If we don't even know the string for the sid, return fFalse
     - If there is no fniHD, set *pfExists to fFalse and return fTrue
     - If we find the fniHD, put it in *pfniHD, set *pfExists to fTrue,
       and return fTrue
 ***************************************************************************/
-bool TAGM::_FBuildFniHD(long sid, PFNI pfniHD, bool *pfExists)
+bool TAGM::_FBuildFniHD(long sid, PFilename pfniHD, bool *pfExists)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
@@ -313,7 +313,7 @@ bool TAGM::_FBuildFniHD(long sid, PFNI pfniHD, bool *pfExists)
 
     STN stnLong;
     STN stnShort;
-    FNI fni;
+    Filename fni;
 
     *pfExists = fFalse;
     if (!_FGetStnSplitOfSid(sid, &stnLong, &stnShort))
@@ -334,15 +334,15 @@ bool TAGM::_FBuildFniHD(long sid, PFNI pfniHD, bool *pfExists)
 /***************************************************************************
     See if there are any content files in the directory specified by pfni
 ***************************************************************************/
-bool TAGM::_FDetermineIfContentOnFni(PFNI pfni, bool *pfContentOnFni)
+bool TAGM::_FDetermineIfContentOnFni(PFilename pfni, bool *pfContentOnFni)
 {
     AssertThis(0);
     AssertPo(pfni, ffniDir);
     AssertVarMem(pfContentOnFni);
 
     FNE fne;
-    FTG ftgContent = kftgContent;
-    FNI fni;
+    FileType ftgContent = kftgContent;
+    Filename fni;
 
     if (!fne.FInit(pfni, &ftgContent, 1))
         return fFalse;
@@ -358,7 +358,7 @@ bool TAGM::_FDetermineIfContentOnFni(PFNI pfni, bool *pfContentOnFni)
     think it does.  Or, if pstn is non-nil, try to go down from pfniCD
     to pstn.
 ***************************************************************************/
-bool TAGM::_FEnsureFniCD(long sid, FNI *pfniCD, PSTN pstn)
+bool TAGM::_FEnsureFniCD(long sid, Filename *pfniCD, PSTN pstn)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
@@ -393,23 +393,23 @@ bool TAGM::_FEnsureFniCD(long sid, FNI *pfniCD, PSTN pstn)
 
 /***************************************************************************
     This function verifies that the source (e.g., CD) is where we think it
-    is, and searches for it otherwise.  Pass the previously determined FNI
+    is, and searches for it otherwise.  Pass the previously determined Filename
     of the CD directory file in pfniCD.  Or if this is the first time
-    looking for this source, pass in any FNI with a FTG of ftgNil.	If it
+    looking for this source, pass in any Filename with a FileType of ftgNil.	If it
     can't find the CD directory, it returns fFalse with pfniInfo untouched.
 ***************************************************************************/
-bool TAGM::_FFindFniCD(long sid, PFNI pfniCD, bool *pfFniChanged)
+bool TAGM::_FFindFniCD(long sid, PFilename pfniCD, bool *pfFniChanged)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
-    AssertPo(pfniCD, ffniEmpty | ffniDir); // could be a blank FNI
+    AssertPo(pfniCD, ffniEmpty | ffniDir); // could be a blank Filename
     AssertVarMem(pfFniChanged);
 
     FNE fne;
-    FNI fni;
+    Filename fni;
     STN stnLong;
     STN stnShort;
-    FNI fniCD;
+    Filename fniCD;
 
     *pfFniChanged = fFalse;
 
@@ -424,7 +424,7 @@ bool TAGM::_FFindFniCD(long sid, PFNI pfniCD, bool *pfFniChanged)
         }
         else
         {
-            // With the way the CRM stuff works now, the CRM can't
+            // With the way the ChunkyResourceManager stuff works now, the ChunkyResourceManager can't
             // move to another path.  So fail if the CD isn't exactly
             // where it was before.
             return fFalse;
@@ -476,23 +476,23 @@ bool TAGM::_FRetry(long sid)
 }
 
 /***************************************************************************
-    Builds the CRM for the given sid's source.  pfniDir tells where the
+    Builds the ChunkyResourceManager for the given sid's source.  pfniDir tells where the
     content files are.
 ***************************************************************************/
-PCRM TAGM::_PcrmSourceNew(long sid, PFNI pfniDir)
+PChunkyResourceManager TAGM::_PcrmSourceNew(long sid, PFilename pfniDir)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
     AssertPo(pfniDir, ffniDir);
 
     STN stn;
-    FNI fni;
-    PCRM pcrmSource = pvNil;
+    Filename fni;
+    PChunkyResourceManager pcrmSource = pvNil;
     FNE fne;
-    FTG ftgChk = kftgContent;
-    PCFL pcfl = pvNil;
+    FileType ftgChk = kftgContent;
+    PChunkyFile pcfl = pvNil;
 
-    pcrmSource = CRM::PcrmNew(0);
+    pcrmSource = ChunkyResourceManager::PcrmNew(0);
     if (pvNil == pcrmSource)
         goto LFail;
 
@@ -501,7 +501,7 @@ PCRM TAGM::_PcrmSourceNew(long sid, PFNI pfniDir)
         goto LFail;
     while (fne.FNextFni(&fni))
     {
-        pcfl = CFL::PcflOpen(&fni, fcflNil);
+        pcfl = ChunkyFile::PcflOpen(&fni, fcflNil);
         if (pvNil == pcfl)
             goto LFail;
         if (!pcrmSource->FAddCfl(pcfl, _cbCache))
@@ -516,11 +516,11 @@ LFail:
 }
 
 /***************************************************************************
-    Returns the source CRM for the given sid, creating (and remembering) a
+    Returns the source ChunkyResourceManager for the given sid, creating (and remembering) a
     new one if there isn't one already.  It verifies that the CD is still
     in the drive, unless fDontHitCD is fTrue.
 ***************************************************************************/
-PCRM TAGM::_PcrmSourceGet(long sid, bool fDontHitCD)
+PChunkyResourceManager TAGM::_PcrmSourceGet(long sid, bool fDontHitCD)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
@@ -658,9 +658,9 @@ LSetupSfs:
 }
 
 /***************************************************************************
-    Get the FNI for the HD directory
+    Get the Filename for the HD directory
 ***************************************************************************/
-bool TAGM::_FGetFniHD(long sid, PFNI pfniHD)
+bool TAGM::_FGetFniHD(long sid, PFilename pfniHD)
 {
     AssertThis(0);
     AssertVarMem(pfniHD);
@@ -692,9 +692,9 @@ LSetupSFS:
 }
 
 /***************************************************************************
-    Get the FNI for the CD directory
+    Get the Filename for the CD directory
 ***************************************************************************/
-bool TAGM::_FGetFniCD(long sid, PFNI pfniCD, bool fAskForCD)
+bool TAGM::_FGetFniCD(long sid, PFilename pfniCD, bool fAskForCD)
 {
     AssertThis(0);
     AssertVarMem(pfniCD);
@@ -731,14 +731,14 @@ LSetupSFS:
 /***************************************************************************
     Finds the file with name pstn on the HD or CD.
 ***************************************************************************/
-bool TAGM::FFindFile(long sid, PSTN pstn, PFNI pfni, bool fAskForCD)
+bool TAGM::FFindFile(long sid, PSTN pstn, PFilename pfni, bool fAskForCD)
 {
     AssertThis(0);
     Assert(sid >= 0, "Invalid sid");
     AssertPo(pstn, 0);
     AssertVarMem(pfni);
 
-    FTG ftg;
+    FileType ftg;
 
     if (!pfni->FBuildFromPath(pstn))
         return fFalse;
@@ -764,16 +764,16 @@ bool TAGM::FFindFile(long sid, PSTN pstn, PFNI pfni, bool fAskForCD)
     Build a tag for a child of another tag.  Note that this may hit the
     CD if _PcrmSourceGet has not yet been called for ptagPar->sid.
 ***************************************************************************/
-bool TAGM::FBuildChildTag(PTAG ptagPar, CHID chid, CTG ctgChild, PTAG ptagChild)
+bool TAGM::FBuildChildTag(PTAG ptagPar, ChildChunkID chid, ChunkTag ctgChild, PTAG ptagChild)
 {
     AssertThis(0);
     AssertVarMem(ptagPar);
     Assert(ptagPar->sid >= 0, "Invalid sid");
     AssertVarMem(ptagChild);
 
-    PCRM pcrmSource;
-    PCRF pcrfSource;
-    KID kid;
+    PChunkyResourceManager pcrmSource;
+    PChunkyResourceFile pcrfSource;
+    ChildChunkIdentification kid;
 
     TrashVar(ptagChild);
 
@@ -817,10 +817,10 @@ bool TAGM::FCacheTagToHD(PTAG ptag, bool fCacheChildChunks)
     AssertVarMem(ptag);
     Assert(ptag->sid >= 0, "Invalid sid");
 
-    PCRM pcrmSource;
-    PCRF pcrfSource;
+    PChunkyResourceManager pcrmSource;
+    PChunkyResourceFile pcrfSource;
     bool fSourceIsOnHD;
-    PCFL pcfl;
+    PChunkyFile pcfl;
 
     if (ksidUseCrf == ptag->sid)
         return fTrue;
@@ -846,7 +846,7 @@ bool TAGM::FCacheTagToHD(PTAG ptag, bool fCacheChildChunks)
         // Cache the chunk specified by the tag, and all its child
         // chunks.
         CGE cge;
-        KID kid;
+        ChildChunkIdentification kid;
         ulong grfcgeIn = 0;
         ulong grfcgeOut;
 
@@ -873,18 +873,18 @@ LFail:
 }
 
 /***************************************************************************
-    Resolve the TAG to a BACO.  Only use HD cache files, unless fUseCD is
+    Resolve the TAG to a BaseCacheableObject.  Only use HD cache files, unless fUseCD is
     fTrue.
 ***************************************************************************/
-PBACO TAGM::PbacoFetch(PTAG ptag, PFNRPO pfnrpo, bool fUseCD)
+PBaseCacheableObject TAGM::PbacoFetch(PTAG ptag, PFNRPO pfnrpo, bool fUseCD)
 {
     AssertThis(0);
     AssertVarMem(ptag);
     Assert(ptag->sid >= 0, "Invalid sid");
     Assert(pvNil != pfnrpo, "bad rpo");
 
-    PBACO pbaco = pvNil;
-    PCRM pcrmSource;
+    PBaseCacheableObject pbaco = pvNil;
+    PChunkyResourceManager pcrmSource;
 
     if (ptag->sid == ksidUseCrf)
     {
@@ -921,7 +921,7 @@ void TAGM::ClearCache(long sid, ulong grftagm)
     {
         long icrf, icrfMac;
         SFS sfs;
-        PCRM pcrmSource;
+        PChunkyResourceManager pcrmSource;
 
         _pglsfs->Get(isfs, &sfs);
         if ((sid != sidNil && sfs.sid != sid) || sfs.pcrmSource == pvNil)
@@ -943,7 +943,7 @@ void TAGM::ClearCache(long sid, ulong grftagm)
         icrfMac = pcrmSource->Ccrf();
         for (icrf = 0; icrf < icrfMac; icrf++)
         {
-            PCRF pcrf;
+            PChunkyResourceFile pcrf;
 
             pcrf = pcrmSource->PcrfGet(icrf);
             AssertPo(pcrf->Pcfl(), 0);
@@ -957,7 +957,7 @@ void TAGM::ClearCache(long sid, ulong grftagm)
                 if (grftagm & ftagmMemory)
                 {
                     // Clear RAM cache (for BACOs with 0 cactRef) by
-                    // temporarily setting the CRF's cbMax to 0
+                    // temporarily setting the ChunkyResourceFile's cbMax to 0
                     cbMax = pcrf->CbMax();
                     pcrf->SetCbMax(0);
                     pcrf->SetCbMax(cbMax);
@@ -975,14 +975,14 @@ void TAGM::ClearCache(long sid, ulong grftagm)
     calling FOpenTag().  If you FOpenTag() a tag, you must CloseTag() it
     when you're done with it.
 ***************************************************************************/
-bool TAGM::FOpenTag(PTAG ptag, PCRF pcrfDest, PCFL pcflSrc)
+bool TAGM::FOpenTag(PTAG ptag, PChunkyResourceFile pcrfDest, PChunkyFile pcflSrc)
 {
     AssertVarMem(ptag);
     Assert(ptag->sid >= 0, "Invalid sid");
     AssertPo(pcrfDest, 0);
     AssertNilOrPo(pcflSrc, 0);
 
-    CNO cnoDest;
+    ChunkNumber cnoDest;
 
     if (ptag->sid != ksidUseCrf)
         return fTrue;
@@ -1001,16 +1001,16 @@ bool TAGM::FOpenTag(PTAG ptag, PCRF pcrfDest, PCFL pcflSrc)
 }
 
 /***************************************************************************
-    Save tag's data in the given CRF.  If fRedirect, the tag now points
-    to the copy in the CRF.
+    Save tag's data in the given ChunkyResourceFile.  If fRedirect, the tag now points
+    to the copy in the ChunkyResourceFile.
 ***************************************************************************/
-bool TAGM::FSaveTag(PTAG ptag, PCRF pcrf, bool fRedirect)
+bool TAGM::FSaveTag(PTAG ptag, PChunkyResourceFile pcrf, bool fRedirect)
 {
     AssertVarMem(ptag);
     Assert(ptag->sid >= 0, "Invalid sid");
     AssertPo(pcrf, 0);
 
-    CNO cnoDest;
+    ChunkNumber cnoDest;
 
     if (ptag->sid != ksidUseCrf)
         return fTrue;
@@ -1035,7 +1035,7 @@ bool TAGM::FSaveTag(PTAG ptag, PCRF pcrf, bool fRedirect)
 
 /***************************************************************************
     Call this for each tag when you're duplicating it.  Increments
-    refcount on the tag's CRF.
+    refcount on the tag's ChunkyResourceFile.
 ***************************************************************************/
 void TAGM::DupTag(PTAG ptag)
 {
@@ -1067,7 +1067,7 @@ void TAGM::CloseTag(PTAG ptag)
 }
 
 /***************************************************************************
-    Compare two tags.  Tags are sorted first by sid, then CTG, then CNO.
+    Compare two tags.  Tags are sorted first by sid, then ChunkTag, then ChunkNumber.
 ***************************************************************************/
 ulong TAGM::FcmpCompareTags(PTAG ptag1, PTAG ptag2)
 {

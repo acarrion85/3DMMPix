@@ -13,19 +13,19 @@ void FrameMain(void)
 ***************************************************************************/
 int __cdecl main(int cpszs, char *prgpszs[])
 {
-    FNI fniSrc, fniDst;
-    FNI fniPalette;
+    Filename fniSrc, fniDst;
+    Filename fniPalette;
     STN stn;
     FLO floSrc;
     long lwSig;
-    BLCK blck;
+    DataBlock blck;
     bool fPacked;
     bool fCompress = fFalse;
     long cfni = 0;
     long cfmt = vpcodmUtil->CfmtDefault();
     long lwSwapped;
     PMBMP mbmp;
-    PGL pglclrSrc;
+    PDynamicArray pglclrSrc;
 
 #ifdef UNICODE
     fprintf(stderr, "\nPBM to MBMP Utility (Unicode; " Debug("Debug; ") __DATE__ "; " __TIME__ ")\n");

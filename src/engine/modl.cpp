@@ -48,7 +48,7 @@ LFail:
 /***************************************************************************
     A PFNRPO to read a MODL from a file
 ***************************************************************************/
-bool MODL::FReadModl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, long *pcb)
+bool MODL::FReadModl(PChunkyResourceFile pcrf, ChunkTag ctg, ChunkNumber cno, PDataBlock pblck, PBaseCacheableObject *ppbaco, long *pcb)
 {
     AssertPo(pcrf, 0);
     AssertPo(pblck, 0);
@@ -81,9 +81,9 @@ bool MODL::FReadModl(PCRF pcrf, CTG ctg, CNO cno, PBLCK pblck, PBACO *ppbaco, lo
 }
 
 /***************************************************************************
-    Reads a MODL from a BLCK
+    Reads a MODL from a DataBlock
 ***************************************************************************/
-bool MODL::_FInit(PBLCK pblck)
+bool MODL::_FInit(PDataBlock pblck)
 {
     AssertBaseThis(0);
     AssertPo(pblck, 0);
@@ -204,7 +204,7 @@ bool MODL::_FInit(PBLCK pblck)
 /***************************************************************************
     Reads a BRender model from a .DAT file
 ***************************************************************************/
-PMODL MODL::PmodlReadFromDat(FNI *pfni)
+PMODL MODL::PmodlReadFromDat(Filename *pfni)
 {
     AssertPo(pfni, ffniFile);
 
@@ -256,7 +256,7 @@ MODL::~MODL(void)
 /***************************************************************************
     Writes a MODL to a chunk
 ***************************************************************************/
-bool MODL::FWrite(PCFL pcfl, CTG ctg, CNO cno)
+bool MODL::FWrite(PChunkyFile pcfl, ChunkTag ctg, ChunkNumber cno)
 {
     AssertThis(0);
     AssertPo(pcfl, 0);

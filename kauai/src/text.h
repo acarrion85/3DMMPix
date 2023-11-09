@@ -21,33 +21,33 @@ typedef class EDPAR *PEDPAR;
 class EDPAR
 {
   public:
-    GCB _gcb;
+    GraphicsObjectBlock _gcb;
     long _onn;
     ulong _grfont;
     long _dypFont;
     long _tah;
     long _tav;
-    ACR _acrFore;
-    ACR _acrBack;
+    AbstractColor _acrFore;
+    AbstractColor _acrBack;
     long _cmhl;
 
     EDPAR(void)
     {
     }
-    EDPAR(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
-          long tah = tahLeft, long tav = tavTop, ACR acrFore = kacrBlack, ACR acrBack = kacrWhite, long cmhl = 0);
+    EDPAR(long hid, PGraphicsObject pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
+          long tah = tahLeft, long tav = tavTop, AbstractColor acrFore = kacrBlack, AbstractColor acrBack = kacrWhite, long cmhl = 0);
 
-    void Set(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
-             long tah = tahLeft, long tav = tavTop, ACR acrFore = kacrBlack, ACR acrBack = kacrWhite, long cmhl = 0);
-    void SetFont(long onn, ulong grfont, long dypFont, long tah = tahLeft, long tav = tavTop, ACR acrFore = kacrBlack,
-                 ACR acrBack = kacrWhite);
+    void Set(long hid, PGraphicsObject pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
+             long tah = tahLeft, long tav = tavTop, AbstractColor acrFore = kacrBlack, AbstractColor acrBack = kacrWhite, long cmhl = 0);
+    void SetFont(long onn, ulong grfont, long dypFont, long tah = tahLeft, long tav = tavTop, AbstractColor acrFore = kacrBlack,
+                 AbstractColor acrBack = kacrWhite);
 };
 
 /***************************************************************************
     Edit control base class.
 ***************************************************************************/
 typedef class EDCB *PEDCB;
-#define EDCB_PAR GOB
+#define EDCB_PAR GraphicsObject
 #define kclsEDCB 'EDCB'
 class EDCB : public EDCB_PAR
 {
@@ -152,8 +152,8 @@ class EDPL : public EDPL_PAR
     long _dypFont;
     long _tah;
     long _tav;
-    ACR _acrFore;
-    ACR _acrBack;
+    AbstractColor _acrFore;
+    AbstractColor _acrBack;
     long _dypLine;
 
     EDPL(PEDPAR pedpar);
@@ -229,7 +229,7 @@ class EDML : public EDML_PAR
   protected:
     // the text
     BSM _bsm;
-    PGL _pglich;
+    PDynamicArray _pglich;
 
     EDML(PEDPAR pedpar);
 

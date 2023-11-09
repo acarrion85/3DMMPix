@@ -6,7 +6,7 @@
  *	Author: ******
  *	Date: March, 1995
  *
- *	This file contains the studio scrollbars class SSCB.  These are the frame
+ *	This file contains the studio scrollbars class StudioScrollbars.  These are the frame
  *	and scene scrollbar master controls.
  *
 \*****************************************************************************/
@@ -15,13 +15,15 @@
 #include "studio.h"
 ASSERTNAME
 
+using GraphicalObjectRepresentation::fgokNoAnim;
+
 /*****************************************************************************\
  *
  *	The studio scrollbars class.
  *
 \*****************************************************************************/
 
-RTCLASS(SSCB)
+RTCLASS(StudioScrollbars)
 
 /*****************************************************************************\
  *
@@ -29,7 +31,7 @@ RTCLASS(SSCB)
  *	PsscbNew() for public construction.
  *
 \*****************************************************************************/
-SSCB::SSCB(PMVIE pmvie)
+StudioScrollbars::StudioScrollbars(PMovie pmvie)
 {
     _pmvie = pmvie;
 #ifdef SHOW_FPS
@@ -50,21 +52,21 @@ SSCB::SSCB(PMVIE pmvie)
  *		A pointer to the scrollbars object, pvNil if failed.
  *
 \*****************************************************************************/
-PSSCB SSCB::PsscbNew(PMVIE pmvie)
+PStudioScrollbars StudioScrollbars::PsscbNew(PMovie pmvie)
 {
     AssertNilOrPo(pmvie, 0);
 
-    PSSCB psscb;
-    PGOB pgob;
+    PStudioScrollbars psscb;
+    PGraphicsObject pgob;
     STN stn;
-    GCB gcb;
+    GraphicsObjectBlock gcb;
     RC rcRel, rcAbs;
     long hid;
 
     //
     // Create the view
     //
-    if (pvNil == (psscb = NewObj SSCB(pmvie)))
+    if (pvNil == (psscb = NewObj StudioScrollbars(pmvie)))
         return pvNil;
 
     rcRel.xpLeft = rcRel.ypTop = 0;
@@ -80,7 +82,7 @@ PSSCB SSCB::PsscbNew(PMVIE pmvie)
         return (pvNil);
     }
 
-    hid = GOB::HidUnique();
+    hid = GraphicsObject::HidUnique();
     gcb.Set(hid, pgob, fgobNil, kginDefault, &rcAbs, &rcRel);
 
     if (pvNil == (psscb->_ptgobFrame = NewObj TGOB(&gcb)))
@@ -97,7 +99,7 @@ PSSCB SSCB::PsscbNew(PMVIE pmvie)
         return (pvNil);
     }
 
-    hid = GOB::HidUnique();
+    hid = GraphicsObject::HidUnique();
     gcb.Set(hid, pgob, fgobNil, kginDefault, &rcAbs, &rcRel);
 
     if (pvNil == (psscb->_ptgobScene = NewObj TGOB(&gcb)))
@@ -115,7 +117,7 @@ PSSCB SSCB::PsscbNew(PMVIE pmvie)
         return (pvNil);
     }
 
-    hid = GOB::HidUnique();
+    hid = GraphicsObject::HidUnique();
     gcb.Set(hid, pgob, fgobNil, kginDefault, &rcAbs, &rcRel);
 
     if (pvNil == (psscb->_ptgobFps = NewObj TGOB(&gcb)))
@@ -134,7 +136,7 @@ PSSCB SSCB::PsscbNew(PMVIE pmvie)
  * Destructor for studio scroll bars.
  *
  ****************************************************/
-SSCB::~SSCB(void)
+StudioScrollbars::~StudioScrollbars(void)
 {
     AssertBaseThis(0);
 
@@ -150,7 +152,7 @@ SSCB::~SSCB(void)
 /*****************************************************************************\
  *
  *	FCmdScroll
- *		Handles scrollbar commands.  Cids to the SSCB are enqueued
+ *		Handles scrollbar commands.  Cids to the StudioScrollbars are enqueued
  *		in the following format:
  *
  *		EnqueueCid(cid, khidSscb, chtt, param1, param2, param3);
@@ -165,7 +167,7 @@ SSCB::~SSCB(void)
  *		fTrue if the command was handled
  *
 \*****************************************************************************/
-bool SSCB::FCmdScroll(PCMD pcmd)
+bool StudioScrollbars::FCmdScroll(PCMD pcmd)
 {
     AssertThis(0);
     AssertVarMem(pcmd);
@@ -176,7 +178,7 @@ bool SSCB::FCmdScroll(PCMD pcmd)
     long cRangeDest, iRangeDestFirst;
     long tool = -1;
     RC rc;
-    PSCEN pscen = pvNil;
+    PScene pscen = pvNil;
 
     // verify that the command is for the studio scrollbars
     if ((pcmd->cid != cidSceneScrollbar) && (pcmd->cid != cidFrameScrollbar) && (pcmd->cid != cidSceneThumb) &&
@@ -415,12 +417,12 @@ LExecuteCmd:
  *		Length of the slidable region of the scrollbar
  *
 \*****************************************************************************/
-long SSCB::_CxScrollbar(long kidScrollbar, long kidThumb)
+long StudioScrollbars::_CxScrollbar(long kidScrollbar, long kidThumb)
 {
     AssertThis(0);
 
     long cxThumb, cxScrollbar;
-    PGOB pgob;
+    PGraphicsObject pgob;
     RC rc;
 
     // rightmost pos we can slide the thumb tab is the pos where it has
@@ -453,13 +455,13 @@ long SSCB::_CxScrollbar(long kidScrollbar, long kidThumb)
  *		Nothing.
  *
 \*****************************************************************************/
-void SSCB::Update(void)
+void StudioScrollbars::Update(void)
 {
     AssertThis(0);
 
-    PSCEN pscen;
+    PScene pscen;
     STN stn;
-    PGOB pgob;
+    PGraphicsObject pgob;
     RC rc;
     long xp, dxp;
     long cxScrollbar;
@@ -501,7 +503,7 @@ void SSCB::Update(void)
         {
             pgob->GetPos(&rc, pvNil);
             dxp = xp - rc.xpLeft;
-            ((PGOK)pgob)->FSetRep(chidNil, fgokNoAnim, ctgNil, dxp, 0, 0);
+            ((PKidspaceGraphicObject)pgob)->FSetRep(chidNil, fgokNoAnim, ctgNil, dxp, 0, 0);
         }
     }
 
@@ -538,7 +540,7 @@ void SSCB::Update(void)
         {
             pgob->GetPos(&rc, pvNil);
             dxp = xp - rc.xpLeft;
-            ((PGOK)pgob)->FSetRep(chidNil, fgokNoAnim, ctgNil, dxp, 0, 0);
+            ((PKidspaceGraphicObject)pgob)->FSetRep(chidNil, fgokNoAnim, ctgNil, dxp, 0, 0);
         }
     }
 
@@ -606,7 +608,7 @@ void SSCB::Update(void)
  *		Nothing.
  *
 \*****************************************************************************/
-void SSCB::SetMvie(PMVIE pmvie)
+void StudioScrollbars::SetMvie(PMovie pmvie)
 {
     _pmvie = pmvie;
     Update();
@@ -623,7 +625,7 @@ void SSCB::SetMvie(PMVIE pmvie)
  *		Nothing.
  *
 \*****************************************************************************/
-void SSCB::StartNoAutoadjust(void)
+void StudioScrollbars::StartNoAutoadjust(void)
 {
     AssertThis(0);
 
@@ -634,25 +636,25 @@ void SSCB::StartNoAutoadjust(void)
     Update();
 }
 
-void SSCB::SetSndFrame(bool fSoundInFrame)
+void StudioScrollbars::SetSndFrame(bool fSoundInFrame)
 {
     long snoNew = fSoundInFrame ? kst2 : kst1;
-    PGOK pgokThumb = (PGOK)vapp.Pkwa()->PgobFromHid(kidFrameThumb);
+    PKidspaceGraphicObject pgokThumb = (PKidspaceGraphicObject)vapp.Pkwa()->PgobFromHid(kidFrameThumb);
 
-    if (pgokThumb != pvNil && pgokThumb->FIs(kclsGOK))
+    if (pgokThumb != pvNil && pgokThumb->FIs(kclsKidspaceGraphicObject))
     {
         if (pgokThumb->Sno() != snoNew)
             pgokThumb->FChangeState(snoNew);
     }
     else
-        Bug("Missing or invalid thumb GOB");
+        Bug("Missing or invalid thumb GraphicsObject");
 }
 
 #ifdef DEBUG
 
 /*****************************************************************************\
  *
- *	Mark memory used by the SSCB
+ *	Mark memory used by the StudioScrollbars
  *
  *	Parameters:
  *		None.
@@ -661,16 +663,16 @@ void SSCB::SetSndFrame(bool fSoundInFrame)
  *		Nothing.
  *
 \*****************************************************************************/
-void SSCB::MarkMem(void)
+void StudioScrollbars::MarkMem(void)
 {
     AssertThis(0);
 
-    SSCB_PAR::MarkMem();
+    StudioScrollbars_PAR::MarkMem();
 }
 
 /*****************************************************************************\
  *
- *	Assert the validity of the SSCB
+ *	Assert the validity of the StudioScrollbars
  *
  *	Parameters:
  *		grf - bit array of options.
@@ -679,9 +681,9 @@ void SSCB::MarkMem(void)
  *		Nothing.
  *
 \*****************************************************************************/
-void SSCB::AssertValid(ulong grf)
+void StudioScrollbars::AssertValid(ulong grf)
 {
-    SSCB_PAR::AssertValid(fobjAllocated);
+    StudioScrollbars_PAR::AssertValid(fobjAllocated);
 }
 
 #endif // DEBUG

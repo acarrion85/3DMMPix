@@ -19,23 +19,23 @@
 /***************************************************************************
     base undo class
 ***************************************************************************/
-typedef class UNDB *PUNDB;
-#define UNDB_PAR BASE
-#define kclsUNDB 'UNDB'
-class UNDB : public UNDB_PAR
+typedef class UndoBase *PUndoBase;
+#define UndoBase_PAR BASE
+#define kclsUndoBase 'UNDB'
+class UndoBase : public UndoBase_PAR
 {
     RTCLASS_DEC
-    NOCOPY(UNDB)
+    NOCOPY(UndoBase)
 
   protected:
-    UNDB(void)
+    UndoBase(void)
     {
     }
 
   public:
     // General undo funtionality
-    virtual bool FUndo(PDOCB pdocb) = 0;
-    virtual bool FDo(PDOCB pdocb) = 0;
+    virtual bool FUndo(PDocumentBase pdocb) = 0;
+    virtual bool FDo(PDocumentBase pdocb) = 0;
 };
 
 /***************************************************************************
@@ -52,9 +52,9 @@ enum
     fdocInval = 16, // invalidate associated DDGs
 };
 
-#define DOCB_PAR CMH
-#define kclsDOCB 'DOCB'
-class DOCB : public DOCB_PAR
+#define DocumentBase_PAR CMH
+#define kclsDocumentBase 'DOCB'
+class DocumentBase : public DocumentBase_PAR
 {
     RTCLASS_DEC
     ASSERT
@@ -64,45 +64,45 @@ class DOCB : public DOCB_PAR
 
   protected:
     static long _cactLast;
-    static PDOCB _pdocbFirst;
+    static PDocumentBase _pdocbFirst;
 
-    PDOCB _pdocbPar;
-    PDOCB _pdocbSib;
-    PDOCB _pdocbChd;
+    PDocumentBase _pdocbPar;
+    PDocumentBase _pdocbSib;
+    PDocumentBase _pdocbChd;
 
     long _cactUntitled; // 0 if titled
     bool _fDirty : 1;
     bool _fFreeing : 1;
     bool _fInternal : 1;
-    PGL _pglpddg; // keep track of the DDGs based on this doc
+    PDynamicArray _pglpddg; // keep track of the DDGs based on this doc
 
-    PGL _pglpundb; // keep track of undo items
+    PDynamicArray _pglpundb; // keep track of undo items
     long _ipundbLimDone;
     long _cundbMax;
 
-    bool _FFindDdg(PDDG pddg, long *pipddg);
+    bool _FFindDdg(PDocumentDisplayGraphicsObject pddg, long *pipddg);
     virtual tribool _TQuerySave(bool fForce);
 
-    DOCB(PDOCB pdocb = pvNil, ulong grfdoc = fdocNil);
-    ~DOCB(void);
+    DocumentBase(PDocumentBase pdocb = pvNil, ulong grfdoc = fdocNil);
+    ~DocumentBase(void);
 
   public:
     static bool FQueryCloseAll(ulong grfdoc);
-    static PDOCB PdocbFromFni(FNI *pfni);
+    static PDocumentBase PdocbFromFni(Filename *pfni);
 
-    static PDOCB PdocbFirst(void)
+    static PDocumentBase PdocbFirst(void)
     {
         return _pdocbFirst;
     }
-    PDOCB PdocbPar(void)
+    PDocumentBase PdocbPar(void)
     {
         return _pdocbPar;
     }
-    PDOCB PdocbSib(void)
+    PDocumentBase PdocbSib(void)
     {
         return _pdocbSib;
     }
-    PDOCB PdocbChd(void)
+    PDocumentBase PdocbChd(void)
     {
         return _pdocbChd;
     }
@@ -110,37 +110,37 @@ class DOCB : public DOCB_PAR
     virtual void Release(void);
 
     // high level call to create a new MDI window based on the doc.
-    virtual PDMD PdmdNew(void);
+    virtual PDocumentMDIWindow PdmdNew(void);
     void ActivateDmd(void);
 
     // low level calls - generally not for public consumption
     virtual PDMW PdmwNew(PGCB pgcb);
     virtual PDSG PdsgNew(PDMW pdwm, PDSG pdsgSplit, ulong grfdsg, long rel);
-    virtual PDDG PddgNew(PGCB pgcb);
+    virtual PDocumentDisplayGraphicsObject PddgNew(PGCB pgcb);
 
-    // DDG management - only to be called by DDGs
-    bool FAddDdg(PDDG pddg);
-    void RemoveDdg(PDDG pddg);
-    void MakeFirstDdg(PDDG pddg);
+    // DocumentDisplayGraphicsObject management - only to be called by DDGs
+    bool FAddDdg(PDocumentDisplayGraphicsObject pddg);
+    void RemoveDdg(PDocumentDisplayGraphicsObject pddg);
+    void MakeFirstDdg(PDocumentDisplayGraphicsObject pddg);
     void CloseAllDdg(void);
 
-    // General DDG management
+    // General DocumentDisplayGraphicsObject management
     long Cddg(void)
     {
         return pvNil == _pglpddg ? 0 : _pglpddg->IvMac();
     }
-    PDDG PddgGet(long ipddg);
-    PDDG PddgActive(void);
+    PDocumentDisplayGraphicsObject PddgGet(long ipddg);
+    PDocumentDisplayGraphicsObject PddgActive(void);
 
     virtual void UpdateName(void);
     virtual void GetName(PSTN pstn);
     virtual bool FQueryClose(ulong grfdoc);
-    virtual bool FQueryCloseDmd(PDMD pdmd);
+    virtual bool FQueryCloseDmd(PDocumentMDIWindow pdmd);
     virtual bool FSave(long cid = cidSave);
 
-    virtual bool FGetFni(FNI *pfni);
-    virtual bool FGetFniSave(FNI *pfni);
-    virtual bool FSaveToFni(FNI *pfni, bool fSetFni);
+    virtual bool FGetFni(Filename *pfni);
+    virtual bool FGetFniSave(Filename *pfni);
+    virtual bool FSaveToFni(Filename *pfni, bool fSetFni);
     virtual bool FDirty(void)
     {
         return _fDirty && !FInternal();
@@ -153,7 +153,7 @@ class DOCB : public DOCB_PAR
     // General undo funtionality
     virtual bool FUndo(void);
     virtual bool FRedo(void);
-    virtual bool FAddUndo(PUNDB pundb);
+    virtual bool FAddUndo(PUndoBase pundb);
     virtual void ClearUndo(void);
     virtual void ClearRedo(void);
     virtual void SetCundbMax(long cundbMax);
@@ -165,8 +165,8 @@ class DOCB : public DOCB_PAR
     void SetAsClipboard(void);
     void SetInternal(bool fInternal = fTrue);
 
-    virtual void ExportFormats(PCLIP pclip);
-    virtual bool FGetFormat(long cls, PDOCB *ppdocb = pvNil);
+    virtual void ExportFormats(PClipboardObject pclip);
+    virtual bool FGetFormat(long cls, PDocumentBase *ppdocb = pvNil);
 };
 
 /***************************************************************************
@@ -202,36 +202,36 @@ class DTE : public DTE_PAR
     };
 
     long _es;
-    PDOCB _pdocbRoot;
-    PDOCB _pdocbCur;
+    PDocumentBase _pdocbRoot;
+    PDocumentBase _pdocbCur;
 
   public:
     DTE(void);
-    void Init(PDOCB pdocb);
-    bool FNextDoc(PDOCB *ppdocb, ulong *pgrfdteOut, ulong grfdteIn = fdteNil);
+    void Init(PDocumentBase pdocb);
+    bool FNextDoc(PDocumentBase *ppdocb, ulong *pgrfdteOut, ulong grfdteIn = fdteNil);
 };
 
 /***************************************************************************
     document display gob - normally a child of a DSG but can be a child
     of any gob (for doc previewing, etc)
 ***************************************************************************/
-#define DDG_PAR GOB
-#define kclsDDG 'DDG'
-class DDG : public DDG_PAR
+#define DocumentDisplayGraphicsObject_PAR GraphicsObject
+#define kclsDocumentDisplayGraphicsObject 'DDG'
+class DocumentDisplayGraphicsObject : public DocumentDisplayGraphicsObject_PAR
 {
     RTCLASS_DEC
-    CMD_MAP_DEC(DDG)
+    CMD_MAP_DEC(DocumentDisplayGraphicsObject)
     ASSERT
     MARKMEM
 
   protected:
-    PDOCB _pdocb;
+    PDocumentBase _pdocb;
     bool _fActive;
     long _scvVert; // scroll values
     long _scvHorz;
 
-    DDG(PDOCB pdocb, PGCB pgcb);
-    ~DDG(void);
+    DocumentDisplayGraphicsObject(PDocumentBase pdocb, PGCB pgcb);
+    ~DocumentDisplayGraphicsObject(void);
 
     virtual bool _FInit(void);
     virtual void _Activate(bool fActive);
@@ -244,18 +244,18 @@ class DDG : public DDG_PAR
     virtual void _ScrollDxpDyp(long dxp, long dyp);
 
     // clipboard support
-    virtual bool _FCopySel(PDOCB *ppdocb = pvNil);
+    virtual bool _FCopySel(PDocumentBase *ppdocb = pvNil);
     virtual void _ClearSel(void);
-    virtual bool _FPaste(PCLIP pclip, bool fDoIt, long cid);
+    virtual bool _FPaste(PClipboardObject pclip, bool fDoIt, long cid);
 
   public:
-    static PDDG PddgNew(PDOCB pdocb, PGCB pgcb);
+    static PDocumentDisplayGraphicsObject PddgNew(PDocumentBase pdocb, PGCB pgcb);
 
-    PDOCB Pdocb(void)
+    PDocumentBase Pdocb(void)
     {
         return _pdocb;
     }
-    PDMD Pdmd(void);
+    PDocumentMDIWindow Pdmd(void);
 
     // activation
     virtual void Activate(bool fActive);
@@ -264,7 +264,7 @@ class DDG : public DDG_PAR
         return _fActive;
     }
 
-    // members of GOB
+    // members of GraphicsObject
     virtual void Draw(PGNV pgnv, RC *prcClip);
     virtual bool FCmdActivateSel(PCMD pcmd);
 
@@ -280,27 +280,27 @@ class DDG : public DDG_PAR
     Document mdi window - this communicates with the docb to coordinate
     closing and querying the user about saving
 ***************************************************************************/
-#define DMD_PAR GOB
-#define kclsDMD 'DMD'
-class DMD : public DMD_PAR
+#define DocumentMDIWindow_PAR GraphicsObject
+#define kclsDocumentMDIWindow 'DMD'
+class DocumentMDIWindow : public DocumentMDIWindow_PAR
 {
     RTCLASS_DEC
 
   protected:
-    PDOCB _pdocb;
+    PDocumentBase _pdocb;
 
-    DMD(PDOCB pdocb, PGCB pgcb);
+    DocumentMDIWindow(PDocumentBase pdocb, PGCB pgcb);
     virtual void _ActivateHwnd(bool fActive);
 
   public:
-    static PDMD PdmdNew(PDOCB pdocb);
-    static PDMD PdmdTop(void);
+    static PDocumentMDIWindow PdmdNew(PDocumentBase pdocb);
+    static PDocumentMDIWindow PdmdTop(void);
 
-    PDOCB Pdocb(void)
+    PDocumentBase Pdocb(void)
     {
         return _pdocb;
     }
-    virtual void ActivateNext(PDDG pddg);
+    virtual void ActivateNext(PDocumentDisplayGraphicsObject pddg);
     virtual bool FCmdCloseWnd(PCMD pcmd);
 };
 
@@ -308,7 +308,7 @@ class DMD : public DMD_PAR
     Document main window
     provides basic pane management - including splitting, etc
 ***************************************************************************/
-#define DMW_PAR GOB
+#define DMW_PAR GraphicsObject
 #define kclsDMW 'DMW'
 class DMW : public DMW_PAR
 {
@@ -330,11 +330,11 @@ class DMW : public DMW_PAR
         long idsedPar;
         PDSG pdsg;
     };
-    PAL _paldsed; // the tree of DSEDs
+    PAllocatedArray _paldsed; // the tree of DSEDs
     long _idsedRoot;
-    PDOCB _pdocb;
+    PDocumentBase _pdocb;
 
-    DMW(PDOCB pdocb, PGCB pgcb);
+    DMW(PDocumentBase pdocb, PGCB pgcb);
 
     virtual bool _FInit(void);
     virtual void _NewRc(void);
@@ -350,9 +350,9 @@ class DMW : public DMW_PAR
     void _SplitRcRel(long idsed, RC *prcLeft, RC *prcRight);
 
   public:
-    static PDMW PdmwNew(PDOCB pdocb, PGCB pgcb);
+    static PDMW PdmwNew(PDocumentBase pdocb, PGCB pgcb);
 
-    PDOCB Pdocb(void)
+    PDocumentBase Pdocb(void)
     {
         return _pdocb;
     }
@@ -371,9 +371,9 @@ class DMW : public DMW_PAR
 /***************************************************************************
     document scroll gob - child gob of a DMW
     holds any scroll bars, splitter boxes and split movers
-    dialogs tightly with DMW and DDG
+    dialogs tightly with DMW and DocumentDisplayGraphicsObject
 ***************************************************************************/
-#define DSG_PAR GOB
+#define DSG_PAR GraphicsObject
 #define kclsDSG 'DSG'
 class DSG : public DSG_PAR
 {
@@ -385,7 +385,7 @@ class DSG : public DSG_PAR
 
   private:
     long _dsno; // this is how the DMW refers to this DSG
-    PDDG _pddg;
+    PDocumentDisplayGraphicsObject _pddg;
 
   protected:
     DSG(PGCB pgcb);
@@ -418,7 +418,7 @@ enum
     document scroll window splitter - must be a child of a DSG
 ***************************************************************************/
 typedef class DSSP *PDSSP;
-#define DSSP_PAR GOB
+#define DSSP_PAR GraphicsObject
 #define kclsDSSP 'DSSP'
 class DSSP : public DSSP_PAR
 {
@@ -453,7 +453,7 @@ enum
     document scroll split mover - must be a child of a DSG
 ***************************************************************************/
 typedef class DSSM *PDSSM;
-#define DSSM_PAR GOB
+#define DSSM_PAR GraphicsObject
 #define kclsDSSM 'DSSM'
 class DSSM : public DSSM_PAR
 {

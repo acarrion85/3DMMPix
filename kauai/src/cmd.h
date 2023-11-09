@@ -45,18 +45,18 @@ struct CMD
 
     PCMH pcmh;          // the target of the command - may be nil
     long cid;           // the command id
-    PGG pgg;            // additional parameters for the command
+    PGeneralGroup pgg;            // additional parameters for the command
     long rglw[kclwCmd]; // standard parameters
 };
 typedef CMD *PCMD;
 
 // command on file - for saving recorded macros
-struct CMDF
+struct CommandFile
 {
     long cid;
     long hid;
     long cact;
-    CHID chidGg; // child id of the pgg, 0 if none
+    ChildChunkID chidGg; // child id of the pgg, 0 if none
     long rglw[kclwCmd];
 };
 
@@ -69,7 +69,7 @@ struct CMDF
     {                                                                                                                  \
         PCMH pcmh;                                                                                                     \
         long cid;                                                                                                      \
-        PGG pgg;                                                                                                       \
+        PGeneralGroup pgg;                                                                                                       \
         long a, b, c, d;                                                                                               \
     };                                                                                                                 \
     typedef CMD_##foo *PCMD_##foo
@@ -234,29 +234,29 @@ class CEX : public CEX_PAR
     // recording and playback
     long _rs;       // recording/playback state
     long _rec;      // recording/playback errors
-    PCFL _pcfl;     // the file we are recording to or playing from
-    PGL _pglcmdf;   // the command stream
-    CNO _cno;       // which macro is being played
+    PChunkyFile _pcfl;     // the file we are recording to or playing from
+    PDynamicArray _pglcmdf;   // the command stream
+    ChunkNumber _cno;       // which macro is being played
     long _icmdf;    // current command for recording or playback
-    CHID _chidLast; // last chid used for recording
+    ChildChunkID _chidLast; // last chid used for recording
     long _cact;     // number of times on this command
     CMD _cmd;       // previous command recorded or played
 
     // dispatching
     CMD _cmdCur;     // command being dispatched
     long _icmheNext; // next command handler to dispatch to
-    PGOB _pgobTrack; // the gob that is tracking the mouse
+    PGraphicsObject _pgobTrack; // the gob that is tracking the mouse
 #ifdef WIN
     HWND _hwndCapture; // the hwnd that we captured the mouse with
 #endif                 // WIN
 
     // filter list and command queue
-    PGL _pglcmhe;       // the command filter list
-    PGL _pglcmd;        // the command queue
+    PDynamicArray _pglcmhe;       // the command filter list
+    PDynamicArray _pglcmd;        // the command queue
     bool _fDispatching; // whether we're currently in FDispatchNextCmd
 
     // Modal filtering
-    PGOB _pgobModal;
+    PGraphicsObject _pgobModal;
 
 #ifdef DEBUG
     long _ccmdMax; // running max
@@ -289,8 +289,8 @@ class CEX : public CEX_PAR
     {
         return _rs == rsPlaying;
     }
-    void Record(PCFL pcfl);
-    void Play(PCFL pcfl, CNO cno);
+    void Record(PChunkyFile pcfl);
+    void Play(PChunkyFile pcfl, ChunkNumber cno);
     void StopRecording(void);
     void StopPlaying(void);
 
@@ -304,9 +304,9 @@ class CEX : public CEX_PAR
     // queueing and dispatching
     virtual void EnqueueCmd(PCMD pcmd);
     virtual void PushCmd(PCMD pcmd);
-    virtual void EnqueueCid(long cid, PCMH pcmh = pvNil, PGG pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
+    virtual void EnqueueCid(long cid, PCMH pcmh = pvNil, PGeneralGroup pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
                             long lw3 = 0);
-    virtual void PushCid(long cid, PCMH pcmh = pvNil, PGG pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
+    virtual void PushCid(long cid, PCMH pcmh = pvNil, PGeneralGroup pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
                          long lw3 = 0);
     virtual bool FDispatchNextCmd(void);
     virtual bool FGetNextKey(PCMD pcmd);
@@ -315,16 +315,16 @@ class CEX : public CEX_PAR
 
     // menu marking
     virtual ulong GrfedsForCmd(PCMD pcmd);
-    virtual ulong GrfedsForCid(long cid, PCMH pcmh = pvNil, PGG pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
+    virtual ulong GrfedsForCid(long cid, PCMH pcmh = pvNil, PGeneralGroup pgg = pvNil, long lw0 = 0, long lw1 = 0, long lw2 = 0,
                                long lw3 = 0);
 
     // mouse tracking
-    virtual void TrackMouse(PGOB pgob);
+    virtual void TrackMouse(PGraphicsObject pgob);
     virtual void EndMouseTracking(void);
-    virtual PGOB PgobTracking(void);
+    virtual PGraphicsObject PgobTracking(void);
 
     virtual void Suspend(bool fSuspend = fTrue);
-    virtual void SetModalGob(PGOB pgob);
+    virtual void SetModalGob(PGraphicsObject pgob);
 };
 
 #endif //! CMD_H

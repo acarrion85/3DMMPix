@@ -24,7 +24,7 @@ typedef ControlHandle HCTL;
 
 // general control
 typedef class CTL *PCTL;
-#define CTL_PAR GOB
+#define CTL_PAR GraphicsObject
 #define kclsCTL 'CTL'
 class CTL : public CTL_PAR
 {
@@ -158,7 +158,7 @@ class WSB : public WSB_PAR
 #endif // MAC
 
   public:
-    static PWSB PwsbNew(PGOB pgob, ulong grfgob);
+    static PWSB PwsbNew(PGraphicsObject pgob, ulong grfgob);
 
 #ifdef MAC
     virtual void Draw(PGNV pgnv, RC *prcClip);

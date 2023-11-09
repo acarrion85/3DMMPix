@@ -25,8 +25,8 @@ const long kdxpInsetSled = 2;
 /***************************************************************************
     Constructor for edit control parameter block.
 ***************************************************************************/
-EDPAR::EDPAR(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
-             long tah, long tav, ACR acrFore, ACR acrBack, long cmhl)
+EDPAR::EDPAR(long hid, PGraphicsObject pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont, long dypFont,
+             long tah, long tav, AbstractColor acrFore, AbstractColor acrBack, long cmhl)
     : _gcb(hid, pgob, grfgob, gin, prcAbs, prcRel)
 {
     _onn = onn;
@@ -42,8 +42,8 @@ EDPAR::EDPAR(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel
 /***************************************************************************
     Set the data in the EDPAR.
 ***************************************************************************/
-void EDPAR::Set(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont,
-                long dypFont, long tah, long tav, ACR acrFore, ACR acrBack, long cmhl)
+void EDPAR::Set(long hid, PGraphicsObject pgob, ulong grfgob, long gin, RC *prcAbs, RC *prcRel, long onn, ulong grfont,
+                long dypFont, long tah, long tav, AbstractColor acrFore, AbstractColor acrBack, long cmhl)
 {
     _gcb.Set(hid, pgob, grfgob, gin, prcAbs, prcRel);
     _onn = onn;
@@ -59,7 +59,7 @@ void EDPAR::Set(long hid, PGOB pgob, ulong grfgob, long gin, RC *prcAbs, RC *prc
 /***************************************************************************
     Set the font portion of the EDPAR.
 ***************************************************************************/
-void EDPAR::SetFont(long onn, ulong grfont, long dypFont, long tah, long tav, ACR acrFore, ACR acrBack)
+void EDPAR::SetFont(long onn, ulong grfont, long dypFont, long tah, long tav, AbstractColor acrFore, AbstractColor acrBack)
 {
     _onn = onn;
     _grfont = grfont;
@@ -73,11 +73,11 @@ void EDPAR::SetFont(long onn, ulong grfont, long dypFont, long tah, long tav, AC
 /***************************************************************************
     Constructor for edit control.
 ***************************************************************************/
-EDCB::EDCB(PGCB pgcb, long cmhl) : GOB(pgcb)
+EDCB::EDCB(PGCB pgcb, long cmhl) : GraphicsObject(pgcb)
 {
     AssertBaseThis(0);
     _cmhl = cmhl;
-    _fMark = (kginMark == pgcb->_gin || kginDefault == pgcb->_gin && kginMark == GOB::GinDefault());
+    _fMark = (kginMark == pgcb->_gin || kginDefault == pgcb->_gin && kginMark == GraphicsObject::GinDefault());
     _pgnv = pvNil;
 }
 
@@ -440,7 +440,7 @@ void EDCB::_GetRcContent(RC *prc)
 }
 
 /***************************************************************************
-    Set the vis for the GNV to be the intersection of the GOB's vis and
+    Set the vis for the GNV to be the intersection of the GraphicsObject's vis and
     the content rc.
 ***************************************************************************/
 void EDCB::_InitGnv(PGNV pgnv)
@@ -1327,7 +1327,7 @@ bool EDML::_FInit(void)
 {
     long ich;
 
-    if (pvNil == (_pglich = GL::PglNew(size(long))))
+    if (pvNil == (_pglich = DynamicArray::PglNew(size(long))))
         return fFalse;
     _pglich->SetMinGrow(20);
     ich = 0;
@@ -1858,7 +1858,7 @@ long EDMW::_CichGetBreakables(achar *prgch, long ich, long *prgich, long cichMax
 }
 
 /***************************************************************************
-    The size of the GOB changed - relayout.
+    The size of the GraphicsObject changed - relayout.
 ***************************************************************************/
 void EDMW::_NewRc(void)
 {

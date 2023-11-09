@@ -23,10 +23,10 @@ int __cdecl main(int cpszs, char *prgpszs[])
 {
     schar chs;
     STN stn;
-    FNI fni;
+    Filename fni;
     PFIL pfil = pvNil;
     PMSNK pmsnk = pvNil;
-    PCFL pcflSrc = pvNil;
+    PChunkyFile pcflSrc = pvNil;
 
 #ifdef UNICODE
     fprintf(stderr,
@@ -53,7 +53,7 @@ int __cdecl main(int cpszs, char *prgpszs[])
                 fprintf(stderr, "Error: Bad file name: %s\n\n", *prgpszs);
                 goto LUsage;
             }
-            if (pvNil == (pcflSrc = CFL::PcflOpen(&fni, fcflNil)))
+            if (pvNil == (pcflSrc = ChunkyFile::PcflOpen(&fni, fcflNil)))
             {
                 fprintf(stderr, "Error: Couldn't open %s\n\n", *prgpszs);
                 goto LUsage;

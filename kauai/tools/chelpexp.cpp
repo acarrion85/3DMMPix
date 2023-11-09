@@ -13,28 +13,28 @@
 #include "chelpexp.h"
 ASSERTNAME
 
-static bool _FWriteHelpChunk(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar);
-static bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar);
-static void _AppendHelpStnLw(PSTN pstn, PGST pgst, long istn, long lw);
+static bool _FWriteHelpChunk(PChunkyFile pcfl, PSourceEmitter pchse, ChildChunkIdentification *pkid, ChunkIdentification *pckiPar);
+static bool _FWriteHelpPropAg(PChunkyFile pcfl, PSourceEmitter pchse, ChildChunkIdentification *pkid, ChunkIdentification *pckiPar);
+static void _AppendHelpStnLw(PSTN pstn, PStringTable pgst, long istn, long lw);
 
 /***************************************************************************
     Export the help topics in their textual representation for compilation
     by chomp.
     REVIEW shonk: this code is a major hack and very fragile.
 ***************************************************************************/
-bool FExportHelpText(PCFL pcfl, PMSNK pmsnk)
+bool FExportHelpText(PChunkyFile pcfl, PMSNK pmsnk)
 {
     AssertPo(pcfl, 0);
 
-    BLCK blck;
-    PGST pgst;
+    DataBlock blck;
+    PStringTable pgst;
     long icki;
-    CKI cki, ckiPar;
-    KID kid;
+    ChunkIdentification cki, ckiPar;
+    ChildChunkIdentification kid;
     CGE cge;
     ulong grfcge;
-    HTOPF htopf;
-    CHSE chse;
+    TopicFile htopf;
+    SourceEmitter chse;
     STN stn, stnT;
     bool fRet = fFalse;
 
@@ -74,14 +74,14 @@ bool FExportHelpText(PCFL pcfl, PMSNK pmsnk)
     {
         // read the string table if it's there
         if (pcfl->FGetKidChidCtg(cki.ctg, cki.cno, 0, kctgGst, &kid) &&
-            (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (pgst = GST::PgstRead(&blck)) ||
+            (!pcfl->FFind(kid.cki.ctg, kid.cki.cno, &blck) || pvNil == (pgst = StringTable::PgstRead(&blck)) ||
              pgst->IvMac() != 6 && (pgst->IvMac() != 5 || !pgst->FAddRgch(PszLit(""), 0))))
         {
             goto LFail;
         }
 
         // read the topic
-        if (!pcfl->FFind(cki.ctg, cki.cno, &blck) || !blck.FUnpackData() || blck.Cb() != size(HTOPF) ||
+        if (!pcfl->FFind(cki.ctg, cki.cno, &blck) || !blck.FUnpackData() || blck.Cb() != size(TopicFile) ||
             !blck.FRead(&htopf))
         {
             goto LFail;
@@ -109,7 +109,7 @@ bool FExportHelpText(PCFL pcfl, PMSNK pmsnk)
         chse.DumpSz(PszLit("#endif //HELP_SINGLE_CHUNK"));
         stn.FAppendCh(ChLit('2'));
 
-        // dump the HTOPF
+        // dump the TopicFile
         chse.DumpSz(PszLit(""));
         chse.DumpSz(stn.Psz());
 
@@ -139,7 +139,7 @@ bool FExportHelpText(PCFL pcfl, PMSNK pmsnk)
             chse.DumpSz(PszLit(""));
             if (kid.cki.ctg == kctgTxtPropArgs)
             {
-                // special handling of argument AG
+                // special handling of argument AllocatedGroup
                 if (!_FWriteHelpPropAg(pcfl, &chse, &kid, &ckiPar))
                     goto LFail;
             }
@@ -179,7 +179,7 @@ LFail:
 /***************************************************************************
     Dump a chunk as text to the given chse.
 ***************************************************************************/
-bool _FWriteHelpChunk(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
+bool _FWriteHelpChunk(PChunkyFile pcfl, PSourceEmitter pchse, ChildChunkIdentification *pkid, ChunkIdentification *pckiPar)
 {
     AssertPo(pcfl, 0);
     AssertPo(pchse, 0);
@@ -188,7 +188,7 @@ bool _FWriteHelpChunk(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
 
     STN stn;
     STN stnT;
-    BLCK blck;
+    DataBlock blck;
 
     if (!pcfl->FFind(pkid->cki.ctg, pkid->cki.cno, &blck))
         return fFalse;
@@ -208,12 +208,12 @@ bool _FWriteHelpChunk(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
 
     if (pkid->cki.ctg == kctgGst)
     {
-        PGST pgst;
+        PStringTable pgst;
         short bo, osk;
         bool fPacked = blck.FPacked();
         bool fRet;
 
-        pgst = GST::PgstRead(&blck, &bo, &osk);
+        pgst = StringTable::PgstRead(&blck, &bo, &osk);
         if (pvNil == pgst)
             return fFalse;
 
@@ -243,25 +243,25 @@ bool _FWriteHelpChunk(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
 }
 
 /***************************************************************************
-    Write the property AG.  This requires special processing
+    Write the property AllocatedGroup.  This requires special processing
 ***************************************************************************/
-bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
+bool _FWriteHelpPropAg(PChunkyFile pcfl, PSourceEmitter pchse, ChildChunkIdentification *pkid, ChunkIdentification *pckiPar)
 {
     AssertPo(pcfl, 0);
     AssertPo(pchse, 0);
     AssertVarMem(pkid);
     AssertVarMem(pckiPar);
 
-    PAG pag;
+    PAllocatedGroup pag;
     short bo, osk;
     STN stn, stnT, stnT2;
     byte rgb[2 * kcbMaxDataStn];
-    BLCK blck;
+    DataBlock blck;
     long iv, lw, cb, ib, cbRead;
-    CKI cki;
+    ChunkIdentification cki;
 
     pag = pvNil;
-    if (!pcfl->FFind(pkid->cki.ctg, pkid->cki.cno, &blck) || pvNil == (pag = AG::PagRead(&blck, &bo, &osk)) ||
+    if (!pcfl->FFind(pkid->cki.ctg, pkid->cki.cno, &blck) || pvNil == (pag = AllocatedGroup::PagRead(&blck, &bo, &osk)) ||
         bo != kboCur || osk != koskCur || size(long) != pag->CbFixed())
     {
         ReleasePpo(&pag);
@@ -281,8 +281,8 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
     stn.FFormatSz(PszLit("PARENT('%f', _help_%x_%x, 0x%x)"), pckiPar->ctg, pckiPar->ctg, pckiPar->cno, pkid->chid);
     pchse->DumpSz(stn.Psz());
 
-    // dump the AG declaration
-    pchse->DumpSz(PszLit("AG(4)"));
+    // dump the AllocatedGroup declaration
+    pchse->DumpSz(PszLit("AllocatedGroup(4)"));
 
     // dump the items
     for (iv = 0; iv < pag->IvMac(); iv++)
@@ -304,7 +304,7 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
         switch (B3Lw(lw))
         {
         case 64: // sprmGroup
-            if (cb <= size(byte) + size(CNO))
+            if (cb <= size(byte) + size(ChunkNumber))
                 goto LWriteCore;
             if (cb > size(rgb))
             {
@@ -313,7 +313,7 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
             }
 
             pag->GetRgb(iv, 0, cb, rgb);
-            ib = size(byte) + size(CNO);
+            ib = size(byte) + size(ChunkNumber);
             if (!stnT.FSetData(rgb + ib, cb - ib) || stnT.Cch() == 0)
             {
                 Bug("bad group data");
@@ -328,18 +328,18 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
             break;
 
         case 192: // sprmObject
-            if (cb <= size(CKI))
+            if (cb <= size(ChunkIdentification))
                 goto LWriteCore;
 
             // an object
-            pag->GetRgb(iv, 0, size(CKI), &cki);
+            pag->GetRgb(iv, 0, size(ChunkIdentification), &cki);
             switch (cki.ctg)
             {
             default:
                 goto LWriteCore;
 
             case kctgMbmp:
-                ib = size(CKI);
+                ib = size(ChunkIdentification);
                 if (ib >= cb)
                     goto LWriteCore;
                 if ((cb -= ib) > kcbMaxDataStn)
@@ -361,7 +361,7 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
                 break;
 
             case kctgGokd:
-                ib = size(CKI) + size(long);
+                ib = size(ChunkIdentification) + size(long);
                 if (ib >= cb)
                     goto LWriteCore;
                 if ((cb -= ib) > size(rgb))
@@ -395,7 +395,7 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
                 }
                 else
                 {
-                    pag->GetRgb(iv, size(CKI), size(long), &lw);
+                    pag->GetRgb(iv, size(ChunkIdentification), size(long), &lw);
                     stnT2.FFormatSz(PszLit("0x%x"), lw);
                     stn.FAppendStn(&stnT2);
                     stnT2.SetNil();
@@ -441,7 +441,7 @@ bool _FWriteHelpPropAg(PCFL pcfl, PCHSE pchse, KID *pkid, CKI *pckiPar)
 /***************************************************************************
     Append a string or number.
 ***************************************************************************/
-void _AppendHelpStnLw(PSTN pstn, PGST pgst, long istn, long lw)
+void _AppendHelpStnLw(PSTN pstn, PStringTable pgst, long istn, long lw)
 {
     AssertPo(pstn, 0);
     AssertNilOrPo(pgst, 0);
